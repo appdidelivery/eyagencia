@@ -1,4 +1,5 @@
 import HeroSection from "../components/HeroSection";
+import LogoTicker from "../components/LogoTicker";
 
 export default function Home() {
   // Configuração de SEO Técnico - JSON-LD Schema Markup

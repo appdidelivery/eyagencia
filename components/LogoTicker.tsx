@@ -1,17 +1,19 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export default function LogoTicker() {
-  // Lista de parceiros extraída da sua tela anterior
+  // Lista de parceiros mapeada com os nomes exatos dos seus arquivos na pasta public
   const partners = [
-    { name: 'VTEX', color: 'text-pink-600 font-black tracking-tighter' },
-    { name: 'Tray', color: 'text-teal-700 font-bold tracking-tight' },
-    { name: 'Linx', color: 'text-orange-500 font-black' },
-    { name: 'Jet Commerce', color: 'text-orange-600 font-bold' },
-    { name: 'Flexy', color: 'text-blue-900 font-black italic tracking-wider' },
-    { name: 'DOOCA', color: 'text-blue-500 font-bold tracking-widest' },
-    { name: 'Betalabs', color: 'text-sky-500 font-semibold' },
+    { name: 'VTEX', src: '/vtex-300x300.jpg' },
+    { name: 'Tray', src: '/tray-300x300.jpg' },
+    { name: 'Linx', src: '/linx-300x300.jpg' },
+    { name: 'Jet Commerce', src: '/jet-300x300.jpg' },
+    { name: 'Flexy', src: '/flexy-300x300.jpg' },
+    { name: 'DOOCA', src: '/dooca-300x300.jpg' },
+    { name: 'Betalabs', src: '/betalabs-300x300.jpg' },
+    { name: 'Loja Integrada', src: '/lojaintegrada-300x300.jpg' },
   ];
 
   // Duplicamos o array para criar a ilusão de loop infinito (seamless)
@@ -27,30 +29,34 @@ export default function LogoTicker() {
         </h2>
       </div>
 
-      {/* Máscara de gradiente nas bordas para dar efeito de entrada/saída suave */}
+      {/* Máscara de gradiente nas bordas para dar efeito de fade nas pontas da tela */}
       <div className="relative w-full overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
         
         {/* Container da Animação do Framer Motion */}
         <motion.div
-          className="flex w-max"
+          className="flex w-max items-center"
           animate={{
             x: ['0%', '-50%'],
           }}
           transition={{
             ease: 'linear',
-            duration: 30, // Velocidade do carrossel (aumente para mais lento)
+            duration: 35, // Velocidade suave
             repeat: Infinity,
           }}
         >
           {tickerItems.map((partner, index) => (
             <div
               key={index}
-              className="flex items-center justify-center w-[200px] md:w-[250px] flex-shrink-0 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-pointer"
+              className="flex items-center justify-center w-[180px] md:w-[220px] flex-shrink-0 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-pointer"
             >
-              {/* SUBSTITUA AQUI: Quando tiver as imagens, troque esse <span> pela tag <Image src="..." alt="..." /> */}
-              <span className={`text-3xl md:text-4xl ${partner.color}`}>
-                {partner.name}
-              </span>
+              <Image
+                src={partner.src}
+                alt={`Logo da plataforma de e-commerce ${partner.name}`} // Alt tag rica para SEO
+                width={150}
+                height={150}
+                className="object-contain w-auto h-16 md:h-20 mix-blend-multiply"
+                quality={85}
+              />
             </div>
           ))}
         </motion.div>
