@@ -1,7 +1,12 @@
 import HeroSection from "../components/HeroSection";
 import LogoTicker from "../components/LogoTicker";
 import ServicesGrid from "../components/ServicesGrid";
+import Methodology from "../components/Methodology";
 import ProcessTimeline from "../components/ProcessTimeline";
+import GoogleReviews from "../components/GoogleReviews";
+import BlogPreview from "../components/BlogPreview";
+import WhatsAppForm from "../components/WhatsAppForm";
+import Footer from "../components/Footer";
 
 export default function Home() {
   // Configuração de SEO Técnico - JSON-LD Schema Markup
@@ -42,7 +47,12 @@ export default function Home() {
       <HeroSection />
       <LogoTicker />
       <ServicesGrid />
+      <Methodology />
       <ProcessTimeline />
+      <GoogleReviews />
+      <BlogPreview />
+      <WhatsAppForm />
+      <Footer />
     </main>
   );
 }
