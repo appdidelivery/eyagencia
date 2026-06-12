@@ -3,9 +3,8 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-// Tipagem do que esperamos receber da sua API
+// Tipagem base (Ajuste caso sua API devolva os nomes diferentes)
 interface ReviewData {
-  id: string;
   author_name: string;
   text: string;
   rating: number;
@@ -16,33 +15,29 @@ export default function GoogleReviews() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchGoogleReviews() {
+    async function fetchRealReviews() {
       try {
-        // ==========================================
-        // ATENÇÃO: COLOQUE A URL DA SUA API AQUI ABAIXO
-        // Exemplo: const res = await fetch('https://api.velodelivery.../eyagencia/reviews');
-        // ==========================================
+        // =====================================================================
+        // ATENÇÃO: SUBSTITUA A URL ABAIXO PELA SUA API DO GOOGLE MEU NEGÓCIO
+        // =====================================================================
+        const URL_DA_SUA_API = "https://sua-api.com.br/endpoint-de-reviews"; 
         
-        // Simulação de tempo de resposta da API (Remova isso quando conectar a API real)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const response = await fetch(URL_DA_SUA_API);
+        const data = await response.json();
         
-        // Dados de fallback caso a API demore ou enquanto você não configura
-        const fallbackData = [
-          { id: "1", author_name: "Ricardo S.", rating: 5, text: "A migração da nossa loja nos dava muito medo por causa da perda de tráfego. A EyAgencia fez um mapeamento perfeito. Aumentamos o ROAS em 45% nos primeiros 3 meses." },
-          { id: "2", author_name: "Mariana L.", rating: 5, text: "O trabalho de SEO Técnico deles é absurdo. Injetaram dados estruturados e nossas páginas de categoria B2B agora dominam o topo do Google." },
-          { id: "3", author_name: "Felipe T.", rating: 5, text: "Transparência total. Fomos de um CAC altíssimo para uma máquina previsível. A equipe realmente usa engenharia de dados e não achismos." }
-        ];
+        // Supondo que sua API devolva um array de reviews
+        // Se ela devolver muito mais que 3, a gente corta para mostrar só 3 na tela:
+        setReviews(data.slice(0, 3)); 
 
-        // Quando plugar a API, use: const data = await res.json(); setReviews(data);
-        setReviews(fallbackData);
       } catch (error) {
-        console.error("Erro ao buscar avaliações:", error);
+        console.error("Falha ao puxar a API do Google:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchGoogleReviews();
+    // Chama a função ao carregar a tela
+    fetchRealReviews();
   }, []);
 
   const StarIcon = () => (
@@ -54,8 +49,8 @@ export default function GoogleReviews() {
   return (
     <section className="w-full bg-white py-24 px-6 lg:px-8 border-t border-slate-100">
       <div className="max-w-7xl mx-auto">
+        
         <div className="text-center mb-16 flex flex-col items-center">
-          {/* Badge oficial Google */}
           <div className="flex items-center gap-2 bg-white border border-slate-200 shadow-sm rounded-full px-4 py-2 mb-6">
             <svg className="w-6 h-6" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571c.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
             <span className="font-bold text-slate-800 text-sm">Avaliações Verificadas</span>
@@ -68,14 +63,19 @@ export default function GoogleReviews() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#275c58]"></div>
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#275c58] mb-4"></div>
+            <p className="text-slate-500 font-medium animate-pulse">Puxando avaliações reais do Google...</p>
+          </div>
+        ) : reviews.length === 0 ? (
+          <div className="text-center text-red-500 font-bold py-10 border border-red-200 bg-red-50 rounded-xl">
+            Atenção Desenvolvedor: A URL da API do Google não foi inserida no código ou falhou. Insira a URL real no arquivo GoogleReviews.tsx.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {reviews.map((review, index) => (
               <motion.div
-                key={review.id}
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
@@ -90,7 +90,8 @@ export default function GoogleReviews() {
                 </p>
                 <div className="flex items-center gap-4 mt-auto">
                   <div className="w-10 h-10 rounded-full bg-[#275c58]/10 flex items-center justify-center font-bold text-[#275c58]">
-                    {review.author_name.charAt(0)}
+                    {/* Pega a primeira letra do nome que vier da API */}
+                    {review.author_name ? review.author_name.charAt(0) : "C"}
                   </div>
                   <p className="font-semibold text-slate-900 text-sm">{review.author_name}</p>
                 </div>

@@ -11,7 +11,7 @@ export default function Footer() {
         "@id": "https://eyagencia.com.br/#organization",
         "name": "EyAgencia",
         "url": "https://eyagencia.com.br",
-        "logo": "https://eyagencia.com.br/logo.png",
+        "logo": "https://eyagencia.com.br/eyagencia-logo.png",
         "description": "Agência especialista em setup de e-commerce B2B, estratégias avançadas de SEO Técnico e Tráfego Pago."
       },
       {
