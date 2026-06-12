@@ -34,19 +34,10 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-slate-50/90"></div>
       </div>
 
-      {/* TOPO: Logo da EyAgencia */}
-      <div className="absolute top-0 left-0 w-full p-6 lg:px-8 z-20 flex justify-center md:justify-start">
-        <Image 
-          src="/eyagencia-logo-verde.png" 
-          alt="Logo EyAgencia" 
-          width={180} 
-          height={60} 
-          className="object-contain"
-        />
-      </div>
+      {/* A logo duplicada foi removida daqui, pois o Header agora cuida disso globalmente */}
 
       <motion.div
-        className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center px-6 mt-16"
+        className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center px-6 mt-24"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
