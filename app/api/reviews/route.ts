@@ -9,39 +9,39 @@ export async function GET() {
   }
 
   try {
-    // Nova URL oficial do Google Places API
-    const url = `https://places.googleapis.com/v1/places/${placeId}?fields=reviews,rating,userRatingCount&key=${apiKey}&languageCode=pt-BR`;
+    // Retornamos para a API Clássica que aceita a sua chave da Velo sem frescuras
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&language=pt-BR&key=${apiKey}`;
     
     const response = await fetch(url);
     const data = await response.json();
 
-    // Se o Google devolver erro, logamos no terminal
-    if (data.error) {
-      console.log("ERRO DO GOOGLE CLOUD:", data.error.message);
-      return NextResponse.json({ error: data.error.message }, { status: 500 });
+    if (data.status !== "OK") {
+      console.log("ERRO DO GOOGLE CLOUD:", data.status, data.error_message);
+      return NextResponse.json({ error: data.status }, { status: 500 });
     }
 
-    if (data.reviews) {
-      // Filtra e formata para o formato que a nossa tela espera
-      const validReviews = data.reviews
-        .filter((r: any) => r.text?.text && r.rating >= 4)
+    if (data.result && data.result.reviews) {
+      // Ajuste para o formato clássico
+      const validReviews = data.result.reviews
+        .filter((r: any) => r.text && r.rating >= 4)
         .slice(0, 3)
         .map((r: any) => ({
-          author_name: r.authorAttribution?.displayName || "Cliente",
+          author_name: r.author_name || "Cliente",
           rating: r.rating,
-          text: r.text.text,
-          profile_photo_url: r.authorAttribution?.photoUri
+          text: r.text,
+          profile_photo_url: r.profile_photo_url
         }));
 
       return NextResponse.json({
-        rating: data.rating,
-        total: data.userRatingCount,
+        rating: data.result.rating,
+        total: data.result.user_ratings_total,
         reviews: validReviews
       });
     }
 
     return NextResponse.json({ error: 'Nenhuma avaliação encontrada' }, { status: 404 });
   } catch (error) {
-    return NextResponse.json({ error: 'Falha na comunicação' }, { status: 500 });
+    console.log("FALHA NA REDE:", error);
+    return NextResponse.json({ error: 'Falha na comunicação com o Google' }, { status: 500 });
   }
 }
