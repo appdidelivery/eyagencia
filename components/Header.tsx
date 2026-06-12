@@ -78,8 +78,10 @@ export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }
 
         {/* Botão Menu Mobile */}
         <button 
-          className="md:hidden p-2"
+          className="md:hidden p-2 focus:outline-none focus:ring-2 focus:ring-[#f0815b] rounded-md"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
+          aria-expanded={isMobileMenuOpen}
         >
           <svg className={`w-6 h-6 ${textColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {isMobileMenuOpen ? (

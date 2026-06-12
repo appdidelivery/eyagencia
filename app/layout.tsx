@@ -45,17 +45,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   
-  // MASTER SCHEMA MARKUP: Dados exatos do Google Meu Negócio para E-E-A-T Máximo
+  // MASTER SCHEMA MARKUP: Arquitetura aninhada (Nested) exigida pelo Google
   const masterSchema = {
     "@context": "https://schema.org",
-    "@type": "MarketingAgency",
+    "@type": "LocalBusiness", // Mudamos de MarketingAgency para LocalBusiness (o Google prefere para locais físicos com nota)
+    "@id": "https://eyagencia.com.br/#business",
     "name": "EyAgencia de E-commerce, Marketing Social e Digital",
-    "alternateName": "EyAgencia",
     "url": "https://eyagencia.com.br",
     "logo": "https://eyagencia.com.br/icon.png",
     "image": "https://eyagencia.com.br/icon.png",
     "description": "Agência especializada em E-commerce, Marketing Social e Digital, focada em SEO Técnico e Tráfego Pago.",
-    "foundingDate": "2015",
     "telephone": "+554832200260",
     "address": {
       "@type": "PostalAddress",
@@ -65,6 +64,7 @@ export default function RootLayout({
       "postalCode": "88106-500",
       "addressCountry": "BR"
     },
+    // Aqui está a cura: O AggregateRating agora é perfeitamente válido dentro de um LocalBusiness
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "4.9",
@@ -76,27 +76,14 @@ export default function RootLayout({
       "https://www.tiktok.com/@eyagenciamkt",
       "https://www.youtube.com/@eyagenciadee-commercemktso5161"
     ],
-    "makesOffer": [
+    "department": [
       {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "SEO Técnico e Consultoria"
-        }
+        "@type": "ProfessionalService",
+        "name": "SEO Técnico e Consultoria"
       },
       {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Gestão de Tráfego Pago e Performance"
-        }
-      },
-      {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Setup e Migração de E-commerce"
-        }
+        "@type": "ProfessionalService",
+        "name": "Setup e Migração de E-commerce"
       }
     ]
   };

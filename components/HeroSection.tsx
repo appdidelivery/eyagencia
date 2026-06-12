@@ -72,7 +72,7 @@ export default function HeroSection() {
         <motion.div variants={itemVariants} className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-4">
           <a
             href="#diagnostico"
-            className="rounded-md bg-[#f0815b] px-8 py-4 text-base font-bold text-white shadow-xl hover:bg-[#d96a45] hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto"
+            className="rounded-md bg-[#f0815b] px-8 py-4 text-base font-black text-slate-900 shadow-xl hover:bg-[#d96a45] hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto"
           >
             Fale Conosco
           </a>
