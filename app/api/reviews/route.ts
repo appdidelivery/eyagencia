@@ -28,4 +28,15 @@ export async function GET() {
         .filter((r: any) => r.text && r.rating >= 4)
         .slice(0, 3);
 
-      return Nex
+      return NextResponse.json({
+        rating: data.result.rating,
+        total: data.result.user_ratings_total,
+        reviews: validReviews
+      });
+    }
+
+    return NextResponse.json({ error: 'Nenhuma avaliação encontrada neste local' }, { status: 404 });
+  } catch (error) {
+    return NextResponse.json({ error: 'Falha grave na comunicação com o servidor do Google' }, { status: 500 });
+  }
+}
