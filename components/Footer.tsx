@@ -3,7 +3,6 @@
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
-  // SEO Técnico: JSON-LD Schema Markup de LocalBusiness e Organization
   const seoSchema = {
     "@context": "https://schema.org",
     "@graph": [
@@ -34,17 +33,13 @@ export default function Footer() {
 
   return (
     <footer className="w-full bg-zinc-950 border-t border-zinc-900 pt-16 pb-8 px-6 lg:px-8 relative">
-      {/* Injeção Crítica de SEO no Footer */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(seoSchema) }}
       />
 
       <div className="max-w-7xl mx-auto">
-        
-        {/* Colunas Principais */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
-          {/* Coluna 1: Marca e Posicionamento */}
           <div>
             <span className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
               <svg className="w-6 h-6 text-[#275c58]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
@@ -55,7 +50,6 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Coluna 2: Links Rápidos */}
           <div>
             <h4 className="text-white font-semibold mb-4 tracking-wide">Links Rápidos</h4>
             <ul className="space-y-3">
@@ -66,7 +60,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Coluna 3: Contato e Base */}
           <div>
             <h4 className="text-white font-semibold mb-4 tracking-wide">Contato e Base Operacional</h4>
             <ul className="space-y-3 text-sm text-zinc-400 font-medium">
@@ -75,7 +68,7 @@ export default function Footer() {
                 <span>São José, Santa Catarina<br/>Brasil</span>
               </li>
               <li className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-[#275c58] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                <svg className="w-5 h-5 text-[#275c58] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 <span>contato@eyagencia.com.br</span>
               </li>
               <li className="flex items-center gap-3">
@@ -86,21 +79,41 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Linha de Selos / Plataformas Parceiras (E-E-A-T) */}
+        {/* SELOS DE CREDIBILIDADE (ATUALIZADOS CONFORME SEU PEDIDO) */}
         <div className="py-8 border-t border-zinc-900 flex flex-col md:flex-row items-center justify-between gap-6">
           <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest text-center md:text-left">
-            Plataformas Parceiras e Certificações
+            Credibilidade e Segurança
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-            <span className="text-xl font-black text-white tracking-tighter">VTEX</span>
-            <span className="text-xl font-bold text-white tracking-tight">Tray</span>
-            <span className="text-lg font-bold text-white">Nuvemshop</span>
-            <span className="text-lg font-black italic tracking-wider text-white">Loja Integrada</span>
-            <span className="text-lg font-semibold text-white">Beta Labs</span>
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+            
+            {/* Google Safe Browsing */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded px-3 py-1.5">
+              <span className="text-xs font-bold text-zinc-300">Google Safe Browsing</span>
+            </div>
+
+            {/* Google Partner */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded px-3 py-1.5">
+              <span className="text-xs font-bold text-blue-400">Google Partner</span>
+            </div>
+
+            {/* Meta Business Partner */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded px-3 py-1.5">
+              <span className="text-xs font-bold text-blue-600">Meta Business Partner</span>
+            </div>
+
+            {/* Instagram Ads */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded px-3 py-1.5">
+              <span className="text-xs font-bold text-pink-500">Instagram Ads</span>
+            </div>
+
+            {/* ABComm */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded px-3 py-1.5">
+              <span className="text-xs font-bold text-green-500">Associado ABComm</span>
+            </div>
+
           </div>
         </div>
 
-        {/* Linha Divisória e Copyright */}
         <div className="pt-6 border-t border-zinc-900 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-zinc-600 font-medium">
             © {currentYear} EyAgencia. Todos os direitos reservados. CNPJ: 22.829.884/0001-24.
