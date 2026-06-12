@@ -1,39 +1,37 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 
 export default function ClientShowcase() {
-  // Lista atualizada apontando para a sua pasta public local (MUITO mais seguro e rápido)
   const clients = [
     {
       name: "Soller Embalagens",
       url: "https://www.sollerembalagens.com.br/",
-      src: "/soller.png", // Nome do arquivo na sua pasta public
+      src: "/logo soller embalagens.webp", 
       niche: "E-commerce B2B/B2C"
     },
     {
       name: "Mamedes Papéis",
       url: "https://loja.mamedes.com.br/",
-      src: "/mamedes.png",
+      src: "/logo mamedes papeis.webp",
       niche: "E-commerce"
     },
     {
       name: "Sacola Online",
       url: "https://www.sacolaonline.com.br/",
-      src: "/sacola.png",
+      src: "/logo sacola online.webp",
       niche: "E-commerce Embalagens"
     },
     {
       name: "Pitney Embalagens",
       url: "https://pitney.com.br/",
-      src: "/pitney.png",
+      src: "/pitney logo marca.webp",
       niche: "E-commerce B2B"
     },
     {
       name: "Focco Auto",
       url: "https://foccoauto.com.br/",
-      src: "/focco.png",
+      src: "/logo focco auto.png",
       niche: "E-commerce Automotivo"
     }
   ];
@@ -75,13 +73,16 @@ export default function ClientShowcase() {
               className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-between hover:bg-zinc-800/80 hover:border-zinc-700 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
               onClick={() => window.open(client.url, "_blank")}
             >
-              {/* Logo via Pasta Public (Perfeito para SEO e Performance) */}
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center p-2 mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300 overflow-hidden relative">
-                <Image 
+              {/* Fallback Inteligente e Fundo Escuro para destacar logos brancas */}
+              <div className="w-24 h-24 bg-zinc-950 border border-zinc-800 rounded-full flex items-center justify-center p-3 mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300 overflow-hidden relative">
+                <img 
                   src={client.src} 
                   alt={`Logo ${client.name}`}
-                  fill
-                  className="object-contain p-2"
+                  className="w-full h-full object-contain p-1"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-[#275c58]">${client.name.charAt(0)}</span>`;
+                  }}
                 />
               </div>
 
@@ -94,7 +95,6 @@ export default function ClientShowcase() {
                 </span>
               </div>
 
-              {/* Botão de Visitar */}
               <div className="mt-6 text-zinc-500 flex items-center gap-2 text-sm group-hover:text-white transition-colors">
                 Visitar loja
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
@@ -102,6 +102,17 @@ export default function ClientShowcase() {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Novo Botão CTA: Ver todos os Projetos */}
+        <div className="mt-16 flex justify-center">
+          <a 
+            href="/clientes"
+            className="rounded-md bg-transparent border-2 border-[#f0815b] text-[#f0815b] px-8 py-3.5 text-base font-bold shadow-sm hover:bg-[#f0815b] hover:text-white hover:-translate-y-1 transition-all duration-300"
+          >
+            Ver todos os projetos e cases →
+          </a>
+        </div>
+
       </div>
     </section>
   );

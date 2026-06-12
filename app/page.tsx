@@ -1,3 +1,4 @@
+import Header from "../components/Header";
 import HeroSection from "../components/HeroSection";
 import LogoTicker from "../components/LogoTicker";
 import ServicesGrid from "../components/ServicesGrid";
@@ -45,6 +46,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       
+      <Header />
       <HeroSection />
       <LogoTicker />
       <ServicesGrid />
