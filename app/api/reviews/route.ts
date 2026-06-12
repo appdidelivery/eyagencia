@@ -4,39 +4,44 @@ export async function GET() {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   const placeId = process.env.GOOGLE_PLACE_ID;
 
-  // Isso vai aparecer no seu terminal do VS Code pra gente saber se ele leu o arquivo .env
-  console.log("CHAVE LIDA PELO SISTEMA:", apiKey ? "OK, chave existe!" : "ERRO, chave em branco!");
-
   if (!apiKey || !placeId) {
-    return NextResponse.json({ error: 'Faltam chaves de API no arquivo .env.local' }, { status: 500 });
+    return NextResponse.json({ error: 'Faltam chaves de API' }, { status: 500 });
   }
 
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&language=pt-BR&key=${apiKey}`;
+    // Nova URL oficial do Google Places API
+    const url = `https://places.googleapis.com/v1/places/${placeId}?fields=reviews,rating,userRatingCount&key=${apiKey}&languageCode=pt-BR`;
     
     const response = await fetch(url);
     const data = await response.json();
 
-    // Se o Google recusar a chave, a gente avisa na tela
-    if (data.status !== "OK") {
-      console.log("ERRO DO GOOGLE:", data.status, data.error_message);
-      return NextResponse.json({ error: `O Google recusou o pedido: ${data.status}` }, { status: 500 });
+    // Se o Google devolver erro, logamos no terminal
+    if (data.error) {
+      console.log("ERRO DO GOOGLE CLOUD:", data.error.message);
+      return NextResponse.json({ error: data.error.message }, { status: 500 });
     }
 
-    if (data.result && data.result.reviews) {
-      const validReviews = data.result.reviews
-        .filter((r: any) => r.text && r.rating >= 4)
-        .slice(0, 3);
+    if (data.reviews) {
+      // Filtra e formata para o formato que a nossa tela espera
+      const validReviews = data.reviews
+        .filter((r: any) => r.text?.text && r.rating >= 4)
+        .slice(0, 3)
+        .map((r: any) => ({
+          author_name: r.authorAttribution?.displayName || "Cliente",
+          rating: r.rating,
+          text: r.text.text,
+          profile_photo_url: r.authorAttribution?.photoUri
+        }));
 
       return NextResponse.json({
-        rating: data.result.rating,
-        total: data.result.user_ratings_total,
+        rating: data.rating,
+        total: data.userRatingCount,
         reviews: validReviews
       });
     }
 
-    return NextResponse.json({ error: 'Nenhuma avaliação encontrada neste local' }, { status: 404 });
+    return NextResponse.json({ error: 'Nenhuma avaliação encontrada' }, { status: 404 });
   } catch (error) {
-    return NextResponse.json({ error: 'Falha grave na comunicação com o servidor do Google' }, { status: 500 });
+    return NextResponse.json({ error: 'Falha na comunicação' }, { status: 500 });
   }
 }
