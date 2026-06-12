@@ -17,10 +17,11 @@ export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }
   }, []);
 
   const navLinks = [
-    { name: 'Home', href: '/' }, // Adicionado link para voltar pra Home
+    { name: 'Home', href: '/' },
     { name: 'Serviços', href: '/#servicos' },
     { name: 'Processos', href: '/#nossos-processos' },
     { name: 'Clientes', href: '/clientes' },
+    { name: 'Parceiros', href: '/parceiros' },
     { name: 'Blog', href: '/blog' },
   ];
 
