@@ -3,21 +3,25 @@
 import { motion } from 'framer-motion';
 
 export default function GoogleReviews() {
+  // Reviews reais extraídos diretamente do Google Meu Negócio da EyAgencia
   const reviews = [
     {
-      author_name: "Ricardo S.",
+      author_name: "pati duran",
       rating: 5,
-      text: "A migração da nossa loja para a VTEX nos dava muito medo por causa da perda de tráfego. A EyAgencia fez um mapeamento de URLs em 301 perfeito. Não só mantivemos o tráfego, como aumentamos o ROAS em 45%.",
+      date: "25 de jan. de 2018",
+      text: "Estamos muito satisfeitas com a eficiência e agilidade da EYA agência, o Diego tem muita paciência e está sempre disponível, além de que entenderam de primeira tudo que estávamos querendo, não foi preciso fazer quase nenhuma alteração, praticamente leram nosso pensamento! Indico sem nenhuma dúvida!",
     },
     {
-      author_name: "Mariana L.",
+      author_name: "Bolos Infantis.com Loja Virtual",
       rating: 5,
-      text: "O trabalho de SEO Técnico deles é absurdo. Injetaram dados estruturados (JSON-LD) que nós nem sabíamos que existiam. Nossas páginas de categoria B2B agora dominam o topo do Google para os termos difíceis.",
+      date: "22 de fev. de 2018",
+      text: "Sinceramente, não me lembro de ter sido tão bem atendida por uma empresa. Nada, absolutamente nada a reclamar, só tenho elogios. Pelo fato de eu estar em SP e eles em SC, nosso contato foi todo virtual e mesmo assim, fui super bem atendida todas as vezes que precisei ... e foram muitas!! kkk Indico com certeza!! Obrigado por tudo!",
     },
     {
-      author_name: "Felipe T.",
+      author_name: "MultiFestasNet",
       rating: 5,
-      text: "Transparência total. Fomos de um CAC altíssimo para uma máquina previsível. A aplicação de Inbound com foco em LTV mudou o jogo. A equipe de gestão de performance realmente usa engenharia de dados.",
+      date: "31 de jul. de 2017",
+      text: "Resultados - Satisfatórios, Atendimento e orientação sobre tudo que esta sendo feito, Recomendaria - uma grande ajuda para profissionalizar e adequar nosso e-commerce no Google.",
     }
   ];
 
@@ -63,15 +67,20 @@ export default function GoogleReviews() {
               transition={{ duration: 0.5, delay: index * 0.2 }}
               className="bg-slate-50 border border-slate-200 rounded-2xl p-8 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
-              <div className="flex gap-1 mb-6">
-                {[...Array(review.rating)].map((_, i) => <StarIcon key={i} />)}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex gap-1">
+                  {[...Array(review.rating)].map((_, i) => <StarIcon key={i} />)}
+                </div>
+                <span className="text-xs font-medium text-slate-400">{review.date}</span>
               </div>
+              
               <p className="text-slate-700 italic mb-6 leading-relaxed flex-grow text-sm">
                 "{review.text}"
               </p>
-              <div className="flex items-center gap-4 mt-auto">
-                <div className="w-10 h-10 rounded-full bg-[#275c58]/10 flex items-center justify-center font-bold text-[#275c58]">
-                  {review.author_name.charAt(0)}
+              
+              <div className="flex items-center gap-4 mt-auto pt-4 border-t border-slate-200/60">
+                <div className="w-10 h-10 rounded-full bg-[#275c58] flex items-center justify-center font-bold text-white shadow-sm">
+                  {review.author_name.charAt(0).toUpperCase()}
                 </div>
                 <p className="font-semibold text-slate-900 text-sm truncate">{review.author_name}</p>
               </div>
@@ -79,10 +88,9 @@ export default function GoogleReviews() {
           ))}
         </div>
 
-        {/* CURA 4: O Botão direto para ver mais no Google (Ajustado para Contraste Máximo) */}
         <div className="mt-12 flex justify-center">
           <a 
-            href="https://www.google.com/search?q=EyAgencia+de+E-commerce" // Link de busca do seu GMB
+            href="https://www.google.com/search?q=EyAgencia+de+E-commerce"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full bg-[#f0815b] px-6 py-3 text-sm font-black text-slate-900 shadow-md hover:bg-[#d96a45] hover:-translate-y-1 transition-all duration-300"
