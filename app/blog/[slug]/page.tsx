@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function BlogPostPage({ params }: Props) {
   const resolvedParams = await params;
 
-  // Busca o post específico e AGORA Pede a URL da imagem principal
+  // Busca o post específico com TODAS as informações, incluindo Resumo e Áudio
   const post = await client.fetch(
     groq`*[_type == "post" && slug.current == $slug][0]{
       title,
@@ -39,7 +39,9 @@ export default async function BlogPostPage({ params }: Props) {
       body,
       "authorName": author->name,
       "imageUrl": mainImage.asset->url,
-      "imageAlt": mainImage.alt
+      "imageAlt": mainImage.alt,
+      excerpt,
+      audioUrl
     }`,
     { slug: resolvedParams.slug }
   );
@@ -49,7 +51,7 @@ export default async function BlogPostPage({ params }: Props) {
     notFound();
   }
 
-  // Dados da Sidebar (Iguais aos da página principal do blog)
+  // Dados da Sidebar
   const categories = ["SEO Técnico", "Tráfego Pago", "E-commerce B2B", "Inbound Marketing", "Web Analytics"];
   const popularTags = ["Vtex", "ROAS", "Core Web Vitals", "LTV", "Automação", "JSON-LD"];
 
@@ -77,7 +79,7 @@ export default async function BlogPostPage({ params }: Props) {
         {/* Coluna Esquerda: O Artigo em si */}
         <div className="lg:w-2/3 bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-slate-200">
           
-          {/* Renderização da Imagem Principal (se existir no Sanity) */}
+          {/* Renderização da Imagem Principal */}
           {post.imageUrl && (
             <div className="mb-10 w-full overflow-hidden rounded-xl border border-slate-100">
               <img 
@@ -88,22 +90,59 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           )}
 
-          {/* Corpo do Texto formatado */}
+          {/* Box de Resumo Executivo (E-E-A-T / UX) */}
+          {post.excerpt && (
+            <div className="mb-10 bg-[#275c58]/5 border-l-4 border-[#275c58] p-6 rounded-r-xl">
+              <h4 className="text-sm font-black uppercase tracking-wider text-[#275c58] mb-2">Resumo Executivo</h4>
+              <p className="text-slate-700 font-medium leading-relaxed">{post.excerpt}</p>
+            </div>
+          )}
+
+          {/* Player de Áudio (Aumenta o Dwell Time / Retenção) */}
+          {post.audioUrl && (
+            <div className="mb-10 bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center gap-4 shadow-sm">
+              <div className="w-12 h-12 bg-[#f0815b] rounded-full flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              </div>
+              <div className="w-full flex-grow">
+                <p className="text-sm font-bold text-slate-900 mb-1">Ouvir versão em áudio</p>
+                <audio controls className="w-full h-8 outline-none">
+                  <source src={post.audioUrl} type="audio/mpeg" />
+                  Seu navegador não suporta o elemento de áudio.
+                </audio>
+              </div>
+            </div>
+          )}
+
+          {/* Corpo do Texto formatado (Com tipagem corrigida) */}
           <article className="text-slate-700 text-lg leading-relaxed">
             <PortableText 
               value={post.body} 
               components={{
                 block: {
-                  h2: ({children}) => <h2 className="text-3xl font-bold text-slate-900 mt-12 mb-6 leading-snug">{children}</h2>,
-                  h3: ({children}) => <h3 className="text-2xl font-bold text-slate-900 mt-8 mb-4 leading-snug">{children}</h3>,
-                  normal: ({children}) => <p className="mb-6">{children}</p>,
+                  h2: ({children}: any) => <h2 className="text-3xl font-bold text-slate-900 mt-12 mb-6 leading-snug">{children}</h2>,
+                  h3: ({children}: any) => <h3 className="text-2xl font-bold text-slate-900 mt-8 mb-4 leading-snug">{children}</h3>,
+                  normal: ({children}: any) => <p className="mb-6">{children}</p>,
                 },
                 list: {
-                  bullet: ({children}) => <ul className="list-disc pl-6 mb-6 space-y-2">{children}</ul>,
-                  number: ({children}) => <ol className="list-decimal pl-6 mb-6 space-y-2">{children}</ol>,
+                  bullet: ({children}: any) => <ul className="list-disc pl-6 mb-6 space-y-2">{children}</ul>,
+                  number: ({children}: any) => <ol className="list-decimal pl-6 mb-6 space-y-2">{children}</ol>,
                 },
                 marks: {
-                  strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
+                  strong: ({children}: any) => <strong className="font-bold text-slate-900">{children}</strong>,
+                  link: ({children, value}: any) => {
+                    const target = (value?.href || '').startsWith('http') ? '_blank' : undefined;
+                    return (
+                      <a 
+                        href={value?.href} 
+                        target={target} 
+                        rel={target === '_blank' ? 'noopener noreferrer' : undefined} 
+                        className="text-[#f0815b] font-semibold hover:text-[#275c58] underline decoration-2 underline-offset-4 transition-colors"
+                      >
+                        {children}
+                      </a>
+                    );
+                  },
                 },
               }}
             />
