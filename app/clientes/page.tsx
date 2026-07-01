@@ -19,42 +19,42 @@ export const metadata: Metadata = {
 
 export default function ClientesPage() {
   const allClients = [
-    // Clientes Anteriores
+    // Clientes Anteriores (Apenas os que possuem case mantém a internalRoute)
     { name: "Soller Embalagens", url: "https://www.sollerembalagens.com.br/", internalRoute: "/clientes/soller-embalagens" },
     { name: "Mamedes Papéis", url: "https://loja.mamedes.com.br/", internalRoute: "/clientes/mamedes-papeis" },
     { name: "Sacola Online", url: "https://www.sacolaonline.com.br/", internalRoute: "/clientes/sacola-online" },
-    { name: "Pitney Embalagens", url: "https://pitney.com.br/", internalRoute: "/clientes/pitney-embalagens" },
+    { name: "Pitney Embalagens", url: "https://pitney.com.br/" },
     { name: "Focco Auto", url: "https://foccoauto.com.br/", internalRoute: "/clientes/focco-auto" },
-    { name: "Dona Mesa", url: "https://donamesa.com.br", internalRoute: "/clientes/dona-mesa" },
+    { name: "Dona Mesa", url: "https://donamesa.com.br" },
     { name: "Otávio Giora", url: "https://otaviogiora.com.br", internalRoute: "/clientes/otaviogiora" },
-    { name: "Multicaixasnet", url: "https://multicaixasnet.com.br", internalRoute: "/clientes/multicaixasnet" },
-    { name: "Mezzaliramix", url: "https://mezzaliramix.com.br", internalRoute: "/clientes/mezzaliramix" },
+    { name: "Multicaixasnet", url: "https://multicaixasnet.com.br" },
+    { name: "Mezzaliramix", url: "https://mezzaliramix.com.br" },
     { name: "Alcance Profissional", url: "https://alcanceprofissional.com.br", internalRoute: "/clientes/alcance-profissional" },
-    { name: "Vispo Studio", url: "https://vispostudio.com.br", internalRoute: "/clientes/vispo-studio" },
-    { name: "Badulake Festas", url: "https://badulakefestas.com.br", internalRoute: "/clientes/badulake-festas" },
-    { name: "Bibi Brindes", url: "https://bibibrindes.com.br", internalRoute: "/clientes/bibi-brindes" },
-    { name: "Multi Fantasias", url: "https://multifantasias.com.br", internalRoute: "/clientes/multi-fantasias" },
-    { name: "Remile Baby", url: "https://remilebaby.com.br", internalRoute: "/clientes/remile-baby" },
+    { name: "Vispo Studio", url: "https://vispostudio.com.br" },
+    { name: "Badulake Festas", url: "https://badulakefestas.com.br" },
+    { name: "Bibi Brindes", url: "https://bibibrindes.com.br" },
+    { name: "Multi Fantasias", url: "https://multifantasias.com.br" },
+    { name: "Remile Baby", url: "https://remilebaby.com.br" },
     { name: "Lottus Moda", url: "https://lottusmoda.com.br", internalRoute: "/clientes/lottusmoda" },
-    { name: "Compro", url: "https://compro.com.br", internalRoute: "/clientes/compro" },
-    { name: "Rosa Bardo", url: "https://rosabardo.com.br", internalRoute: "/clientes/rosabardo" },
+    { name: "Compro", url: "https://compro.com.br" },
+    { name: "Rosa Bardo", url: "https://rosabardo.com.br" },
     { name: "Embalagens Original", url: "https://embalagensoriginal.com.br", internalRoute: "/clientes/embalagensoriginal" },
 
-    // Nova Leva de Clientes
-    { name: "Livewell", url: "https://livewell.com.br/", internalRoute: "/clientes/livewell" },
-    { name: "Reserva Gourmet", url: "https://reservagourmet.com.br/", internalRoute: "/clientes/reserva-gourmet" },
-    { name: "Casa do Borracheiro", url: "https://casadoborracheiro.com.br/", internalRoute: "/clientes/casa-do-borracheiro" },
-    { name: "Gran Pneus", url: "https://granpneus.com.br/", internalRoute: "/clientes/gran-pneus" },
-    { name: "Automação Curitiba", url: "https://automacaocuritiba.com.br/", internalRoute: "/clientes/automacao-curitiba" },
-    { name: "Disk Etiquetas", url: "https://disketiquetas.com.br/", internalRoute: "/clientes/disk-etiquetas" },
-    { name: "Pnuts", url: "https://pnuts.com.br/", internalRoute: "/clientes/pnuts" },
-    { name: "Andanza", url: "https://andanza.com.br/", internalRoute: "/clientes/andanza" },
-    { name: "Latitude 12", url: "https://latitute12.com.br/", internalRoute: "/clientes/latitude-12" },
-    { name: "Bio Hair Shine", url: "https://biohairshine.com.br/", internalRoute: "/clientes/bio-hair-shine" },
-    { name: "Pack Embalagens", url: "https://packembalagens.com.br/", internalRoute: "/clientes/pack-embalagens" },
-    { name: "Modella", url: "https://modella.com.br/", internalRoute: "/clientes/modella" },
-    { name: "Charlote Beauty", url: "https://charlotebeaty.com.br/", internalRoute: "/clientes/charlote-beauty" },
-    { name: "Marka Sports", url: "https://markasports.com.br/", internalRoute: "/clientes/marka-sports" }
+    // Nova Leva de Clientes (Rotas internas removidas temporariamente para evitar erro 404)
+    { name: "Livewell", url: "https://livewell.com.br/" },
+    { name: "Reserva Gourmet", url: "https://reservagourmet.com.br/" },
+    { name: "Casa do Borracheiro", url: "https://casadoborracheiro.com.br/" },
+    { name: "Gran Pneus", url: "https://granpneus.com.br/" },
+    { name: "Automação Curitiba", url: "https://automacaocuritiba.com.br/" },
+    { name: "Disk Etiquetas", url: "https://disketiquetas.com.br/" },
+    { name: "Pnuts", url: "https://pnuts.com.br/" },
+    { name: "Andanza", url: "https://andanza.com.br/" },
+    { name: "Latitude 12", url: "https://latitute12.com.br/" },
+    { name: "Bio Hair Shine", url: "https://biohairshine.com.br/" },
+    { name: "Pack Embalagens", url: "https://packembalagens.com.br/" },
+    { name: "Modella", url: "https://modella.com.br/" },
+    { name: "Charlote Beauty", url: "https://charlotebeaty.com.br/" },
+    { name: "Marka Sports", url: "https://markasports.com.br/" }
   ];
 
   // 2. SCHEMA ORG PARA O GOOGLE ENTENDER O HUB DE CLIENTES
@@ -73,7 +73,8 @@ export default function ClientesPage() {
       "itemListElement": allClients.map((client, index) => ({
         "@type": "ListItem",
         "position": index + 1,
-        "url": `https://eyagencia.com.br${client.internalRoute}`,
+        // Se houver rota interna, aponta para ela. Se não, aponta pro site do cliente (evita erros no Google).
+        "url": client.internalRoute ? `https://eyagencia.com.br${client.internalRoute}` : client.url,
         "name": client.name
       }))
     }
@@ -101,7 +102,6 @@ export default function ClientesPage() {
       <section className="py-20 px-6 lg:px-8 max-w-7xl mx-auto w-full flex-grow">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {allClients.map((client, i) => (
-            /* ATENÇÃO: Mudou de <a> para <div> para permitir dois botões clicáveis dentro */
             <div 
               key={i} 
               className="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center overflow-hidden hover:border-[#f0815b]/50 hover:bg-zinc-800/50 transition-all duration-500 group"
@@ -117,30 +117,46 @@ export default function ClientesPage() {
                 {client.url.replace('https://', '').replace('www.', '').replace(/\/$/, '')}
               </span>
 
-              {/* CONTAINER DOS DOIS BOTÕES */}
+              {/* CONTAINER CONDICIONAL DOS BOTÕES */}
               <div className="relative z-10 flex flex-col w-full gap-2 mt-auto">
                 
-                {/* 1. Botão Interno: Ver Case (Principal) */}
-                <Link 
-                  href={client.internalRoute}
-                  className="flex items-center justify-center gap-2 bg-zinc-950 border border-zinc-800 px-4 py-2.5 rounded-xl text-sm font-bold text-zinc-300 group-hover:text-white group-hover:border-[#f0815b] group-hover:bg-[#f0815b] transition-all duration-300 w-full"
-                >
-                  Ver Case
-                  <span className="text-lg leading-none mb-[2px]">→</span>
-                </Link>
+                {client.internalRoute ? (
+                  /* SE TIVER CASE: Mostra o Botão de Case (Laranja) + Botão de Visitar Loja (Discreto) */
+                  <>
+                    <Link 
+                      href={client.internalRoute}
+                      className="flex items-center justify-center gap-2 bg-zinc-950 border border-zinc-800 px-4 py-2.5 rounded-xl text-sm font-bold text-zinc-300 group-hover:text-white group-hover:border-[#f0815b] group-hover:bg-[#f0815b] transition-all duration-300 w-full"
+                    >
+                      Ver Case
+                      <span className="text-lg leading-none mb-[2px]">→</span>
+                    </Link>
 
-                {/* 2. Botão Externo: Visitar Loja (Secundário) */}
-                <a 
-                  href={client.url}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 bg-transparent border border-transparent px-4 py-2 rounded-xl text-xs font-semibold text-zinc-500 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 transition-all duration-300 w-full"
-                >
-                  Visitar Loja
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
+                    <a 
+                      href={client.url}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 bg-transparent border border-transparent px-4 py-2 rounded-xl text-xs font-semibold text-zinc-500 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 transition-all duration-300 w-full"
+                    >
+                      Visitar Loja
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </>
+                ) : (
+                  /* SE NÃO TIVER CASE: Mostra apenas o Botão de Visitar Loja como Principal (Laranja no hover) */
+                  <a 
+                    href={client.url}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-zinc-950 border border-zinc-800 px-4 py-2.5 rounded-xl text-sm font-bold text-zinc-300 group-hover:text-white group-hover:border-[#f0815b] group-hover:bg-[#f0815b] transition-all duration-300 w-full"
+                  >
+                    Visitar Loja
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
 
               </div>
             </div>
