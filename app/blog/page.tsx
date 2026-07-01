@@ -64,33 +64,34 @@ export default async function BlogPage() {
         <div className="lg:w-2/3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {posts.map((post: any, i: number) => (
-              <Link key={i} href={`/blog/${post.slug}`} className="block">
+              <Link key={i} href={`/blog/${post.slug}`} className="block h-full">
                 <article className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col group h-full">
                   <div className="p-8 flex flex-col flex-grow">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-black uppercase tracking-wider text-[#f0815b] bg-[#f0815b]/10 px-3 py-1 rounded-full">
-                      {post.category || "Sem Categoria"}
-                    </span>
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-4 group-hover:text-[#275c58] transition-colors leading-snug">
-                    {post.title}
-                  </h2>
-                  <p className="text-slate-600 text-base leading-relaxed mb-6 flex-grow">
-                    {post.desc}
-                  </p>
-                  
-                  {/* Rodapé do Card */}
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
-                    <div className="text-xs font-medium text-slate-500 flex flex-col">
-                      <span>{post.date}</span>
-                      <span>{post.readTime}</span>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xs font-black uppercase tracking-wider text-[#f0815b] bg-[#f0815b]/10 px-3 py-1 rounded-full">
+                        {post.category || "Sem Categoria"}
+                      </span>
                     </div>
-                    <div className="text-sm font-bold text-[#275c58] flex items-center gap-1 group-hover:gap-2 transition-all">
-                      Ler <span aria-hidden="true">→</span>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-4 group-hover:text-[#275c58] transition-colors leading-snug">
+                      {post.title}
+                    </h2>
+                    <p className="text-slate-600 text-base leading-relaxed mb-6 flex-grow">
+                      {post.desc}
+                    </p>
+                    
+                    {/* Rodapé do Card */}
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+                      <div className="text-xs font-medium text-slate-500 flex flex-col">
+                        <span>{post.date}</span>
+                        <span>{post.readTime}</span>
+                      </div>
+                      <div className="text-sm font-bold text-[#275c58] flex items-center gap-1 group-hover:gap-2 transition-all">
+                        Ler <span aria-hidden="true">→</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </Link>
             ))}
           </div>
           
