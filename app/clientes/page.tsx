@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import { client } from "../../sanity/lib/client";
+import { groq } from "next-sanity";
 import type { Metadata } from "next";
 
 // 1. METADADOS OTIMIZADOS PARA A PÁGINA DE CLIENTES

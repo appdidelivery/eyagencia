@@ -1,5 +1,7 @@
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import { client } from "../../sanity/lib/client";
+import { groq } from "next-sanity";
 
 // SEO Técnico Nativo para a página do Blog
 export const metadata = {
