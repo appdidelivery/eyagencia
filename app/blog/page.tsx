@@ -2,6 +2,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { client } from "../../sanity/lib/client";
 import { groq } from "next-sanity";
+import Link from "next/link";
 
 // SEO Técnico Nativo para a página do Blog
 export const metadata = {
@@ -16,7 +17,8 @@ export default async function BlogPage() {
     "desc": seoDescription,
     "date": publishedAt,
     "category": categories[0]->title,
-    "readTime": "5 min de leitura"
+    "readTime": "5 min de leitura",
+    "slug": slug.current
   }`);
 
   const blogSchema = {
@@ -62,8 +64,9 @@ export default async function BlogPage() {
         <div className="lg:w-2/3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {posts.map((post: any, i: number) => (
-              <article key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col group">
-                <div className="p-8 flex flex-col flex-grow">
+              <Link key={i} href={`/blog/${post.slug}`} className="block">
+                <article className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col group h-full">
+                  <div className="p-8 flex flex-col flex-grow">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-black uppercase tracking-wider text-[#f0815b] bg-[#f0815b]/10 px-3 py-1 rounded-full">
                       {post.category || "Sem Categoria"}
