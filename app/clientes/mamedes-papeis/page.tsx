@@ -113,11 +113,11 @@ export default function MamedesCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">mamedes-search-console.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
-                  <p className="font-semibold text-sm">Dashboard do Search Console</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do crescimento de páginas indexadas e volume de cliques.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>
@@ -134,11 +134,11 @@ export default function MamedesCaseStudy() {
                   <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">mamedes-merchant-center.webp</span>
                 </div>
                 <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                  <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                    <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                    <p className="font-semibold text-sm">Performance do Google Shopping</p>
-                    <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print da qualidade do feed ou gráfico de conversões PMAX.</p>
-                  </div>
+                  <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
                 </div>
               </div>
             </div>
@@ -189,11 +189,11 @@ export default function MamedesCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">mamedes-ga4-ecommerce.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
-                  <p className="font-semibold text-sm">Monetização no GA4</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do relatório de E-commerce do Analytics mostrando faturamento.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>

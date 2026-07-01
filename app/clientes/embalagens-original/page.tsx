@@ -91,11 +91,11 @@ export default function EmbalagensOriginalCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">pagespeed-insights.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <p className="font-semibold text-sm">Dashboard de Performance</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do PageSpeed mostrando as métricas verdes.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>
@@ -109,11 +109,11 @@ export default function EmbalagensOriginalCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">merchant-center-b2b.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                  <p className="font-semibold text-sm">Google Merchant B2B vs B2C</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do Merchant Center com produtos segmentados.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
             
@@ -161,11 +161,11 @@ export default function EmbalagensOriginalCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">ga4-checkout-funnel.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                  <p className="font-semibold text-sm">Funil de Checkout (GA4)</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do funil de conversão reduzindo as desistências.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>

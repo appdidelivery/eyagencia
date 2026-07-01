@@ -91,11 +91,11 @@ export default function OtavioGioraCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">ga4-high-ticket-audience.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                  <p className="font-semibold text-sm">Filtros de Audiência GA4</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do Analytics mostrando o LTV e perfil de alta renda.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>
@@ -109,11 +109,11 @@ export default function OtavioGioraCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">seo-visual-search.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  <p className="font-semibold text-sm">Google Imagens e Shopping</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do Google Shopping exibindo produtos do cliente no topo.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
             
@@ -160,11 +160,11 @@ export default function OtavioGioraCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">looker-studio-dashboard.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                  <p className="font-semibold text-sm">Dashboard Gerencial</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do Looker Studio mostrando faturamento e ROAS.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>

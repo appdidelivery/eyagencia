@@ -113,11 +113,11 @@ export default function AlcanceProfissionalCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">alcance-rich-snippets-serp.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                  <p className="font-semibold text-sm">Busca do Google (Resultados Ricos)</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do site ranqueando com vídeos e FAQs na busca orgânica.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>
@@ -134,11 +134,11 @@ export default function AlcanceProfissionalCaseStudy() {
                   <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">alcance-youtube-ads.webp</span>
                 </div>
                 <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                  <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                    <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <p className="font-semibold text-sm">Dashboard de YouTube Ads</p>
-                    <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do painel de PMAX convertendo através de vídeos.</p>
-                  </div>
+                  <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
                 </div>
               </div>
             </div>
@@ -189,11 +189,11 @@ export default function AlcanceProfissionalCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">alcance-ga4-cohorts.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  <p className="font-semibold text-sm">Relatório de Retenção (GA4)</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print do gráfico mostrando clientes comprando repetidas vezes.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>

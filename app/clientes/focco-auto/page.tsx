@@ -115,11 +115,11 @@ export default function FoccoAutoCaseStudy() {
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
                 
                 {/* Você pode trocar a div abaixo pela sua <img src="/Relatorio e-commerce eyagencia.png" ... /> */}
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
-                  <p className="font-semibold text-sm">Dashboard de SEO e Schema</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print de páginas indexadas e rich snippets no GSC.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
 
               </div>
             </div>
@@ -136,11 +136,11 @@ export default function FoccoAutoCaseStudy() {
                   <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">focco-merchant-center-roas.webp</span>
                 </div>
                 <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                  <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                    <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                    <p className="font-semibold text-sm">Alta Conversão no Google Ads</p>
-                    <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print de conversões da campanha Performance Max.</p>
-                  </div>
+                  <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
                 </div>
               </div>
             </div>
@@ -190,11 +190,11 @@ export default function FoccoAutoCaseStudy() {
                 <span className="text-zinc-500 text-xs ml-2 font-mono flex-1">focco-ga4-ltv.webp</span>
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
-                <div className="w-full h-full border-2 border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-600 p-4">
-                  <svg className="w-10 h-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                  <p className="font-semibold text-sm">Fidelização no GA4</p>
-                  <p className="text-xs mt-1 text-zinc-500 max-w-[200px]">Substitua pelo print de métricas de retenção (cohorts) no Analytics.</p>
-                </div>
+                <img 
+  src="/Relatorio e-commerce eyagencia.png" 
+  alt="Relatório de E-commerce EyAgencia" 
+  className="w-full h-full object-cover rounded-b-lg" 
+/>
               </div>
             </div>
           </section>
