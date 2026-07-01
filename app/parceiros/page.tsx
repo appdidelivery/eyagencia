@@ -1,10 +1,9 @@
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import { client } from "../../sanity/lib/client";
-import { groq } from "next-sanity";
 import Image from "next/image";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Plataformas Parceiras | Setup de E-commerce | EyAgencia",
   description: "Conheça as plataformas de e-commerce líderes de mercado que a EyAgencia domina. Implantação e migração em VTEX, Tray, Nuvemshop e mais.",
 };
@@ -55,13 +54,38 @@ export default function ParceirosPage() {
     }
   ];
 
+  // AGORA SIM: Criamos a variável que vai gerar os Rich Snippets pro Google
+  const parceirosSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Plataformas Parceiras | EyAgencia",
+    "description": "Conheça as plataformas de e-commerce líderes de mercado que a EyAgencia domina.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "EyAgencia",
+      "url": "https://eyagencia.com.br"
+    },
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": partnersData.map((partner, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "url": partner.url,
+        "name": partner.name,
+        "description": partner.desc
+      }))
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col w-full bg-slate-50">
-      {/* Script JSON-LD Injetado no DOM para Leitura do Algoritmo */}
+      
+      {/* Script JSON-LD Injetado no DOM para Leitura do Algoritmo usando a variável criada acima */}
       <script
-  type="application/ld+json"
-  dangerouslySetInnerHTML={{ __html: JSON.stringify(parceirosSchema) }}
-/>
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(parceirosSchema) }}
+      />
+      
       <Header />
       
       {/* Hero da Página */}
