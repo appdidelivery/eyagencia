@@ -208,7 +208,7 @@ export default function SollerCaseStudy() {
           <p className="text-zinc-400 text-lg mb-10 max-w-2xl mx-auto">
             Assim como a Soller Embalagens, seu e-commerce pode estar perdendo milhares de reais por falta de uma infraestrutura técnica focada em conversão. Vamos mapear seus gargalos.
           </p>
-          <a href="/contato" className="inline-flex items-center gap-2 bg-[#f0815b] text-white font-bold py-4 px-10 rounded-full hover:bg-[#d96a45] transition-all hover:scale-105 shadow-[0_0_20px_rgba(240,129,91,0.3)]">
+          <a href="/#diagnostico" className="inline-flex items-center gap-2 bg-[#f0815b] text-white font-bold py-4 px-10 rounded-full hover:bg-[#d96a45] transition-all hover:scale-105 shadow-[0_0_20px_rgba(240,129,91,0.3)]">
             Solicitar Auditoria Gratuita
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
           </a>
