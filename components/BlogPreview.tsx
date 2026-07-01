@@ -11,9 +11,9 @@ export default function BlogPreview() {
       desc: "Descubra como a densidade factual e o E-E-A-T rigoroso estão redefinindo o ranqueamento de lojas virtuais na nova era das buscas.",
       date: "12 de Outubro",
       // Imagem que você já tem na pasta public
-      image: "/Relatorio e-commerce eyagencia.png",
+      image: "/Como preparar seu Ecommerce para o Update MUVERA 2026.png",
       // Rota para onde o post vai apontar
-      url: "/blog/update-muvera" 
+      url: "/blog/como-preparar-seu-e-commerce-para-o-update-muvera-2026" 
     },
     {
       category: "Desenvolvimento",
@@ -21,8 +21,8 @@ export default function BlogPreview() {
       desc: "O impacto direto da marcação de dados estruturados na compreensão do Googlebot e no aumento da Taxa de Clique (CTR) orgânica.",
       date: "05 de Outubro",
       // Imagem genérica provisória (basta trocar o nome depois)
-      image: "/vtex-300x300.jpg", 
-      url: "/blog/guia-json-ld"
+      image: "/A Evolucao das Buscas Do SEO Tradicional para AEO e GEO.png", 
+      url: "/blog/a-evolucao-das-buscas-do-seo-tradicional-para-aeo-e-geo"
     },
     {
       category: "Estratégia B2B",
