@@ -9,7 +9,16 @@ export const metadata = {
   description: "Aprenda estratégias avançadas de Inbound Marketing, automação B2B e engenharia de marketing para lojas virtuais.",
 };
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  // Busca os dados diretamente do Sanity com alias para manter a estrutura que o seu código já espera
+  const posts = await client.fetch(groq`*[_type == "post"]{
+    title,
+    "desc": seoDescription,
+    "date": publishedAt,
+    "category": categories[0]->title,
+    "readTime": "5 min de leitura"
+  }`);
+
   const blogSchema = {
     "@context": "https://schema.org",
     "@type": "Blog",
