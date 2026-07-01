@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default async function BlogPage() {
-  // Busca os dados diretamente do Sanity com alias para manter a estrutura que o seu código já espera
+  // Busca os dados diretamente do Sanity
   const posts = await client.fetch(groq`*[_type == "post"]{
     title,
     "desc": seoDescription,
@@ -38,37 +38,6 @@ export default async function BlogPage() {
   const categories = ["SEO Técnico", "Tráfego Pago", "E-commerce B2B", "Inbound Marketing", "Web Analytics"];
   const popularTags = ["Vtex", "ROAS", "Core Web Vitals", "LTV", "Automação", "JSON-LD"];
 
-  const posts = [
-    {
-      category: "SEO Técnico",
-      title: "Como preparar seu E-commerce para o Update MUVERA (2026)",
-      desc: "Descubra como a densidade factual e o E-E-A-T rigoroso estão redefinindo o ranqueamento de lojas virtuais na nova era das buscas.",
-      date: "12 de Outubro",
-      readTime: "7 min de leitura"
-    },
-    {
-      category: "Desenvolvimento",
-      title: "JSON-LD para Lojas Virtuais: O Guia Definitivo",
-      desc: "O impacto direto da marcação de dados estruturados na compreensão do Googlebot e no aumento da Taxa de Clique (CTR) orgânica.",
-      date: "05 de Outubro",
-      readTime: "5 min de leitura"
-    },
-    {
-      category: "Estratégia B2B",
-      title: "Inbound Marketing: Como diminuir o CAC em ciclos longos",
-      desc: "Metodologias práticas para nutrir leads complexos e aumentar o LTV através de fluxos de automação de alto nível.",
-      date: "28 de Setembro",
-      readTime: "6 min de leitura"
-    },
-    {
-      category: "Tráfego Pago",
-      title: "Google Performance Max para B2B: Vale a pena?",
-      desc: "Análise aprofundada sobre como o algoritmo da Meta e do Google Ads podem ser domesticados para captação de lojistas.",
-      date: "15 de Setembro",
-      readTime: "8 min de leitura"
-    }
-  ];
-
   return (
     <main className="flex min-h-screen flex-col w-full bg-slate-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }} />
@@ -92,12 +61,12 @@ export default async function BlogPage() {
         {/* Coluna Esquerda: Grid de Artigos */}
         <div className="lg:w-2/3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {posts.map((post, i) => (
+            {posts.map((post: any, i: number) => (
               <article key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col group">
                 <div className="p-8 flex flex-col flex-grow">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-black uppercase tracking-wider text-[#f0815b] bg-[#f0815b]/10 px-3 py-1 rounded-full">
-                      {post.category}
+                      {post.category || "Sem Categoria"}
                     </span>
                   </div>
                   <h2 className="text-2xl font-bold text-slate-900 mb-4 group-hover:text-[#275c58] transition-colors leading-snug">
