@@ -63,6 +63,19 @@ export const postType = defineType({
       description: 'Resumo persuasivo focado em clique/conversão na página de busca (Ideal: 150-160 caracteres)',
       rows: 3,
     }),
+    defineField({
+      name: 'excerpt',
+      title: 'Resumo Executivo (TL;DR)',
+      type: 'text',
+      description: 'Resumo de alto valor que aparece no topo do artigo para reter o leitor B2B.',
+      rows: 4,
+    }),
+    defineField({
+      name: 'audioUrl',
+      title: 'Link do Áudio (Opcional)',
+      type: 'url',
+      description: 'Cole a URL do arquivo de áudio (.mp3) hospedado para criar a versão narrada.',
+    }),
   ],
   preview: {
     select: {
