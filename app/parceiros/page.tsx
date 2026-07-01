@@ -57,6 +57,11 @@ export default function ParceirosPage() {
 
   return (
     <main className="flex min-h-screen flex-col w-full bg-slate-50">
+      {/* Script JSON-LD Injetado no DOM para Leitura do Algoritmo */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
       
       {/* Hero da Página */}
