@@ -50,6 +50,19 @@ export const postType = defineType({
       name: 'body',
       type: 'blockContent',
     }),
+    defineField({
+      name: 'seoTitle',
+      title: 'Título SEO (Meta Title)',
+      type: 'string',
+      description: 'Título estratégico que aparecerá no Google (Ideal: 50-60 caracteres)',
+    }),
+    defineField({
+      name: 'seoDescription',
+      title: 'Descrição SEO (Meta Description)',
+      type: 'text',
+      description: 'Resumo persuasivo focado em clique/conversão na página de busca (Ideal: 150-160 caracteres)',
+      rows: 3,
+    }),
   ],
   preview: {
     select: {
