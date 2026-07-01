@@ -92,7 +92,7 @@ export default function EmbalagensOriginalCaseStudy() {
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
                 <img 
-  src="/Relatorio e-commerce eyagencia.png" 
+  src="/Domínio no Google Search eyagencia.png" 
   alt="Relatório de E-commerce EyAgencia" 
   className="w-full h-full object-cover rounded-b-lg" 
 />
@@ -162,7 +162,7 @@ export default function EmbalagensOriginalCaseStudy() {
               </div>
               <div className="relative aspect-video bg-zinc-900/50 flex flex-col items-center justify-center p-6 text-center group-hover:bg-zinc-900 transition-colors">
                 <img 
-  src="/Relatorio e-commerce eyagencia.png" 
+  src="/eyagencia GA4 e ROAS Previsível.png" 
   alt="Relatório de E-commerce EyAgencia" 
   className="w-full h-full object-cover rounded-b-lg" 
 />
