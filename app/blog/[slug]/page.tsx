@@ -5,11 +5,18 @@ import { PortableText } from "@portabletext/react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 
-// 1. Metadados dinâmicos para SEO (Puxa o título e descrição que a Sophia preencheu)
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+// Definindo que o params agora é uma Promise (Regra do Next.js 15+)
+type Props = {
+  params: Promise<{ slug: string }>;
+};
+
+// 1. Metadados dinâmicos para SEO
+export async function generateMetadata({ params }: Props) {
+  const resolvedParams = await params; // Espera a URL carregar
+  
   const post = await client.fetch(
     groq`*[_type == "post" && slug.current == $slug][0]{ title, "desc": seoDescription }`,
-    { slug: params.slug }
+    { slug: resolvedParams.slug }
   );
   
   if (!post) return { title: "Página não encontrada | EyAgencia" };
@@ -21,8 +28,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 // 2. Renderização da Página do Artigo
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  // Busca o post específico baseado na URL
+export default async function BlogPostPage({ params }: Props) {
+  const resolvedParams = await params; // Espera a URL carregar
+
+  // Busca o post específico baseado na URL resolvida
   const post = await client.fetch(
     groq`*[_type == "post" && slug.current == $slug][0]{
       title,
@@ -30,7 +39,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       body,
       "authorName": author->name
     }`,
-    { slug: params.slug }
+    { slug: resolvedParams.slug }
   );
 
   // Se o post não existir no banco, dispara o 404 real do Next.js
