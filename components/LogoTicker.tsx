@@ -39,6 +39,7 @@ export default function LogoTicker() {
           className="flex w-max items-center"
           animate={{ x: ['0%', '-50%'] }}
           transition={{ ease: 'linear', duration: 40, repeat: Infinity }}
+          style={{ willChange: "transform" }}
         >
           {tickerItems.map((partner, index) => (
             <a
@@ -56,6 +57,7 @@ export default function LogoTicker() {
                 height={150}
                 className="object-contain w-auto h-16 md:h-20 mix-blend-multiply"
                 quality={85}
+                priority={true} 
               />
             </a>
           ))}
