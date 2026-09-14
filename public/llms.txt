@@ -14,7 +14,7 @@
 - Arquitetura de ponta (Next.js, JSON-LD, Core Web Vitals).
 
 ## Informações de Contato e Links Úteis
-- Site Oficial: https://eyagencia.com.br
+- [Site Oficial da EyAgencia](https://eyagencia.com.br)
+- [Fale com um Especialista](https://eyagencia.com.br/#diagnostico)
 - Telefone/WhatsApp: +55 48 3220-0260
 - Endereço: São José, SC, Brasil - CEP 88106-500
-- Fale com um especialista: https://eyagencia.com.br/#diagnostico
