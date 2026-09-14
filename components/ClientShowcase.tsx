@@ -1,37 +1,38 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export default function ClientShowcase() {
   const clients = [
     {
       name: "Soller Embalagens",
       url: "https://www.sollerembalagens.com.br/",
-      src: "/logo soller embalagens.webp", 
+      src: "/logo-soller-embalagens.webp", 
       niche: "E-commerce B2B/B2C"
     },
     {
       name: "Mamedes Papéis",
       url: "https://loja.mamedes.com.br/",
-      src: "/logo mamedes papeis.webp",
+      src: "/logo-mamedes-papeis.webp",
       niche: "E-commerce"
     },
     {
       name: "Sacola Online",
       url: "https://www.sacolaonline.com.br/",
-      src: "/logo sacola online.webp",
+      src: "/logo-sacola-online.webp",
       niche: "E-commerce Embalagens"
     },
     {
       name: "Pitney Embalagens",
       url: "https://pitney.com.br/",
-      src: "/pitney logo marca.webp",
+      src: "/pitney-logo-marca.webp",
       niche: "E-commerce B2B"
     },
     {
       name: "Focco Auto",
       url: "https://foccoauto.com.br/",
-      src: "/logo focco auto.png",
+      src: "/logo-focco-auto.png",
       niche: "E-commerce Automotivo"
     }
   ];
@@ -75,10 +76,13 @@ export default function ClientShowcase() {
             >
               {/* Fallback Inteligente e Fundo Escuro para destacar logos brancas */}
               <div className="w-24 h-24 bg-zinc-950 border border-zinc-800 rounded-full flex items-center justify-center p-3 mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300 overflow-hidden relative">
-                <img 
+                <Image 
                   src={client.src} 
                   alt={`Logo ${client.name}`}
-                  className="w-full h-full object-contain p-1"
+                  fill
+                  sizes="96px"
+                  quality={85}
+                  className="object-contain p-1"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-[#275c58]">${client.name.charAt(0)}</span>`;
