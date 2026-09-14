@@ -34,7 +34,6 @@ export default function HeroSection() {
           className="object-cover object-center opacity-40 grayscale"
           priority
         />
-        {/* Máscara clara para garantir a leitura do texto */}
         <div className="absolute inset-0 bg-slate-50/90"></div>
       </div>
 
