@@ -26,10 +26,10 @@ export default function HeroSection() {
           Você pode trocar o src por uma foto real do seu escritório colocando na pasta public */}
       <div className="absolute inset-0 z-0 bg-slate-100">
         <Image 
-          src="/hero-bg.webp" // OU hero-bg.jpg dependendo de como você salvou
+          src="/hero-bg.jpg" 
           alt="Equipe da EyAgencia trabalhando no escritório" 
           fill 
-          sizes="(max-width: 768px) 100vw, 100vw"
+          sizes="100vw"
           fetchPriority="high"
           className="object-cover object-center opacity-40 grayscale"
           priority
