@@ -13,8 +13,10 @@ export default function HeroSection() {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
+    // Otimização Core Web Vitals: Textos cruciais nascem com opacidade 1 
+    // para garantir First Contentful Paint imediato antes do JS carregar.
+    hidden: { opacity: 1, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
   };
 
   return (
@@ -22,11 +24,13 @@ export default function HeroSection() {
       
       {/* IMAGEM DE FUNDO: Equipe trabalhando. 
           Você pode trocar o src por uma foto real do seu escritório colocando na pasta public */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 bg-slate-100">
         <Image 
-          src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2850&auto=format&fit=crop" 
+          src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80" 
           alt="Equipe da EyAgencia trabalhando no escritório" 
           fill 
+          sizes="100vw"
+          fetchPriority="high"
           className="object-cover object-center opacity-40 grayscale"
           priority
         />
