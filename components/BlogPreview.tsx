@@ -11,8 +11,8 @@ export default function BlogPreview() {
       title: "Como preparar seu E-commerce para o Update MUVERA (2026)",
       desc: "Descubra como a densidade factual e o E-E-A-T rigoroso estão redefinindo o ranqueamento de lojas virtuais na nova era das buscas.",
       date: "12 de Outubro",
-      // Imagem que você já tem na pasta public
-      image: "/Como preparar seu Ecommerce para o Update MUVERA 2026.png",
+      // Imagem atualizada com URL amigável para o Next.js otimizar
+      image: "/update-muvera.png",
       // Rota para onde o post vai apontar
       url: "/blog/como-preparar-seu-e-commerce-para-o-update-muvera-2026" 
     },
@@ -21,8 +21,8 @@ export default function BlogPreview() {
       title: "JSON-LD para Lojas Virtuais: O Guia Definitivo",
       desc: "O impacto direto da marcação de dados estruturados na compreensão do Googlebot e no aumento da Taxa de Clique (CTR) orgânica.",
       date: "05 de Outubro",
-      // Imagem genérica provisória (basta trocar o nome depois)
-      image: "/A Evolucao das Buscas Do SEO Tradicional para AEO e GEO.png", 
+      // Imagem atualizada com URL amigável para o Next.js otimizar
+      image: "/evolucao-seo.png", 
       url: "/blog/a-evolucao-das-buscas-do-seo-tradicional-para-aeo-e-geo"
     },
     {
