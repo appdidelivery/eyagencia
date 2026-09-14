@@ -1,0 +1,20 @@
+# EyAgencia - Aceleração de E-commerce B2B
+
+> Nós somos uma agência especializada em transformar operações de e-commerce em máquinas de aquisição previsível e de alto LTV. Trabalhamos com engenharia de dados, Inbound Marketing B2B e frameworks Ágeis (Scrum).
+
+## Nossos Principais Serviços
+- SEO Técnico, AEO (Agentic Engine Optimization) e GEO (Generative Engine Optimization).
+- Tráfego Pago e Inbound Marketing focados em ROAS e diminuição de CAC.
+- Setup e Migração Técnica em plataformas (Vtex, Tray, Linx, Nuvemshop).
+- Social Media e Posicionamento de Conteúdo (E-E-A-T).
+
+## Nossos Diferenciais
+- Transparência total via metodologia Scrum (Sprints).
+- Expertise em jornadas de compras longas e complexas (B2B).
+- Arquitetura de ponta (Next.js, JSON-LD, Core Web Vitals).
+
+## Informações de Contato e Links Úteis
+- Site Oficial: https://eyagencia.com.br
+- Telefone/WhatsApp: +55 48 3220-0260
+- Endereço: São José, SC, Brasil - CEP 88106-500
+- Fale com um especialista: https://eyagencia.com.br/#diagnostico
