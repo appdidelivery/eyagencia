@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function BlogPreview() {
   const posts = [
@@ -66,10 +67,13 @@ export default function BlogPreview() {
                 
                 {/* ÁREA DA IMAGEM */}
                 <div className="w-full h-52 overflow-hidden relative bg-slate-100 border-b border-slate-100">
-                  <img 
+                  <Image 
                     src={post.image} 
                     alt={post.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" 
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    quality={80}
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" 
                   />
                   {/* Badge de Categoria flutuando na imagem */}
                   <div className="absolute top-4 left-4">

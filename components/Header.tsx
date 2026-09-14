@@ -45,6 +45,8 @@ export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }
             src={logoSrc} 
             alt="EyAgencia Logo" 
             fill
+            sizes="160px"
+            priority={true}
             className="object-contain"
             onError={(e) => {
               // Fallback se você não tiver a logo branca/verde nomeada corretamente
