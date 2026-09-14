@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   // Força a Vercel a ignorar avisos de Lint e concluir o Deploy
+  // @ts-ignore
   eslint: {
     ignoreDuringBuilds: true,
   },
