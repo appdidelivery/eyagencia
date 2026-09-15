@@ -57,7 +57,7 @@ export default function LogoTicker() {
                 height={150}
                 className="object-contain w-auto h-16 md:h-20 mix-blend-multiply"
                 quality={85}
-                priority={true} 
+                loading="lazy" 
               />
             </a>
           ))}
