@@ -73,7 +73,7 @@ export default function Footer() {
 
           {/* Coluna 2: Links Rápidos com Âncoras */}
           <div>
-            <h4 className="text-white font-semibold mb-4 tracking-wide">Links Rápidos</h4>
+            <h3 className="text-white font-semibold mb-4 tracking-wide">Links Rápidos</h3>
             <ul className="space-y-3">
               <li><a href="#servicos" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Nossos Serviços</a></li>
               <li><a href="#nossos-processos" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Processo de Trabalho</a></li>
@@ -84,7 +84,7 @@ export default function Footer() {
 
           {/* Coluna 3: Contato */}
           <div>
-            <h4 className="text-white font-semibold mb-4 tracking-wide">Contato e Base Operacional</h4>
+            <h3 className="text-white font-semibold mb-4 tracking-wide">Contato e Base Operacional</h3>
             <ul className="space-y-3 text-sm text-zinc-400 font-medium">
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-[#275c58] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -108,7 +108,7 @@ export default function Footer() {
 
         {/* SELOS DE CREDIBILIDADE (CÓDIGO PURO - NÃO QUEBRAM NUNCA MAIS) */}
         <div className="py-8 border-t border-zinc-900 flex flex-col md:flex-row items-center justify-between gap-6">
-          <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest text-center md:text-left">
+          <p className="text-zinc-400 text-xs font-semibold uppercase tracking-widest text-center md:text-left">
             Credibilidade e Segurança
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
@@ -142,7 +142,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="pt-6 border-t border-zinc-900 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-zinc-600 font-medium">
+          <p className="text-xs text-zinc-400 font-medium">
             © {currentYear} EyAgencia. Todos os direitos reservados. CNPJ: 22.829.884/0001-24.
           </p>
         </div>
