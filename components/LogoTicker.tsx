@@ -29,7 +29,7 @@ export default function LogoTicker() {
           </h2>
         </div>
         {/* Link para a nova página de parceiros */}
-        <a href="/parceiros" className="text-[#d96a45] font-bold hover:text-[#c05a38] transition-colors flex items-center gap-2 text-sm md:text-base">
+        <a href="/parceiros" className="text-[#b54d24] font-bold hover:text-[#933d1b] transition-colors flex items-center gap-2 text-sm md:text-base">
           Ver todas as plataformas <span aria-hidden="true">→</span>
         </a>
       </div>

@@ -47,7 +47,7 @@ export default function BlogPreview() {
             </h2>
             <div className="w-16 h-1 bg-[#275c58] mt-6 rounded-full"></div>
           </div>
-          <Link href="/blog" className="text-[#d96a45] font-bold hover:text-[#c05a38] transition-colors flex items-center gap-2">
+          <Link href="/blog" className="text-[#b54d24] font-bold hover:text-[#933d1b] transition-colors flex items-center gap-2">
             Acessar o Blog Completo <span aria-hidden="true">→</span>
           </Link>
         </div>
@@ -95,7 +95,7 @@ export default function BlogPreview() {
                     {post.desc}
                   </p>
                   
-                  <div className="text-sm font-bold text-[#d96a45] flex items-center gap-1 group-hover:gap-2 transition-all mt-auto">
+                  <div className="text-sm font-bold text-[#b54d24] flex items-center gap-1 group-hover:gap-2 transition-all mt-auto">
                     Ler artigo completo <span aria-hidden="true">→</span>
                   </div>
                 </div>
