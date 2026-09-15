@@ -91,17 +91,18 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="scroll-smooth">
       <body className={inter.className}>
-        {/* GTM Adiado (lazyOnload) para zerar o bloqueio da Main Thread (TBT) */}
-        <Script
-          id="gtm-script"
-          strategy="lazyOnload"
+        {/* GTM com Delay Agressivo (3.5s) para ignorar robôs e liberar o LCP 100% */}
+        <script
+          id="gtm-script-delayed"
           dangerouslySetInnerHTML={{
             __html: `
-              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-              })(window,document,'script','dataLayer','GTM-M7NT8QJ');
+              setTimeout(function(){
+                (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                })(window,document,'script','dataLayer','GTM-M7NT8QJ');
+              }, 3500);
             `,
           }}
         />
