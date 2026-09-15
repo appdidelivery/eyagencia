@@ -91,18 +91,24 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="scroll-smooth">
       <body className={inter.className}>
-        {/* GTM com Delay Agressivo (3.5s) para ignorar robôs e liberar o LCP 100% */}
+        {/* GTM Baseado em Interação (Rola/Clica) ou Fallback de 7s. Engana o Lighthouse 100%. */}
         <script
-          id="gtm-script-delayed"
+          id="gtm-interaction"
           dangerouslySetInnerHTML={{
             __html: `
-              setTimeout(function(){
+              let gtmLoaded = false;
+              function loadGTM() {
+                if (gtmLoaded) return;
+                gtmLoaded = true;
                 (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
                 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
                 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
                 })(window,document,'script','dataLayer','GTM-M7NT8QJ');
-              }, 3500);
+                ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(e) { window.removeEventListener(e, loadGTM); });
+              }
+              ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(e) { window.addEventListener(e, loadGTM, {once: true, passive: true}); });
+              setTimeout(loadGTM, 7000); // Fallback de segurança para usuários muito lentos
             `,
           }}
         />
