@@ -30,6 +30,7 @@ export default function HeroSection() {
           alt="Equipe da EyAgencia trabalhando no escritório" 
           fill 
           sizes="100vw"
+          quality={60}
           fetchPriority="high"
           className="object-cover object-center opacity-40 grayscale"
           priority
