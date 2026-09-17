@@ -7,7 +7,7 @@ type Task = { id: string; title: string; description: string };
 type Epic = { title: string; tasks: Task[] };
 type ProjectData = { title: string; description: string; epics: Epic[] };
 
-// Dicionário de projetos (Mock inicial - futuramente puxar do Firebase/Sanity)
+// Dicionário de projetos (Mock inicial)
 const projectsDb: Record<string, ProjectData> = {
   "mvp-academias12": {
     title: "Onboarding: MVP Academia S12",
@@ -58,15 +58,31 @@ const projectsDb: Record<string, ProjectData> = {
 export default function OnboardingProjectPage({ params }: { params: { projetoId: string } }) {
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   
-  const project = projectsDb[params.projetoId];
+  // 1. Pega o ID da URL de forma segura
+  const rawId = params?.projetoId || "";
+  
+  // 2. Limpa formatações e ignora maiúsculas/minúsculas para evitar erros humanos
+  const safeId = decodeURIComponent(rawId).toLowerCase().trim();
 
-  // Se a URL não bater com o banco de dados, exibe erro 404 customizado
+  // 3. Procura no nosso "banco" a chave que corresponda ao ID limpo
+  const projectKey = Object.keys(projectsDb).find(key => key.toLowerCase() === safeId);
+  const project = projectKey ? projectsDb[projectKey] : null;
+
+  // Renderização do erro customizado com Debug Tool
   if (!project) {
     return (
-      <div className="min-h-screen bg-[#0B1121] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-[#0B1121] flex flex-col items-center justify-center text-white">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Projeto não encontrado</h1>
-          <p className="text-slate-400">Verifique a URL e tente novamente.</p>
+          <p className="text-slate-400 mb-6">Verifique a URL e tente novamente.</p>
+          
+          {/* Debug Box para sabermos exatamente o que a URL está mandando */}
+          <div className="bg-white/5 border border-white/10 p-4 rounded-lg text-left inline-block">
+            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Diagnóstico do Sistema:</p>
+            <p className="text-sm font-mono text-emerald-400">Parâmetro Recebido: <span className="text-white">"{rawId}"</span></p>
+            <p className="text-sm font-mono text-blue-400 mt-1">Parâmetro Limpo: <span className="text-white">"{safeId}"</span></p>
+            <p className="text-sm font-mono text-orange-400 mt-1">Chave Esperada: <span className="text-white">"mvp-academias12"</span></p>
+          </div>
         </div>
       </div>
     );
@@ -85,7 +101,6 @@ export default function OnboardingProjectPage({ params }: { params: { projetoId:
 
   return (
     <div className="min-h-screen bg-[#0B1121] text-white font-sans selection:bg-blue-500/30 pb-20">
-      {/* Header Imitação VeloDelivery */}
       <header className="border-b border-white/5 bg-[#0B1121]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -115,9 +130,7 @@ export default function OnboardingProjectPage({ params }: { params: { projetoId:
           </p>
         </div>
 
-        {/* Card Roadmap */}
         <div className="bg-[#111827] border border-white/10 rounded-2xl p-6 md:p-10 shadow-2xl relative overflow-hidden">
-          {/* Brilho de fundo (Glow effect) */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
           
           <div className="flex items-center gap-3 mb-10">
@@ -133,7 +146,6 @@ export default function OnboardingProjectPage({ params }: { params: { projetoId:
                 <div className="space-y-4">
                   {epic.tasks.map((task, tIndex) => {
                     const isChecked = completedTasks.includes(task.id);
-                    // Linha conectora (timeline)
                     const isLastTask = tIndex === epic.tasks.length - 1;
 
                     return (
@@ -142,7 +154,6 @@ export default function OnboardingProjectPage({ params }: { params: { projetoId:
                         className={`group relative flex gap-4 p-4 rounded-xl cursor-pointer transition-all duration-200 border ${isChecked ? 'bg-emerald-900/10 border-emerald-500/20' : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-white/10'}`}
                         onClick={() => toggleTask(task.id)}
                       >
-                        {/* Linha vertical da timeline (se não for o último) */}
                         {!isLastTask && (
                            <div className={`absolute left-[31px] top-12 bottom-[-16px] w-[2px] ${isChecked ? 'bg-emerald-500/30' : 'bg-slate-700/50'}`}></div>
                         )}
