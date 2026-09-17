@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation"; // <-- IMPORTAÇÃO NOVA E OBRIGATÓRIA
 
 // Tipagem para os dados do projeto
 type Task = { id: string; title: string; description: string };
@@ -55,20 +56,20 @@ const projectsDb: Record<string, ProjectData> = {
   }
 };
 
-export default function OnboardingProjectPage({ params }: { params: { projetoId: string } }) {
+export default function OnboardingProjectPage() { // <-- REMOVIDO O { params } DAQUI
+  const params = useParams(); // <-- NOVA CAPTURA DE PARÂMETROS
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   
-  // 1. Pega o ID da URL de forma segura
-  const rawId = params?.projetoId || "";
+  // 1. Pega o ID da URL usando o hook do Next.js
+  const rawId = (params?.projetoId as string) || "";
   
-  // 2. Limpa formatações e ignora maiúsculas/minúsculas para evitar erros humanos
+  // 2. Limpa formatações e ignora maiúsculas/minúsculas
   const safeId = decodeURIComponent(rawId).toLowerCase().trim();
 
-  // 3. Procura no nosso "banco" a chave que corresponda ao ID limpo
+  // 3. Procura no nosso "banco"
   const projectKey = Object.keys(projectsDb).find(key => key.toLowerCase() === safeId);
   const project = projectKey ? projectsDb[projectKey] : null;
 
-  // Renderização do erro customizado com Debug Tool
   if (!project) {
     return (
       <div className="min-h-screen bg-[#0B1121] flex flex-col items-center justify-center text-white">
@@ -76,7 +77,6 @@ export default function OnboardingProjectPage({ params }: { params: { projetoId:
           <h1 className="text-2xl font-bold mb-2">Projeto não encontrado</h1>
           <p className="text-slate-400 mb-6">Verifique a URL e tente novamente.</p>
           
-          {/* Debug Box para sabermos exatamente o que a URL está mandando */}
           <div className="bg-white/5 border border-white/10 p-4 rounded-lg text-left inline-block">
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Diagnóstico do Sistema:</p>
             <p className="text-sm font-mono text-emerald-400">Parâmetro Recebido: <span className="text-white">"{rawId}"</span></p>
