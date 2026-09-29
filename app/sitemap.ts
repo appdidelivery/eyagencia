@@ -1,7 +1,22 @@
 import { MetadataRoute } from 'next';
+import { categories, tools } from './ia-ecommerce/data';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://eyagencia.com.br';
+
+  const iaCategoryUrls: MetadataRoute.Sitemap = categories.map((category) => ({
+    url: `${baseUrl}/ia-ecommerce/${category.slug}`,
+    lastModified: new Date('2026-09-29'),
+    changeFrequency: 'weekly',
+    priority: 0.85,
+  }));
+
+  const iaToolUrls: MetadataRoute.Sitemap = tools.map((tool) => ({
+    url: `${baseUrl}/ia-ecommerce/ferramentas/${tool.slug}`,
+    lastModified: new Date('2026-09-29'),
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  }));
 
   return [
     {
@@ -33,7 +48,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date('2026-09-29'),
       changeFrequency: 'weekly',
       priority: 0.95,
+      images: [`${baseUrl}/ia-ecommerce/hero-ia-ecommerce.svg`],
     },
+    ...iaCategoryUrls,
+    ...iaToolUrls,
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
