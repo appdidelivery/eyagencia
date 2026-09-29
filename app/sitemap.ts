@@ -26,18 +26,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/servicos`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/sobre`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
       url: `${baseUrl}/clientes`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -49,6 +37,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.95,
       images: [`${baseUrl}/ia-ecommerce/hero-ia-ecommerce.svg`],
+    },
+    {
+      url: `${baseUrl}/ia-ecommerce/metodologia`,
+      lastModified: new Date('2026-09-29'),
+      changeFrequency: 'monthly',
+      priority: 0.75,
     },
     ...iaCategoryUrls,
     ...iaToolUrls,
