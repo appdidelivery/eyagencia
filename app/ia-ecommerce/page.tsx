@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
@@ -30,10 +31,10 @@ export const metadata: Metadata = {
     type: "article",
     images: [
       {
-        url: "/eyagencia-logo-verde.png",
+        url: "/ia-ecommerce/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "EyAgencia — IA para E-commerce 2026",
+        alt: "IA para E-commerce 2026 — Central de Inteligência EyAgencia",
       },
     ],
   },
@@ -228,6 +229,11 @@ export default function IAEcommercePage() {
         description:
           "Guia editorial da EyAgencia sobre ferramentas e aplicações de inteligência artificial para e-commerce em 2026.",
         dateModified: "2026-09-29",
+        primaryImageOfPage: {
+          "@type": "ImageObject",
+          contentUrl: "https://eyagencia.com.br/ia-ecommerce/opengraph-image",
+          caption: "IA para E-commerce 2026 — Central de Inteligência EyAgencia",
+        },
         isPartOf: {
           "@type": "WebSite",
           name: "EyAgencia",
@@ -293,13 +299,13 @@ export default function IAEcommercePage() {
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-slate-50 px-6 pb-20 pt-36 lg:px-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(39,92,88,0.14),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(240,129,91,0.12),transparent_34%)]" />
-        <div className="relative mx-auto max-w-7xl">
-          <div className="max-w-4xl">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
+          <div>
             <span className="inline-flex rounded-full border border-[#275c58]/20 bg-[#275c58]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#275c58]">
               Central de Inteligência • Atualizado em 29/09/2026
             </span>
 
-            <h1 className="mt-7 text-4xl font-black tracking-tight text-slate-950 sm:text-6xl lg:text-7xl">
+            <h1 className="mt-7 text-4xl font-black tracking-tight text-slate-950 sm:text-6xl">
               IA para E-commerce em 2026:
               <span className="block text-[#275c58]">
                 ferramentas, agentes e aplicações
@@ -329,6 +335,24 @@ export default function IAEcommercePage() {
               </Link>
             </div>
           </div>
+
+          <figure className="relative">
+            <div className="absolute -inset-5 rounded-[2rem] bg-gradient-to-br from-[#275c58]/16 via-transparent to-[#f0815b]/16 blur-2xl" />
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white p-2 shadow-2xl shadow-slate-900/10">
+              <Image
+                src="/ia-ecommerce/hero-ia-ecommerce.svg"
+                alt="Mapa visual de inteligência artificial aplicada ao e-commerce, conectando SEO e GEO, mídia, CRM, atendimento, analytics e agentes de IA"
+                width={1200}
+                height={800}
+                priority
+                className="h-auto w-full rounded-[1.55rem]"
+              />
+            </div>
+            <figcaption className="mt-4 text-center text-xs leading-5 text-slate-500">
+              Ecossistema de IA aplicado ao e-commerce: descoberta, aquisição,
+              conversão, relacionamento, dados e operação.
+            </figcaption>
+          </figure>
         </div>
       </section>
 
