@@ -1,8 +1,6 @@
 import Link from "next/link";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import { client } from "../../sanity/lib/client";
-import { groq } from "next-sanity";
 import type { Metadata } from "next";
 
 // 1. METADADOS OTIMIZADOS PARA A PÁGINA DE CLIENTES
@@ -163,6 +161,17 @@ export default function ClientesPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-7xl px-6 pb-20 lg:px-8">
+        <div className="grid items-center gap-8 rounded-3xl border border-[#275c58] bg-gradient-to-br from-[#275c58]/20 to-zinc-900 p-8 sm:p-12 md:grid-cols-[1fr_auto]">
+          <div>
+            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#f0815b]">Plataformas digitais · Esporte & creators</p>
+            <h2 className="text-3xl font-black tracking-tight text-white">Sidão Hub</h2>
+            <p className="mt-4 max-w-2xl leading-relaxed text-zinc-400">Um projeto que conecta autoridade no esporte, audiência e oportunidades de parceria. Conheça essa frente do nosso trabalho.</p>
+          </div>
+          <Link href="/clientes/sidao-hub" className="inline-flex w-fit items-center rounded-full bg-[#f0815b] px-7 py-4 font-bold text-zinc-950 transition-colors hover:bg-[#ffa17f]">Conhecer o case →</Link>
         </div>
       </section>
 
