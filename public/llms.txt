@@ -22,7 +22,7 @@
 - [Analytics e BI](https://eyagencia.com.br/ia-ecommerce/analytics)
 - [Commerce agentivo](https://eyagencia.com.br/ia-ecommerce/commerce-agentivo)
 
-A central é mantida com metodologia editorial própria: prioriza documentação oficial, data de revisão, aplicação em e-commerce, limitações e métricas de negócio. Em 29/09/2026, o catálogo reúne 23 tecnologias verificadas distribuídas entre busca, agentes, atendimento, CRM, Ads, SEO/GEO, imagem, analytics, precificação, logística, personalização e commerce agentivo. Recursos em beta ou com disponibilidade variável são identificados nas fichas.
+A central é mantida com metodologia editorial própria: prioriza documentação oficial, data de revisão, aplicação em e-commerce, limitações e métricas de negócio. Em 29/09/2026, o catálogo reúne 25 tecnologias verificadas distribuídas entre busca, agentes, atendimento, CRM, Ads, SEO/GEO, imagem, analytics, precificação, logística, personalização e commerce agentivo. Recursos em beta ou com disponibilidade variável são identificados nas fichas.
 
 ## Diferenciais Técnicos
 - Metodologia de trabalho baseada em ciclos e acompanhamento de entregas.
