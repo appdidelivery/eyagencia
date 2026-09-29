@@ -39,6 +39,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       images: [`${baseUrl}/ia-ecommerce/hero-ia-ecommerce.svg`],
     },
     {
+      url: `${baseUrl}/ia-ecommerce/ferramentas`,
+      lastModified: new Date('2026-09-29'),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/ia-ecommerce/metodologia`,
       lastModified: new Date('2026-09-29'),
       changeFrequency: 'monthly',
