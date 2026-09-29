@@ -4,6 +4,7 @@ import Image from "next/image";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { categories, editorial, faqs, tools } from "./data";
+import { guides } from "./guias/data";
 
 export const metadata: Metadata = {
   title: "IA para E-commerce 2026: Ferramentas e Aplicações | EyAgencia",
@@ -353,6 +354,51 @@ export default function IAEcommercePage() {
             >
               Explorar todas as {tools.length} ferramentas verificadas →
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-slate-200 bg-slate-50 px-6 py-20 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div className="max-w-3xl">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-[#b54d24]">
+                Guias editoriais
+              </span>
+              <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+                Da ferramenta para a execução
+              </h2>
+              <p className="mt-4 leading-7 text-slate-600">
+                A biblioteca editorial conecta tecnologia, processo e métrica.
+                Cada guia parte de documentação oficial e termina em uma forma
+                prática de aplicar ou medir o recurso na operação.
+              </p>
+            </div>
+            <Link href="/ia-ecommerce/guias" className="text-sm font-black text-[#275c58]">
+              Ver todos os guias →
+            </Link>
+          </div>
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            {guides.slice(0, 4).map((guide) => (
+              <article key={guide.slug} className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs font-black uppercase tracking-[0.16em] text-[#b54d24]">
+                    {guide.eyebrow}
+                  </span>
+                  <span className="text-xs font-bold text-slate-400">{guide.readTime}</span>
+                </div>
+                <h3 className="mt-4 text-2xl font-black leading-tight">
+                  <Link href={`/ia-ecommerce/guias/${guide.slug}`} className="hover:text-[#275c58]">
+                    {guide.title}
+                  </Link>
+                </h3>
+                <p className="mt-4 text-sm leading-7 text-slate-600">{guide.description}</p>
+                <Link href={`/ia-ecommerce/guias/${guide.slug}`} className="mt-6 inline-flex text-sm font-black text-[#275c58]">
+                  Ler guia →
+                </Link>
+              </article>
+            ))}
           </div>
         </div>
       </section>

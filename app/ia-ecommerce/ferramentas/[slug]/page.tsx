@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { categories, editorial, tools } from "../../data";
+import { guides } from "../../guias/data";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -48,6 +49,7 @@ export default async function ToolPage({ params }: Props) {
 
   const category = categories.find((item) => item.slug === tool.categorySlug);
   const relatedTools = tools.filter((item) => item.categorySlug === tool.categorySlug && item.slug !== tool.slug).slice(0, 3);
+  const relatedGuides = guides.filter((guide) => guide.relatedTools.includes(tool.slug));
 
   const schema = {
     "@context": "https://schema.org",
@@ -177,6 +179,23 @@ export default async function ToolPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      {relatedGuides.length > 0 && (
+        <section className="px-6 py-14 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <span className="text-xs font-black uppercase tracking-[0.18em] text-[#b54d24]">Guia editorial relacionado</span>
+            <div className="mt-5 grid gap-5 md:grid-cols-2">
+              {relatedGuides.map((guide) => (
+                <Link key={guide.slug} href={`/ia-ecommerce/guias/${guide.slug}`} className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+                  <div className="text-xl font-black">{guide.title}</div>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{guide.description}</p>
+                  <span className="mt-5 inline-flex text-sm font-black text-[#275c58]">Ler guia →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="px-6 py-16 lg:px-8">
         <div className="mx-auto max-w-5xl rounded-3xl bg-[#275c58] p-8 text-white sm:p-12">

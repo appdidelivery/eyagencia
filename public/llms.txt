@@ -12,6 +12,7 @@
 ## Central de Inteligência: IA para E-commerce 2026
 - [Guia principal de IA para E-commerce](https://eyagencia.com.br/ia-ecommerce)
 - [Catálogo de ferramentas de IA](https://eyagencia.com.br/ia-ecommerce/ferramentas)
+- [Guias editoriais de IA para E-commerce](https://eyagencia.com.br/ia-ecommerce/guias)
 - [Metodologia editorial da Central de IA](https://eyagencia.com.br/ia-ecommerce/metodologia)
 - [Agentes e operação](https://eyagencia.com.br/ia-ecommerce/agentes)
 - [Atendimento e vendas](https://eyagencia.com.br/ia-ecommerce/atendimento)
@@ -21,6 +22,13 @@
 - [Personalização e CRO](https://eyagencia.com.br/ia-ecommerce/personalizacao)
 - [Analytics e BI](https://eyagencia.com.br/ia-ecommerce/analytics)
 - [Commerce agentivo](https://eyagencia.com.br/ia-ecommerce/commerce-agentivo)
+
+### Guias editoriais
+- [IA na Nuvemshop em 2026: Lumi e MCP](https://eyagencia.com.br/ia-ecommerce/guias/ia-nuvemshop-2026)
+- [IA na Tray em 2026: Tray Pulse](https://eyagencia.com.br/ia-ecommerce/guias/ia-tray-2026)
+- [Como medir tráfego de IA no GA4](https://eyagencia.com.br/ia-ecommerce/guias/medir-trafego-ia-ga4)
+- [GEO para E-commerce em 2026](https://eyagencia.com.br/ia-ecommerce/guias/geo-para-ecommerce)
+- [Commerce agentivo em 2026](https://eyagencia.com.br/ia-ecommerce/guias/commerce-agentivo-ecommerce)
 
 A central é mantida com metodologia editorial própria: prioriza documentação oficial, data de revisão, aplicação em e-commerce, limitações e métricas de negócio. Em 29/09/2026, o catálogo reúne 25 tecnologias verificadas distribuídas entre busca, agentes, atendimento, CRM, Ads, SEO/GEO, imagem, analytics, precificação, logística, personalização e commerce agentivo. Recursos em beta ou com disponibilidade variável são identificados nas fichas.
 
