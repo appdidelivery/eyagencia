@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import { categories, editorial, faqs, tools } from "./data";
 
 export const metadata: Metadata = {
   title: "IA para E-commerce 2026: Ferramentas e Aplicações | EyAgencia",
@@ -43,179 +44,6 @@ export const metadata: Metadata = {
     follow: true,
   },
 };
-
-const categories = [
-  {
-    title: "Agentes e operação",
-    description:
-      "Copilotos e agentes que analisam dados, executam tarefas e reduzem trabalho operacional.",
-  },
-  {
-    title: "Atendimento e vendas",
-    description:
-      "Assistentes que respondem dúvidas, recomendam produtos e apoiam pré e pós-venda.",
-  },
-  {
-    title: "CRM e automação",
-    description:
-      "IA aplicada a segmentação, jornadas, campanhas, retenção e relacionamento.",
-  },
-  {
-    title: "Busca e descoberta",
-    description:
-      "Busca semântica, recomendação e descoberta de produtos com intenção mais complexa.",
-  },
-  {
-    title: "Personalização e CRO",
-    description:
-      "Experiências, vitrines e ofertas adaptadas ao comportamento do comprador.",
-  },
-  {
-    title: "Ads e aquisição",
-    description:
-      "Otimização de mídia, criativos, segmentação e Shopping com modelos de IA.",
-  },
-  {
-    title: "Conteúdo, SEO e GEO",
-    description:
-      "Conteúdo, catálogo e estrutura técnica preparados para busca tradicional e respostas de IA.",
-  },
-  {
-    title: "Imagem e vídeo",
-    description:
-      "Criação e edição de ativos de produto, anúncios e conteúdo em escala.",
-  },
-  {
-    title: "Analytics e BI",
-    description:
-      "Leitura de dados, detecção de padrões e apoio à tomada de decisão.",
-  },
-  {
-    title: "Precificação",
-    description:
-      "Monitoramento competitivo e suporte algorítmico a decisões de preço.",
-  },
-  {
-    title: "Logística e operação",
-    description:
-      "Previsão, roteirização, atendimento operacional e automação de backoffice.",
-  },
-  {
-    title: "Commerce agentivo",
-    description:
-      "Produtos descobertos, comparados e comprados dentro de interfaces conversacionais.",
-  },
-];
-
-const tools = [
-  {
-    name: "ChatGPT Shopping & Merchant Feeds",
-    company: "OpenAI",
-    category: "Commerce agentivo",
-    status: "Canal de descoberta e compra",
-    useCase:
-      "Expor produtos em experiências de compra do ChatGPT e manter catálogo atualizado por integrações e feeds elegíveis.",
-    bestFor:
-      "Lojistas que querem preparar catálogo, metadados e presença para descoberta em interfaces de IA.",
-    url: "https://help.openai.com/pt-br/articles/11128490-shopping-with-chatgpt-search",
-  },
-  {
-    name: "Sidekick",
-    company: "Shopify",
-    category: "Agentes e operação",
-    status: "Assistente nativo da plataforma",
-    useCase:
-      "Analisar dados, editar produtos, criar conteúdo, automatizar tarefas e apoiar decisões dentro do admin da Shopify.",
-    bestFor:
-      "Operações Shopify que querem reduzir tarefas manuais sem sair do painel da loja.",
-    url: "https://help.shopify.com/pt-BR/manual/ai-powered-tools/sidekick",
-  },
-  {
-    name: "Shopify Magic",
-    company: "Shopify",
-    category: "Conteúdo, SEO e mídia",
-    status: "Suite de IA nativa",
-    useCase:
-      "Gerar descrições, conteúdo, e-mails e mídia para acelerar a produção do catálogo e do marketing.",
-    bestFor:
-      "Times enxutos que precisam aumentar volume de conteúdo e ativos criativos.",
-    url: "https://help.shopify.com/pt-BR/manual/ai-powered-tools/shopify-magic",
-  },
-  {
-    name: "K:AI Customer Agent",
-    company: "Klaviyo",
-    category: "CRM e vendas",
-    status: "Agente de relacionamento",
-    useCase:
-      "Atender compradores, usar contexto do catálogo e dados do cliente e oferecer recomendações personalizadas.",
-    bestFor:
-      "Marcas com estratégia forte de CRM, retenção e comunicação multicanal.",
-    url: "https://www.klaviyo.com/solutions/ai/customer-agent/shopping-assistant",
-  },
-  {
-    name: "AI Agent",
-    company: "Gorgias",
-    category: "Atendimento e vendas",
-    status: "Agente de suporte e pré-venda",
-    useCase:
-      "Automatizar conversas de suporte e vendas em canais como chat, e-mail, SMS e redes sociais.",
-    bestFor:
-      "E-commerces com volume relevante de atendimento e dúvidas repetitivas.",
-    url: "https://helpcenter.gorgias.com/en-US/ai-agent-explained-497772",
-  },
-  {
-    name: "experience.AI + Huginn",
-    company: "Nosto",
-    category: "Personalização e CRO",
-    status: "Personalização e agentes",
-    useCase:
-      "Personalizar busca, merchandising, recomendações e testes com inteligência sobre catálogo e comportamento.",
-    bestFor:
-      "Operações com tráfego suficiente para otimizar experiência e conversão de forma contínua.",
-    url: "https://www.nosto.com/",
-  },
-  {
-    name: "IA Max para Shopping",
-    company: "Google Ads",
-    category: "Ads e aquisição",
-    status: "Beta em 2026",
-    useCase:
-      "Usar IA para ampliar relevância de criativos, termos e páginas de destino em pesquisas de compra mais complexas.",
-    bestFor:
-      "Varejistas que já trabalham com Merchant Center e campanhas de Shopping.",
-    url: "https://support.google.com/google-ads/answer/17091277?hl=pt-BR",
-  },
-  {
-    name: "Product Recommendations",
-    company: "Adobe Commerce",
-    category: "Personalização e recomendação",
-    status: "Recomendação com Adobe AI",
-    useCase:
-      "Gerar recomendações personalizadas a partir de comportamento agregado de compradores e dados do catálogo.",
-    bestFor:
-      "Operações Adobe Commerce que querem automatizar cross-sell, up-sell e recomendação.",
-    url: "https://experienceleague.adobe.com/pt-br/docs/commerce/product-recommendations/overview",
-  },
-];
-
-const faqs = [
-  {
-    q: "Qual é a melhor IA para e-commerce em 2026?",
-    a: "Não existe uma única ferramenta melhor para todas as operações. A escolha depende do gargalo: aquisição, atendimento, CRM, conteúdo, personalização, dados ou operação. Este guia organiza as soluções por aplicação para facilitar essa decisão.",
-  },
-  {
-    q: "IA substitui a plataforma de e-commerce?",
-    a: "Na maioria dos casos, não. A IA funciona como uma camada de inteligência sobre a plataforma, o catálogo, os dados e os canais de aquisição e relacionamento.",
-  },
-  {
-    q: "O que é commerce agentivo?",
-    a: "É um modelo em que agentes de IA participam diretamente da jornada de compra: entendem intenção, pesquisam, comparam, recomendam produtos e, em alguns fluxos, podem ajudar a concluir a transação.",
-  },
-  {
-    q: "Como saber por onde começar?",
-    a: "Comece pelo maior gargalo mensurável da operação. Atendimento alto, CAC crescente, baixa conversão, produção lenta de conteúdo e pouca retenção exigem ferramentas e integrações diferentes.",
-  },
-];
 
 export default function IAEcommercePage() {
   const schema = {
@@ -414,17 +242,21 @@ export default function IAEcommercePage() {
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((category) => (
-              <article
-                key={category.title}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+              <Link
+                key={category.slug}
+                href={`/ia-ecommerce/${category.slug}`}
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[#275c58]/40 hover:shadow-lg"
               >
-                <h3 className="text-lg font-black text-slate-900">
+                <h3 className="text-lg font-black text-slate-900 group-hover:text-[#275c58]">
                   {category.title}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
                   {category.description}
                 </p>
-              </article>
+                <span className="mt-5 inline-flex text-xs font-black uppercase tracking-wider text-[#b54d24]">
+                  Explorar categoria →
+                </span>
+              </Link>
             ))}
           </div>
         </div>
@@ -467,7 +299,9 @@ export default function IAEcommercePage() {
                 </div>
 
                 <h3 className="mt-5 text-2xl font-black text-slate-950">
-                  {tool.name}
+                  <Link href={`/ia-ecommerce/ferramentas/${tool.slug}`} className="hover:text-[#275c58]">
+                    {tool.name}
+                  </Link>
                 </h3>
                 <p className="mt-1 text-sm font-bold text-slate-500">
                   {tool.company}
@@ -484,15 +318,56 @@ export default function IAEcommercePage() {
                   </p>
                 </div>
 
-                <a
-                  href={tool.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-6 inline-flex text-sm font-black text-[#b54d24] hover:text-[#933d1b]"
-                >
-                  Ver fonte oficial →
-                </a>
+                <div className="mt-6 flex flex-wrap items-center gap-4">
+                  <Link
+                    href={`/ia-ecommerce/ferramentas/${tool.slug}`}
+                    className="inline-flex text-sm font-black text-[#275c58] hover:text-[#1f4a46]"
+                  >
+                    Análise completa →
+                  </Link>
+                  <a
+                    href={tool.source}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex text-sm font-black text-[#b54d24] hover:text-[#933d1b]"
+                  >
+                    Fonte oficial ↗
+                  </a>
+                </div>
               </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-slate-200 bg-slate-50 px-6 py-16 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <span className="text-xs font-black uppercase tracking-[0.18em] text-[#b54d24]">
+              Critério editorial e E-E-A-T
+            </span>
+            <h2 className="mt-3 text-3xl font-black tracking-tight">
+              Como a EyAgencia pesquisa e revisa esta central
+            </h2>
+            <p className="mt-5 leading-7 text-slate-600">
+              Esta página é mantida como material editorial e técnico. A seleção
+              considera aplicação real em e-commerce, documentação primária,
+              estágio de disponibilidade, limitações e métricas que permitem
+              avaliar resultado no negócio.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              ["Fontes primárias", "Priorizamos documentação oficial, centrais de ajuda, changelogs e páginas de produto das próprias plataformas."],
+              ["Aplicação prática", "Cada tecnologia é relacionada a um gargalo operacional ou comercial e a indicadores que podem ser acompanhados."],
+              ["Revisão e data", `Conteúdo revisado em ${editorial.updatedAt}. Recursos em beta ou com disponibilidade variável são sinalizados.`],
+              ["Transparência", "A central não usa posição em lista paga como critério editorial e não publica um ranking geral de melhor ferramenta."],
+            ].map(([title, text]) => (
+              <div key={title} className="rounded-2xl border border-slate-200 bg-white p-6">
+                <h3 className="font-black text-slate-900">{title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{text}</p>
+              </div>
             ))}
           </div>
         </div>
@@ -594,11 +469,9 @@ export default function IAEcommercePage() {
       <section className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-8">
         <div className="mx-auto max-w-7xl text-xs leading-6 text-slate-500">
           <p>
-            <strong className="text-slate-700">Nota editorial:</strong> esta
-            página não é patrocinada e não estabelece um ranking. Recursos,
-            elegibilidade e disponibilidade podem mudar. As descrições foram
-            consolidadas a partir de documentação oficial das plataformas e
-            revisadas em 29 de setembro de 2026.
+            <strong className="text-slate-700">Nota editorial:</strong>{" "}
+            {editorial.methodology} Recursos, elegibilidade e disponibilidade
+            podem mudar. Revisão editorial: {editorial.updatedAt}.
           </p>
         </div>
       </section>
