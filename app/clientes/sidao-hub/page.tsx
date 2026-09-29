@@ -8,12 +8,64 @@ const title = "Sidão Hub: esporte, audiência e oportunidades | EyAgencia";
 const description = "Conheça o Sidão Hub, projeto desenvolvido pela EyAgencia que conecta presença digital, autoridade no esporte e oportunidades de parceria.";
 const url = "https://eyagencia.com.br/clientes/sidao-hub";
 const officialSite = "https://sidao12.com.br/";
+const portraitUrl = "https://eyagencia.com.br/cases/sidao-hub/retrato.png";
+const publisher = {
+  "@type": "Organization",
+  "@id": "https://eyagencia.com.br/#business",
+  name: "EYagencia",
+  url: "https://eyagencia.com.br",
+};
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: title,
+      description,
+      inLanguage: "pt-BR",
+      breadcrumb: { "@id": `${url}#breadcrumb` },
+      mainEntity: { "@id": `${url}#article` },
+      primaryImageOfPage: { "@type": "ImageObject", url: portraitUrl },
+    },
+    {
+      "@type": "Article",
+      "@id": `${url}#article`,
+      headline: "Sidão Hub: esporte, audiência e oportunidades",
+      description,
+      articleSection: "Cases de clientes",
+      inLanguage: "pt-BR",
+      mainEntityOfPage: { "@id": `${url}#webpage` },
+      author: publisher,
+      publisher,
+      image: portraitUrl,
+      about: { "@type": "Person", name: "Sidão", url: officialSite },
+      citation: officialSite,
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": `${url}#breadcrumb`,
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Início", item: "https://eyagencia.com.br/" },
+        { "@type": "ListItem", position: 2, name: "Clientes", item: "https://eyagencia.com.br/clientes" },
+        { "@type": "ListItem", position: 3, name: "Sidão Hub", item: url },
+      ],
+    },
+  ],
+};
 
 export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: url },
-  openGraph: { title, description, url, type: "website", locale: "pt_BR" },
+  authors: [{ name: "EYagencia", url: "https://eyagencia.com.br" }],
+  openGraph: {
+    title, description, url, type: "article", locale: "pt_BR", siteName: "EYagencia",
+    images: [{ url: portraitUrl, width: 1086, height: 1448, alt: "Sidão — case de plataforma digital da EYagencia" }],
+  },
+  twitter: { card: "summary_large_image", title, description, images: [portraitUrl] },
 };
 
 const pillars = [
@@ -25,18 +77,24 @@ const pillars = [
 export default function SidaoHubCase() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
       <Header theme="dark" />
       <main className="min-h-screen bg-zinc-950 text-white">
         <article>
           <header className="relative overflow-hidden border-b border-zinc-800 px-6 pb-20 pt-36 lg:px-8 lg:pb-28 lg:pt-44">
             <div aria-hidden="true" className="pointer-events-none absolute -right-32 top-20 h-96 w-96 rounded-full bg-[#275c58]/25 blur-3xl" />
             <div className="relative mx-auto max-w-7xl">
-              <Link href="/clientes" className="text-sm text-zinc-400 transition-colors hover:text-white">← Todos os cases</Link>
+              <nav aria-label="Navegação estrutural" className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+                <Link href="/" className="hover:text-white">Início</Link><span aria-hidden="true">/</span>
+                <Link href="/clientes" className="hover:text-white">Clientes</Link><span aria-hidden="true">/</span>
+                <span aria-current="page" className="text-zinc-200">Sidão Hub</span>
+              </nav>
               <div className="mt-12 grid items-center gap-14 lg:grid-cols-[1.2fr_1fr]">
                 <div>
                   <p className="mb-6 text-xs font-bold uppercase tracking-[0.2em] text-[#f0815b]">Case de cliente · Plataforma digital para creator</p>
                   <h1 className="text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">Sidão Hub.<br /><span className="text-[#f0815b]">O esporte conecta.</span><br />O digital aproxima.</h1>
                   <p className="mt-8 max-w-xl text-lg leading-relaxed text-zinc-400">Um projeto da EYagencia para conectar a autoridade do Sidão no esporte, sua audiência e as oportunidades que nascem dessa relação.</p>
+                  <p className="mt-4 text-sm text-zinc-500">Projeto e case por <Link href="/" className="underline underline-offset-4 hover:text-white">EYagencia</Link> · Plataforma digital para creator</p>
                   <div className="mt-9 flex flex-wrap gap-3">
                     <a href={officialSite} target="_blank" rel="noopener" className="inline-flex rounded-full bg-[#f0815b] px-7 py-4 font-bold text-zinc-950 transition-colors hover:bg-[#ffa17f]">Visitar o site do Sidão ↗</a>
                     <a href="#projeto" className="inline-flex rounded-full border border-zinc-700 px-7 py-4 font-bold text-white transition-colors hover:bg-zinc-800">Conheça o projeto ↓</a>

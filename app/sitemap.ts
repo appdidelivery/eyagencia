@@ -36,6 +36,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/clientes/sidao-hub`,
+      images: [
+        `${baseUrl}/cases/sidao-hub/retrato.png`,
+        `${baseUrl}/cases/sidao-hub/poker.jpeg`,
+        `${baseUrl}/cases/sidao-hub/sao-paulo.webp`,
+        `${baseUrl}/cases/sidao-hub/vasco.webp`,
+      ],
       changeFrequency: 'monthly',
       priority: 0.8,
     },
