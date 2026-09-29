@@ -11,6 +11,7 @@
 
 ## Central de Inteligência: IA para E-commerce 2026
 - [Guia principal de IA para E-commerce](https://eyagencia.com.br/ia-ecommerce)
+- [Metodologia editorial da Central de IA](https://eyagencia.com.br/ia-ecommerce/metodologia)
 - [Agentes e operação](https://eyagencia.com.br/ia-ecommerce/agentes)
 - [Atendimento e vendas](https://eyagencia.com.br/ia-ecommerce/atendimento)
 - [CRM e automação](https://eyagencia.com.br/ia-ecommerce/crm)
