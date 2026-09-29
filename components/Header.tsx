@@ -22,6 +22,7 @@ export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }
     { name: 'Processos', href: '/#nossos-processos' },
     { name: 'Clientes', href: '/clientes' },
     { name: 'Parceiros', href: '/parceiros' },
+    { name: 'IA E-commerce', href: '/ia-ecommerce' },
     { name: 'Blog', href: '/blog' },
   ];
 
@@ -56,7 +57,7 @@ export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }
         </a>
 
         {/* Menu Desktop */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <a 
               key={link.name} 
