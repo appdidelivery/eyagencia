@@ -371,6 +371,11 @@ export default function IAEcommercePage() {
               </div>
             ))}
           </div>
+          <div className="mt-8">
+            <Link href="/ia-ecommerce/metodologia" className="inline-flex text-sm font-black text-[#275c58] hover:text-[#1f4a46]">
+              Ler metodologia editorial completa →
+            </Link>
+          </div>
         </div>
       </section>
 
