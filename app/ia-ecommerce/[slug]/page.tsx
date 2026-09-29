@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { categories, editorial, tools } from "../data";
+import { guides } from "../guias/data";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -48,6 +49,7 @@ export default async function IACategoryPage({ params }: Props) {
 
   const categoryTools = tools.filter((tool) => tool.categorySlug === category.slug);
   const related = categories.filter((item) => category.related.includes(item.slug));
+  const categoryGuides = guides.filter((guide) => guide.relatedCategories.includes(category.slug));
 
   const schema = {
     "@context": "https://schema.org",
@@ -166,6 +168,29 @@ export default async function IACategoryPage({ params }: Props) {
           )}
         </div>
       </section>
+
+      {categoryGuides.length > 0 && (
+        <section className="px-6 py-16 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <span className="text-xs font-black uppercase tracking-[0.18em] text-[#b54d24]">Guias relacionados</span>
+                <h2 className="mt-3 text-2xl font-black">Aplicação prática deste tema</h2>
+              </div>
+              <Link href="/ia-ecommerce/guias" className="text-sm font-black text-[#275c58]">Todos os guias →</Link>
+            </div>
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
+              {categoryGuides.map((guide) => (
+                <Link key={guide.slug} href={`/ia-ecommerce/guias/${guide.slug}`} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+                  <div className="text-xs font-black uppercase tracking-wider text-[#b54d24]">{guide.eyebrow}</div>
+                  <div className="mt-3 text-xl font-black">{guide.title}</div>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">{guide.description}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="px-6 py-16 lg:px-8">
         <div className="mx-auto max-w-6xl">
