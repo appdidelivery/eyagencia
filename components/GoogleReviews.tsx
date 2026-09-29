@@ -47,7 +47,7 @@ export default function GoogleReviews() {
             </div>
             <div className="hidden sm:block w-px h-5 bg-slate-300"></div>
             <span className="font-semibold text-slate-600 text-sm">
-              24 avaliações verificadas
+               Avaliações verificadas
             </span>
           </div>
 
