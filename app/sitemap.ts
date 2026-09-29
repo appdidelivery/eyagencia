@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { categories, tools } from './ia-ecommerce/data';
+import { guides } from './ia-ecommerce/guias/data';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://eyagencia.com.br';
@@ -16,6 +17,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date('2026-09-29'),
     changeFrequency: 'monthly',
     priority: 0.8,
+  }));
+
+  const iaGuideUrls: MetadataRoute.Sitemap = guides.map((guide) => ({
+    url: `${baseUrl}/ia-ecommerce/guias/${guide.slug}`,
+    lastModified: new Date('2026-09-29'),
+    changeFrequency: 'monthly',
+    priority: 0.85,
   }));
 
   return [
@@ -45,6 +53,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/ia-ecommerce/guias`,
+      lastModified: new Date('2026-09-29'),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/ia-ecommerce/metodologia`,
       lastModified: new Date('2026-09-29'),
       changeFrequency: 'monthly',
@@ -52,6 +66,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...iaCategoryUrls,
     ...iaToolUrls,
+    ...iaGuideUrls,
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
