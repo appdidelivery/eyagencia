@@ -279,13 +279,21 @@ export default function IAEcommercePage() {
                 2026.
               </p>
             </div>
-            <div className="rounded-xl bg-[#275c58]/10 px-4 py-3 text-xs font-bold text-[#275c58]">
-              Versão inicial: {tools.length} tecnologias verificadas
+            <div className="flex flex-col items-start gap-3 md:items-end">
+              <div className="rounded-xl bg-[#275c58]/10 px-4 py-3 text-xs font-bold text-[#275c58]">
+                {tools.length} tecnologias verificadas
+              </div>
+              <Link
+                href="/ia-ecommerce/ferramentas"
+                className="text-sm font-black text-[#b54d24] hover:text-[#933d1b]"
+              >
+                Ver catálogo completo →
+              </Link>
             </div>
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
-            {tools.map((tool) => (
+            {tools.slice(0, 8).map((tool) => (
               <article
                 key={tool.name}
                 className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
@@ -337,6 +345,14 @@ export default function IAEcommercePage() {
                 </div>
               </article>
             ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              href="/ia-ecommerce/ferramentas"
+              className="inline-flex rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-black text-slate-800 transition hover:border-[#275c58] hover:text-[#275c58]"
+            >
+              Explorar todas as {tools.length} ferramentas verificadas →
+            </Link>
           </div>
         </div>
       </section>
