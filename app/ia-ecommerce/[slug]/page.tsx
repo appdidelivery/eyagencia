@@ -179,7 +179,8 @@ export default async function IACategoryPage({ params }: Props) {
           </div>
 
           <div className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 p-7 text-sm leading-7 text-slate-600">
-            <strong className="text-slate-900">Critério editorial EyAgencia:</strong> {editorial.methodology} Atualizado em {editorial.updatedAt}.
+            <strong className="text-slate-900">Critério editorial EyAgencia:</strong> {editorial.methodology} Atualizado em {editorial.updatedAt}.{" "}
+            <Link href="/ia-ecommerce/metodologia" className="font-black text-[#275c58]">Ver metodologia completa →</Link>
           </div>
         </div>
       </section>
