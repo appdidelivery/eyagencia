@@ -172,7 +172,8 @@ export default async function ToolPage({ params }: Props) {
           </div>
 
           <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-7 text-sm leading-7 text-slate-600">
-            <strong className="text-slate-900">Transparência editorial:</strong> {editorial.methodology} Esta ficha não é uma recomendação comercial automática nem uma classificação de “melhor ferramenta”.
+            <strong className="text-slate-900">Transparência editorial:</strong> {editorial.methodology} Esta ficha não é uma recomendação comercial automática nem uma classificação de “melhor ferramenta”.{" "}
+            <Link href="/ia-ecommerce/metodologia" className="font-black text-[#275c58]">Metodologia completa →</Link>
           </div>
         </div>
       </section>
