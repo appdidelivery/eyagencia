@@ -76,7 +76,8 @@ export default function IAEcommercePage() {
               "@type": "SoftwareApplication",
               name: tool.name,
               applicationCategory: tool.category,
-              url: tool.url,
+              url: `https://eyagencia.com.br/ia-ecommerce/ferramentas/${tool.slug}`,
+              sameAs: tool.source,
               creator: {
                 "@type": "Organization",
                 name: tool.company,
