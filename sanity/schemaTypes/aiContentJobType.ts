@@ -1,11 +1,11 @@
-import {RobotIcon} from '@sanity/icons'
+import {DocumentTextIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 
 export const aiContentJobType = defineType({
   name: 'aiContentJob',
   title: 'AI Content Job',
   type: 'document',
-  icon: RobotIcon,
+  icon: DocumentTextIcon,
   fields: [
     defineField({name: 'topic', title: 'Pauta', type: 'string', validation: (Rule) => Rule.required()}),
     defineField({name: 'targetKeyword', title: 'Palavra-chave alvo', type: 'string'}),
