@@ -75,42 +75,48 @@ async function callAgent(args: {
     process.env.CONTENT_AGENT_MODEL ||
     process.env.OPENAI_CONTENT_MODEL ||
     (usingGateway ? DEFAULT_MODEL : 'gpt-6-luna')
-  const payload: JsonObject = {
-    model,
-    instructions: args.instructions,
-    input: args.input,
-    max_output_tokens: args.maxOutputTokens || 5000,
-  }
-
   const freePilotMode = model === 'inclusionai/ling-3.1-flash-free'
+  const freePilotInstruction =
+    args.instructions +
+    (args.webSearch
+      ? '\nMODO PILOTO GRATUITO: web search nativo está desativado. Não invente fontes, URLs, estatísticas, datas, tendências ou números atuais. Trabalhe apenas com conhecimento geral não temporal e sinalize limitações. Se não puder verificar algo, omita.'
+      : '')
 
-  // The free pilot model does not expose native web search. In that mode we
-  // validate the end-to-end pipeline without paid search/model usage; factual
-  // claims must remain conservative and the draft still requires human review.
+  const payload: JsonObject = freePilotMode
+    ? {
+        model,
+        messages: [
+          {role: 'system', content: freePilotInstruction},
+          {role: 'user', content: args.input},
+        ],
+        max_tokens: args.maxOutputTokens || 5000,
+      }
+    : {
+        model,
+        instructions: args.instructions,
+        input: args.input,
+        max_output_tokens: args.maxOutputTokens || 5000,
+      }
+
   if (args.webSearch && !freePilotMode) {
     payload.tools = [{type: 'web_search'}]
   }
 
-  if (freePilotMode && args.webSearch) {
-    payload.instructions =
-      args.instructions +
-      '\nMODO PILOTO GRATUITO: web search nativo está desativado. Não invente fontes, URLs, estatísticas, datas, tendências ou números atuais. Trabalhe apenas com conhecimento geral não temporal e sinalize limitações. Se não puder verificar algo, omita.'
-  }
-
-  const response = await fetch(
-    usingGateway
+  const endpoint = freePilotMode
+    ? 'https://ai-gateway.vercel.sh/v1/chat/completions'
+    : usingGateway
       ? 'https://ai-gateway.vercel.sh/v1/responses'
-      : 'https://api.openai.com/v1/responses',
-    {
+      : 'https://api.openai.com/v1/responses'
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       Authorization: 'Bearer ' + apiKey,
       'Content-Type': 'application/json',
     },
-      body: JSON.stringify(payload),
-      cache: 'no-store',
-    },
-  )
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  })
 
   if (!response.ok) {
     const detail = await response.text()
@@ -118,7 +124,9 @@ async function callAgent(args: {
   }
 
   const data = await response.json()
-  const text = extractOutputText(data)
+  const text = freePilotMode
+    ? String(data?.choices?.[0]?.message?.content || '').trim()
+    : extractOutputText(data)
   if (!text) throw new Error('Resposta vazia do agente.')
 
   return {text, model, responseId: data.id as string | undefined}
