@@ -10,10 +10,11 @@ Fluxo inicial, deliberadamente em modo **draft-only**:
 
 ## Variáveis de ambiente
 
-- `OPENAI_API_KEY`
-- `OPENAI_CONTENT_MODEL` (opcional; padrão: `gpt-6-luna`)
 - `SANITY_API_WRITE_TOKEN`
-- `CONTENT_AGENT_SECRET`
+- `CONTENT_AGENT_SECRET` (obrigatório em produção; preview protegido dispensa no piloto)
+- `CONTENT_AGENT_MODEL` (opcional; padrão no AI Gateway: `openai/gpt-6-luna`)
+- `AI_GATEWAY_API_KEY` (opcional em deploy Vercel com `VERCEL_OIDC_TOKEN`; usado como fallback)
+- `OPENAI_API_KEY` (fallback opcional caso o AI Gateway/OIDC não esteja disponível)
 - `NEXT_PUBLIC_SANITY_PROJECT_ID` (já usado pelo projeto)
 - `NEXT_PUBLIC_SANITY_DATASET` (já usado pelo projeto)
 
@@ -21,9 +22,11 @@ Fluxo inicial, deliberadamente em modo **draft-only**:
 
 `POST /api/content-agent/run`
 
-Header:
+Header em produção:
 
 `Authorization: Bearer <CONTENT_AGENT_SECRET>`
+
+No preview protegido pela Vercel, o piloto aceita o POST sem esse header.
 
 Body opcional:
 
