@@ -16,7 +16,7 @@ type AgentRequest = {
 const DEFAULT_TOPIC = 'E-commerce + Inteligência Artificial em 2026'
 const DEFAULT_KEYWORD = 'inteligência artificial no e-commerce'
 const DEFAULT_AUDIENCE = 'gestores de e-commerce, marketing e negócios digitais no Brasil'
-const DEFAULT_MODEL = 'gpt-6-luna'
+const DEFAULT_MODEL = 'openai/gpt-6-luna'
 
 function extractOutputText(response: JsonObject): string {
   if (typeof response.output_text === 'string' && response.output_text.trim()) {
@@ -61,10 +61,20 @@ async function callAgent(args: {
   webSearch?: boolean
   maxOutputTokens?: number
 }) {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('OPENAI_API_KEY não configurada.')
+  const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN
+  const directOpenAiKey = process.env.OPENAI_API_KEY
+  const apiKey = gatewayToken || directOpenAiKey
+  if (!apiKey) {
+    throw new Error(
+      'Autenticação de IA ausente: configure AI_GATEWAY_API_KEY/VERCEL_OIDC_TOKEN ou OPENAI_API_KEY.',
+    )
+  }
 
-  const model = process.env.OPENAI_CONTENT_MODEL || DEFAULT_MODEL
+  const usingGateway = Boolean(gatewayToken)
+  const model =
+    process.env.CONTENT_AGENT_MODEL ||
+    process.env.OPENAI_CONTENT_MODEL ||
+    (usingGateway ? DEFAULT_MODEL : 'gpt-6-luna')
   const payload: JsonObject = {
     model,
     instructions: args.instructions,
@@ -76,15 +86,20 @@ async function callAgent(args: {
     payload.tools = [{type: 'web_search'}]
   }
 
-  const response = await fetch('https://api.openai.com/v1/responses', {
+  const response = await fetch(
+    usingGateway
+      ? 'https://ai-gateway.vercel.sh/v1/responses'
+      : 'https://api.openai.com/v1/responses',
+    {
     method: 'POST',
     headers: {
       Authorization: 'Bearer ' + apiKey,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
-    cache: 'no-store',
-  })
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    },
+  )
 
   if (!response.ok) {
     const detail = await response.text()
@@ -196,6 +211,10 @@ function articleToPortableText(article: JsonObject) {
 }
 
 function isAuthorized(request: NextRequest) {
+  // Preview deployments are protected by Vercel Authentication and are used
+  // only for the human-reviewed pilot. Production always requires the app secret.
+  if (process.env.VERCEL_ENV === 'preview') return true
+
   const secret = process.env.CONTENT_AGENT_SECRET
   const authorization = request.headers.get('authorization')
   return Boolean(secret && authorization === 'Bearer ' + secret)
@@ -215,8 +234,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({error: 'Não autorizado.'}, {status: 401})
   }
 
+  const hasAiAuth = Boolean(
+    process.env.AI_GATEWAY_API_KEY ||
+      process.env.VERCEL_OIDC_TOKEN ||
+      process.env.OPENAI_API_KEY,
+  )
+
   const missing = [
-    !process.env.OPENAI_API_KEY && 'OPENAI_API_KEY',
+    !hasAiAuth && 'AI_GATEWAY_API_KEY/VERCEL_OIDC_TOKEN (ou OPENAI_API_KEY)',
     !process.env.SANITY_API_WRITE_TOKEN && 'SANITY_API_WRITE_TOKEN',
     !process.env.NEXT_PUBLIC_SANITY_PROJECT_ID && 'NEXT_PUBLIC_SANITY_PROJECT_ID',
     !process.env.NEXT_PUBLIC_SANITY_DATASET && 'NEXT_PUBLIC_SANITY_DATASET',
