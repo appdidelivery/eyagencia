@@ -283,7 +283,7 @@ export async function POST(request: NextRequest) {
         JSON.stringify(brief) +
         '\n\nVerificação factual:\n' +
         JSON.stringify(factCheck) +
-        '\n\nGere JSON com: title, slug, seoTitle (50-60 caracteres), seoDescription (150-160 caracteres), excerpt, searchIntent, sections (cada item com heading, paragraphs e bullets opcionais), faq (question/answer), internalLinks (anchor/url usando somente caminhos plausíveis de eyagencia.com.br) e sources (title/url apenas das fontes verificadas). O artigo deve ser aprofundado, útil e acionável.',
+        '\n\nGere JSON com: title, slug, seoTitle (50-60 caracteres), seoDescription (150-160 caracteres), excerpt, searchIntent, sections (cada item com heading, paragraphs e bullets opcionais), faq (question/answer), internalLinks (anchor/url usando SOMENTE esta allowlist: /ia-ecommerce, /ia-ecommerce/ferramentas, /ia-ecommerce/guias, /ia-ecommerce/metodologia, /blog, /clientes, /parceiros) e sources (title/url apenas das fontes verificadas). O artigo deve ser aprofundado, útil e acionável.',
     })
     const article = parseJson(editor.text)
 
