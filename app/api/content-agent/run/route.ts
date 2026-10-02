@@ -16,7 +16,7 @@ type AgentRequest = {
 const DEFAULT_TOPIC = 'E-commerce + Inteligência Artificial em 2026'
 const DEFAULT_KEYWORD = 'inteligência artificial no e-commerce'
 const DEFAULT_AUDIENCE = 'gestores de e-commerce, marketing e negócios digitais no Brasil'
-const DEFAULT_MODEL = 'openai/gpt-6-luna'
+const DEFAULT_MODEL = 'google/gemini-3.1-flash-lite'
 
 function extractOutputText(response: JsonObject): string {
   if (typeof response.output_text === 'string' && response.output_text.trim()) {
