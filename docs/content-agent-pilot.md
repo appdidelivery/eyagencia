@@ -12,7 +12,7 @@ Fluxo inicial, deliberadamente em modo **draft-only**:
 
 - `SANITY_API_WRITE_TOKEN`
 - `CONTENT_AGENT_SECRET` (obrigatório em produção; preview protegido dispensa no piloto)
-- `CONTENT_AGENT_MODEL` (opcional; padrão no AI Gateway: `openai/gpt-6-luna`)
+- `CONTENT_AGENT_MODEL` (opcional; padrão no AI Gateway durante o piloto: `google/gemini-3.1-flash-lite` (compatível com Free AI Gateway Credit; priorizamos testar sem gasto antes de habilitar modelos pagos))
 - `AI_GATEWAY_API_KEY` (opcional em deploy Vercel com `VERCEL_OIDC_TOKEN`; usado como fallback)
 - `OPENAI_API_KEY` (fallback opcional caso o AI Gateway/OIDC não esteja disponível)
 - `NEXT_PUBLIC_SANITY_PROJECT_ID` (já usado pelo projeto)
