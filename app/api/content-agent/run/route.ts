@@ -89,7 +89,8 @@ async function callAgent(args: {
           {role: 'system', content: freePilotInstruction},
           {role: 'user', content: args.input},
         ],
-        max_tokens: args.maxOutputTokens || 5000,
+        reasoning: {effort: 'none'},
+        max_completion_tokens: args.maxOutputTokens || 5000,
       }
     : {
         model,
