@@ -16,7 +16,7 @@ type AgentRequest = {
 const DEFAULT_TOPIC = 'E-commerce + Inteligência Artificial em 2026'
 const DEFAULT_KEYWORD = 'inteligência artificial no e-commerce'
 const DEFAULT_AUDIENCE = 'gestores de e-commerce, marketing e negócios digitais no Brasil'
-const DEFAULT_MODEL = 'google/gemini-3.1-flash-lite'
+const DEFAULT_MODEL = 'inclusionai/ling-3.1-flash-free'
 
 function extractOutputText(response: JsonObject): string {
   if (typeof response.output_text === 'string' && response.output_text.trim()) {
@@ -82,8 +82,19 @@ async function callAgent(args: {
     max_output_tokens: args.maxOutputTokens || 5000,
   }
 
-  if (args.webSearch) {
+  const freePilotMode = model === 'inclusionai/ling-3.1-flash-free'
+
+  // The free pilot model does not expose native web search. In that mode we
+  // validate the end-to-end pipeline without paid search/model usage; factual
+  // claims must remain conservative and the draft still requires human review.
+  if (args.webSearch && !freePilotMode) {
     payload.tools = [{type: 'web_search'}]
+  }
+
+  if (freePilotMode && args.webSearch) {
+    payload.instructions =
+      args.instructions +
+      '\nMODO PILOTO GRATUITO: web search nativo está desativado. Não invente fontes, URLs, estatísticas, datas, tendências ou números atuais. Trabalhe apenas com conhecimento geral não temporal e sinalize limitações. Se não puder verificar algo, omita.'
   }
 
   const response = await fetch(
