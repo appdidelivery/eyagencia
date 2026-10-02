@@ -45,3 +45,5 @@ Sem body, o endpoint usa essa pauta como primeiro teste.
 Nenhuma execução publica automaticamente. Mesmo quando o QA retorna score >= 85, o conteúdo permanece em draft para revisão humana no Studio.
 
 > Depois de adicionar ou alterar variáveis de ambiente na Vercel, gere um novo preview deployment para que o runtime receba os novos valores.
+
+Preview validado em 2026-10-02 para recarregar variáveis de ambiente do piloto.
