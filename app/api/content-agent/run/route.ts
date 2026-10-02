@@ -243,6 +243,16 @@ function isAuthorized(request: NextRequest) {
 export async function GET(request: NextRequest) {
   if (
     process.env.VERCEL_ENV === 'preview' &&
+    request.nextUrl.searchParams.get('latest') === '1'
+  ) {
+    const latest = await writeClient.fetch(
+      '*[_type == "aiContentJob"] | order(createdAt desc)[0]{topic,status,qaPassed,qaScore,model,postDraftId,createdAt}',
+    )
+    return NextResponse.json({ok: true, latest})
+  }
+
+  if (
+    process.env.VERCEL_ENV === 'preview' &&
     request.nextUrl.searchParams.get('check') === 'sanity'
   ) {
     if (!process.env.SANITY_API_WRITE_TOKEN) {
