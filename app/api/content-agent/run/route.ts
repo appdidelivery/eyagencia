@@ -221,6 +221,46 @@ function isAuthorized(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  if (
+    process.env.VERCEL_ENV === 'preview' &&
+    request.nextUrl.searchParams.get('check') === 'sanity'
+  ) {
+    if (!process.env.SANITY_API_WRITE_TOKEN) {
+      return NextResponse.json(
+        {ok: false, service: 'sanity', error: 'SANITY_API_WRITE_TOKEN ausente.'},
+        {status: 503},
+      )
+    }
+
+    const testId = 'drafts.content-agent-credential-check'
+    try {
+      await writeClient.createOrReplace({
+        _id: testId,
+        _type: 'aiContentJob',
+        topic: 'Credential check',
+        status: 'running',
+        createdAt: new Date().toISOString(),
+      })
+      await writeClient.delete(testId)
+
+      return NextResponse.json({
+        ok: true,
+        service: 'sanity',
+        writeAccess: true,
+        cleanup: true,
+      })
+    } catch (error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          service: 'sanity',
+          error: error instanceof Error ? error.message : 'Erro desconhecido.',
+        },
+        {status: 500},
+      )
+    }
+  }
+
   // Temporary preview-only pilot trigger. It is removed before merging to main.
   if (
     process.env.VERCEL_ENV === 'preview' &&
