@@ -220,7 +220,15 @@ function isAuthorized(request: NextRequest) {
   return Boolean(secret && authorization === 'Bearer ' + secret)
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Temporary preview-only pilot trigger. It is removed before merging to main.
+  if (
+    process.env.VERCEL_ENV === 'preview' &&
+    request.nextUrl.searchParams.get('pilot') === '1'
+  ) {
+    return POST(request)
+  }
+
   return NextResponse.json({
     service: 'eYagencia Content Agent',
     status: 'ready',
