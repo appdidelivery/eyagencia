@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 
 export default function WhatsAppForm() {
   const handleWhatsAppRedirect = (e: React.FormEvent<HTMLFormElement>) => {
@@ -34,11 +33,8 @@ export default function WhatsAppForm() {
         </div>
 
         {/* Direita: Formulário Focado em WhatsApp */}
-        <motion.div 
+        <div 
           className="lg:w-1/2 w-full bg-zinc-900 rounded-2xl p-6 md:p-8 border border-zinc-800"
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
         >
           <form onSubmit={handleWhatsAppRedirect} className="space-y-5">
             <div>
@@ -58,7 +54,7 @@ export default function WhatsAppForm() {
               Falar no WhatsApp
             </button>
           </form>
-        </motion.div>
+        </div>
 
       </div>
     </section>
