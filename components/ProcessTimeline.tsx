@@ -1,7 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
-
 export default function ProcessTimeline() {
   // Dados enriquecidos com densidade factual B2B
   const steps = [
@@ -56,12 +52,8 @@ export default function ProcessTimeline() {
 
           <div className="space-y-12 md:space-y-16">
             {steps.map((step, index) => (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-100px' }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="relative flex items-start gap-6 md:gap-10"
               >
                 {/* Número / Ponto na Linha */}
@@ -78,7 +70,7 @@ export default function ProcessTimeline() {
                     {step.description}
                   </p>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
