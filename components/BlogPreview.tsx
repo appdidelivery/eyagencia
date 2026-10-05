@@ -1,6 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -54,12 +51,8 @@ export default function BlogPreview() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {posts.map((post, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
               className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 group flex flex-col"
             >
               {/* O Link agora envolve o card inteiro, melhorando a UX (clicabilidade) */}
@@ -101,7 +94,7 @@ export default function BlogPreview() {
                 </div>
                 
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
 
