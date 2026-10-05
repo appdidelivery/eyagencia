@@ -1,7 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
-
 export default function ServicesGrid() {
   const services = [
     {
@@ -75,18 +71,12 @@ export default function ServicesGrid() {
           </p>
         </div>
 
-        <motion.div
+        <div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
         >
           {services.map((service, index) => (
-            <motion.div
+            <div
               key={index}
-              variants={cardVariants}
-              whileHover={{ y: -8, transition: { duration: 0.2 } }}
               className="group bg-zinc-900 border border-zinc-800/80 rounded-2xl p-8 hover:bg-zinc-800/50 hover:border-zinc-700 transition-all duration-300 flex flex-col h-full"
             >
               <div className="bg-zinc-950 w-14 h-14 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm shadow-black/50">
@@ -98,9 +88,9 @@ export default function ServicesGrid() {
               <p className="text-zinc-400 text-sm leading-relaxed flex-grow">
                 {service.description}
               </p>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
