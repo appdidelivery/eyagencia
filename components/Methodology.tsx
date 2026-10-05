@@ -1,7 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
-
 export default function Methodology() {
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -61,17 +57,12 @@ export default function Methodology() {
         </div>
 
         {/* Direita: Infográfico de Passos (Framer Motion) */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+        <div
           className="space-y-6"
         >
           {steps.map((step, index) => (
-            <motion.div
+            <div
               key={index}
-              variants={itemVariants}
               className="flex items-start gap-6 bg-zinc-950/50 p-6 md:p-8 rounded-2xl border border-zinc-800/50 hover:border-zinc-700 transition-colors shadow-lg"
             >
               {/* Círculo com o Número */}
@@ -84,9 +75,9 @@ export default function Methodology() {
                 <h3 className="text-lg md:text-xl font-bold text-white mb-2">{step.title}</h3>
                 <p className="text-zinc-400 text-sm md:text-base leading-relaxed">{step.desc}</p>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
       </div>
     </section>
