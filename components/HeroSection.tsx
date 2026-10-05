@@ -1,6 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export default function HeroSection() {
@@ -40,40 +37,35 @@ export default function HeroSection() {
 
       {/* A logo duplicada foi removida daqui, pois o Header agora cuida disso globalmente */}
 
-      <motion.div
+      <div
         className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center px-6 mt-24"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
       >
         {/* Badge de Autoridade */}
-        <motion.div variants={itemVariants} className="mb-8">
+        <div className="mb-8">
           <span className="inline-flex items-center rounded-full bg-[#275c58]/10 px-4 py-1.5 text-sm font-semibold text-[#275c58] ring-1 ring-inset ring-[#275c58]/20 shadow-sm backdrop-blur-sm">
             Acelerando Negócios B2B desde 2015
           </span>
-        </motion.div>
+        </div>
 
         {/* Headline */}
-        <motion.h1
-          variants={itemVariants}
+        <h1
           className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-7xl drop-shadow-sm"
         >
           Escale o seu E-commerce com{' '}
           <span className="text-[#275c58]">
             SEO Técnico e Tráfego Pago
           </span>
-        </motion.h1>
+        </h1>
 
         {/* Subheadline */}
-        <motion.p
-          variants={itemVariants}
+        <p
           className="mt-6 text-lg md:text-xl leading-8 text-slate-700 max-w-2xl mx-auto font-medium"
         >
           Esqueça achismos. Aplicamos engenharia de dados, Inbound Marketing e frameworks ágeis (Scrum) para transformar a sua operação em uma máquina de aquisição previsível e de alto LTV.
-        </motion.p>
+        </p>
 
         {/* CTA */}
-        <motion.div variants={itemVariants} className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-4">
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-4">
           <a
             href="#diagnostico"
             className="rounded-md bg-[#f0815b] px-8 py-4 text-base font-black text-slate-900 shadow-xl hover:bg-[#d96a45] hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto"
@@ -86,8 +78,8 @@ export default function HeroSection() {
           >
             Ver nossos processos <span aria-hidden="true">→</span>
           </a>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </section>
   );
 }
