@@ -1,7 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
-
 export default function GoogleReviews() {
   // Reviews reais extraídos diretamente do Google Meu Negócio da EyAgencia
   const reviews = [
@@ -59,12 +55,8 @@ export default function GoogleReviews() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {reviews.map((review, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: index * 0.2 }}
               className="bg-slate-50 border border-slate-200 rounded-2xl p-8 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
               <div className="flex items-center justify-between mb-6">
@@ -84,7 +76,7 @@ export default function GoogleReviews() {
                 </div>
                 <p className="font-semibold text-slate-900 text-sm truncate">{review.author_name}</p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
