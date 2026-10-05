@@ -1,20 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 
 // Adicionamos uma "prop" para definir se o fundo da página é claro (light) ou escuro (dark)
 export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }) {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -27,16 +19,15 @@ export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }
   ];
 
   // Regras de cor inteligentes
-  const textColor = isScrolled || theme === 'light' ? 'text-slate-800' : 'text-zinc-300';
-  const logoSrc = isScrolled || theme === 'light' ? '/eyagencia-logo-verde.png' : '/eyagencia-logo-branca.png';
+  const textColor = theme === 'light' ? 'text-slate-800' : 'text-zinc-300';
+  const logoSrc = theme === 'light' ? '/eyagencia-logo-verde.png' : '/eyagencia-logo-branca.png';
+  const headerStyle = theme === 'light'
+    ? 'bg-white/95 backdrop-blur-md shadow-sm py-3 border-b border-slate-100'
+    : 'bg-zinc-950/90 backdrop-blur-md py-3 border-b border-zinc-800';
 
   return (
     <header 
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-sm py-3 border-b border-slate-100' 
-          : 'bg-transparent py-5'
-      }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${headerStyle}`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between">
         
