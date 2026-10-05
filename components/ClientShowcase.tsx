@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export default function ClientShowcase() {
@@ -60,17 +59,12 @@ export default function ClientShowcase() {
           </p>
         </div>
 
-        <motion.div 
+        <div 
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
         >
           {clients.map((client, index) => (
-            <motion.div
+            <div
               key={index}
-              variants={cardVariants}
               className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-between hover:bg-zinc-800/80 hover:border-zinc-700 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
               onClick={() => window.open(client.url, "_blank")}
             >
@@ -103,9 +97,9 @@ export default function ClientShowcase() {
                 Visitar loja
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Novo Botão CTA: Ver todos os Projetos */}
         <div className="mt-16 flex justify-center">
