@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 
 export default function ClientShowcase() {
@@ -63,10 +61,12 @@ export default function ClientShowcase() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6"
         >
           {clients.map((client, index) => (
-            <div
+            <a
               key={index}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-between hover:bg-zinc-800/80 hover:border-zinc-700 hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
-              onClick={() => window.open(client.url, "_blank")}
+              href={client.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-between hover:bg-zinc-800/80 hover:border-zinc-700 hover:-translate-y-2 transition-all duration-300 group"
             >
               {/* Fallback Inteligente e Fundo Escuro para destacar logos brancas */}
               <div className="w-24 h-24 bg-zinc-950 border border-zinc-800 rounded-full flex items-center justify-center p-3 mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300 overflow-hidden relative">
@@ -77,11 +77,7 @@ export default function ClientShowcase() {
                   sizes="96px"
                   quality={85}
                   className="object-contain p-1"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-[#275c58]">${client.name.charAt(0)}</span>`;
-                  }}
-                />
+                  />
               </div>
 
               <div className="text-center">
@@ -97,7 +93,7 @@ export default function ClientShowcase() {
                 Visitar loja
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
               </div>
-            </div>
+            </a>
           ))}
         </div>
 
