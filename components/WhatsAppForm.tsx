@@ -4,10 +4,14 @@
 export default function WhatsAppForm() {
   const handleWhatsAppRedirect = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Simulação da API do WhatsApp. Na prática, você pode pegar os valores do form e montar a URL.
+    const form = new FormData(e.currentTarget);
+    const nome = String(form.get("nome") || "").trim();
+    const url = String(form.get("url") || "").trim();
     const phone = "554832200260";
-    const text = encodeURIComponent("Olá! Vim pela Landing Page da EyAgencia e gostaria de agendar um diagnóstico B2B focado em crescimento.");
-    window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+    const text = encodeURIComponent(
+      `Olá! Vim pelo site da EyAgencia e gostaria de agendar um diagnóstico B2B focado em crescimento.\n\nNome / Empresa: ${nome}\nE-commerce: ${url}`
+    );
+    window.open(`https://wa.me/${phone}?text=${text}`, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -39,11 +43,11 @@ export default function WhatsAppForm() {
           <form onSubmit={handleWhatsAppRedirect} className="space-y-5">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-zinc-400 mb-2">Seu Nome / Empresa</label>
-              <input type="text" id="name" required className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#275c58] transition-all" placeholder="Ex: João - LojaTech B2B" />
+              <input type="text" id="name" name="nome" autoComplete="organization" required className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#275c58] transition-all" placeholder="Ex: João - LojaTech B2B" />
             </div>
             <div>
               <label htmlFor="url" className="block text-sm font-medium text-zinc-400 mb-2">URL do seu E-commerce</label>
-              <input type="url" id="url" required className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#275c58] transition-all" placeholder="https://www..." />
+              <input type="url" id="url" name="url" inputMode="url" autoComplete="url" required className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#275c58] transition-all" placeholder="https://www..." />
             </div>
             
             <button 
