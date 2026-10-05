@@ -1,6 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export default function LogoTicker() {
@@ -35,12 +32,7 @@ export default function LogoTicker() {
       </div>
 
       <div className="relative w-full overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
-        <motion.div
-          className="flex w-max items-center"
-          animate={{ x: ['0%', '-50%'] }}
-          transition={{ ease: 'linear', duration: 40, repeat: Infinity }}
-          style={{ willChange: "transform" }}
-        >
+        <div className="logo-ticker-track flex w-max items-center">
           {tickerItems.map((partner, index) => (
             <a
               key={index}
@@ -61,7 +53,7 @@ export default function LogoTicker() {
               />
             </a>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
