@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { evaluateReview, type ReviewInput } from "@/app/reputacao/engine";
 import { pattyProfile } from "@/app/reputacao/patty-data";
-import { isGoogleBusinessConfigured, listGoogleBusinessReviews } from "@/app/lib/google-business-profile";
+import { getGoogleAccessToken } from "@/app/lib/reputation-google-session";
 
 const starToNumber: Record<string, number> = {
   ONE: 1,
@@ -11,18 +11,33 @@ const starToNumber: Record<string, number> = {
   FIVE: 5,
 };
 
-export async function GET() {
-  if (!isGoogleBusinessConfigured()) {
-    return NextResponse.json({
-      configured: false,
-      mode: "pilot",
-      message: "OAuth do Google Business Profile ainda não configurado.",
-    });
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const locationId = url.searchParams.get("locationId")?.replace(/^locations\//, "").trim();
+
+  if (!locationId) {
+    return NextResponse.json({ error: "locationId é obrigatório." }, { status: 400 });
   }
 
   try {
-    const data = await listGoogleBusinessReviews();
-    const reviews = (data.reviews || []).map((item) => {
+    const accessToken = await getGoogleAccessToken();
+    const endpoint = new URL(
+      `https://mybusiness.googleapis.com/v4/accounts/-/locations/${encodeURIComponent(locationId)}/reviews`
+    );
+    endpoint.searchParams.set("pageSize", "50");
+    endpoint.searchParams.set("orderBy", "update_time desc");
+
+    const response = await fetch(endpoint, {
+      headers: { authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error?.message || "Falha ao listar avaliações.");
+    }
+
+    const items = (data.reviews || []).map((item: any) => {
       const review: ReviewInput = {
         id: item.reviewId,
         reviewerName: item.reviewer?.displayName || "Cliente",
@@ -38,12 +53,13 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      configured: true,
+      connected: true,
       mode: "pilot",
       autopublish: false,
+      locationId,
       averageRating: data.averageRating,
       totalReviewCount: data.totalReviewCount,
-      reviews,
+      reviews: items,
     });
   } catch (error) {
     return NextResponse.json(
