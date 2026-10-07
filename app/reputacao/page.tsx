@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { evaluateReview } from "./engine";
 import { pattyPilotReviews, pattyProfile } from "./patty-data";
+import ReviewPlayground from "./ReviewPlayground";
 
 export const metadata: Metadata = {
   title: "Reputation AI | eYagencia",
@@ -84,6 +85,8 @@ export default function ReputationPage() {
             </div>
           </div>
         </section>
+
+        <ReviewPlayground />
 
         <section className="space-y-4">
           {items.map(({ review, decision }) => (
