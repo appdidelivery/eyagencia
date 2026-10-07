@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { evaluateReview } from "./engine";
 import { pattyPilotReviews, pattyProfile } from "./patty-data";
 import ReviewPlayground from "./ReviewPlayground";
+import GoogleConnectionPanel from "./GoogleConnectionPanel";
 
 export const metadata: Metadata = {
   title: "Reputation AI | eYagencia",
@@ -86,6 +87,8 @@ export default function ReputationPage() {
           </div>
         </section>
 
+        <GoogleConnectionPanel />
+
         <ReviewPlayground />
 
         <section className="space-y-4">
@@ -138,7 +141,7 @@ export default function ReputationPage() {
         </section>
 
         <section className="mt-8 rounded-2xl border border-dashed border-slate-700 p-5 text-sm text-slate-400">
-          <b className="text-slate-200">Próximo passo técnico:</b> conectar OAuth do Google Business Profile. A integração já foi desenhada para listar reviews por unidade e responder somente quando a política do motor autorizar.
+          <b className="text-slate-200">Status:</b> OAuth do Google Business Profile integrado. No piloto, a conta é conectada e os perfis/reviews podem ser consultados, enquanto respostas reais continuam bloqueadas por dry-run.
         </section>
       </div>
     </main>
