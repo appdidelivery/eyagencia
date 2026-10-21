@@ -16,18 +16,18 @@ O score da IA **não sobrepõe** os bloqueios determinísticos. Nenhuma execuç�
 
 - O código agora usa `app/api/content-agent/evidence.ts` para consultar páginas oficiais previamente autorizadas da **ANPD** e do **MDIC**, sem API paga e sem confiar em URLs sugeridas pelo modelo.
 - Toda execução exige pelo menos duas fontes acessíveis e **cobertura de comércio eletrônico e IA/proteção de dados**; ausência de cobertura impede chamadas ao modelo.
-- O Verificador recebe um pacote limitado de trechos textuais e precisa devolver `sourceUrl`, `evidenceQuote` literal da página e `confidence >= 90` para cada fato aprovado. A checagem de código compara as citações com as páginas obtidas.
-- O Editor e o QA recebem apenas as fontes recuperadas. Links externos gerados pelo modelo que não estiverem no pacote são eliminados do rascunho.
+- O Verificador recebe um pacote limitado de trechos textuais e precisa devolver `sourceUrl`, `evidenceQuote` literal e contínua da página e `confidence >= 90` para cada fato aprovado. O código compara as citações com as páginas obtidas. Quando há erro, faz **uma única tentativa de correção do fact-check** e descarta fatos não comprovados antes da redação.
+- O Editor e o QA recebem somente fatos ainda comprovados após a checagem literal, mais as fontes recuperadas. Links externos gerados pelo modelo que não estiverem no pacote são eliminados do rascunho.
 - Se a nota ou o risco editorial falharem **mas os fatos já estiverem fundamentados**, há uma única revisão automática, seguida de novo QA. Se as fontes estiverem insuficientes ou sem lastro, não se permite uma revisão que 'lave' fatos inseguros.
 - A checagem de texto comprobatório **não demonstra sozinha a interpretação correta da fonte**. A revisão humana continua obrigatória antes de qualquer publicação.
 - Os dois rascunhos históricos (QA 84 e QA 78) não são alterados automaticamente.
 
 ## Diagnóstico gratuito de fontes
 
-A chamada `GET /api/content-agent/run?check=evidence`, disponível somente no Preview, consulta os URLs oficiais e retorna cobertura, fontes acessíveis e indisponíveis. Não chama modelos nem grava no Sanity. O autoteste `check=selftest` tem agora **14 verificações determinísticas**.
+A chamada `GET /api/content-agent/run?check=evidence`, disponível somente no Preview, consulta os URLs oficiais e retorna cobertura, fontes acessíveis e indisponíveis. Não chama modelos nem grava no Sanity. O autoteste `check=selftest` tem agora **15 verificações determinísticas**.
 
 ### Limitação conhecida
-No primeiro teste, algumas páginas oficiais do MDIC não responderam ao servidor; outras páginas do mesmo ministério foram incluídas como alternativas. Isso não deve ser interpretado como pesquisa web geral e o sistema não deve extrapolar os dados consultados para o mercado inteiro.
+Em testes sucessivos, páginas de ANPD e MDIC tiveram disponibilidade intermitente. A consulta agora usa ondas pequenas com páginas alternativas, exige cobertura das duas áreas e interrompe a geração em caso de falta de fontes. Isso não deve ser interpretado como pesquisa web geral e o sistema não deve extrapolar os dados consultados para o mercado inteiro.
 
 ## Fatos jurídicos verificados em 21/10/2026
 
@@ -53,7 +53,7 @@ Para qualquer outro dispositivo citado no futuro, **verificar número, ano, obje
 ## Rotas
 
 - `GET /api/content-agent/run`: exibe status e situação da trava financeira (sem chamar IA).
-- `GET /api/content-agent/run?check=selftest`: somente no preview; 14 autotestes determinísticos, sem chamadas de IA e sem gravar no Sanity.
+- `GET /api/content-agent/run?check=selftest`: somente no preview; 15 autotestes determinísticos, sem chamadas de IA e sem gravar no Sanity.
 - `GET /api/content-agent/run?check=evidence`: somente no preview; consulta fontes oficiais em tempo real, sem chamadas de IA nem escrita no Sanity.
 - `GET /api/content-agent/run?check=model`: somente no preview; verifica catálogo e preço real do modelo gratuito, sem chamadas de geração e sem gravar no Sanity.
 - `GET /api/content-agent/run?check=sanity`: somente no preview; grava e remove um registro temporário no Sanity para testar permissões.
@@ -67,7 +67,14 @@ Após mudar variáveis de ambiente, realizar novo deploy de preview para recarre
 
 - [ ] Executar `check=model` para validar o preço do modelo gratuito no catálogo do Vercel AI Gateway.
 - [ ] Configurar orçamento e alerta de gastos restritivos antes de usar modelo pago.
-- [ ] Verificar os 14 autotestes em `check=selftest` (inclui os três erros jurídicos conhecidos).
+- [ ] Verificar os 15 autotestes em `check=selftest` (inclui os três erros jurídicos conhecidos).
 - [ ] Conferir o resultado de build do preview.
 - [ ] Revisar rascunho, fontes, links, autoria, data, FAQ e informações legais por humano.
 - [ ] Manter publicação automática inativa.
+
+## Status do piloto em 21/10/2026
+
+- Primeira geração com pesquisa por fontes oficiais: rascunho criado, QA do modelo 92/100, **bloqueado** por cinco citações sem correspondência literal; nenhuma publicação.
+- Motivos: citação que combinava trechos separados e passagens do MDIC não preservadas por completo na extração anterior. A correção posterior passou a preservar HTML inline e validar trechos contínuos mais longos.
+- Para investigar: `GET /api/content-agent/run?check=latest-evidence` mostra, no preview protegido, citações e fontes do último job sem gerar conteúdo.
+- `CONTENT_AGENT_AI_ENABLED=false` e `CONTENT_AGENT_PILOT_ENABLED=false` devem permanecer como padrão fora de um teste específico. Alterar variáveis exige novo preview; deployments antigos retêm configurações de seu momento de criação.
