@@ -16,7 +16,49 @@ type AgentRequest = {
 const DEFAULT_TOPIC = 'E-commerce + Inteligência Artificial em 2026'
 const DEFAULT_KEYWORD = 'inteligência artificial no e-commerce'
 const DEFAULT_AUDIENCE = 'gestores de e-commerce, marketing e negócios digitais no Brasil'
-const DEFAULT_MODEL = 'inclusionai/ling-3.1-flash-free'
+const DEFAULT_MODEL = 'reflection/beam-free'
+
+// Never silently switch the free pilot to a billable model. Only model IDs
+// ending in -free are considered; confirm their live price before any inference.
+async function checkZeroCostModel(model: string) {
+  if (!model.endsWith('-free')) {
+    return {approved: false, model, reason: 'Modelo sem sufixo -free pode gerar custos.'}
+  }
+
+  try {
+    const response = await fetch('https://ai-gateway.vercel.sh/v1/models', {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!response.ok) {
+      return {approved: false, model, reason: 'Catálogo de preços indisponível.'}
+    }
+    const catalog = await response.json()
+    const entry = Array.isArray(catalog?.data)
+      ? catalog.data.find((candidate: JsonObject) => candidate.id === model)
+      : null
+    if (!entry) {
+      return {approved: false, model, reason: 'Modelo não listado no catálogo atual.'}
+    }
+    const zeroCost =
+      entry.type === 'language' &&
+      Number(entry.pricing?.input) === 0 &&
+      Number(entry.pricing?.output) === 0 &&
+      entry.pricing?.varies_by_provider !== true &&
+      Array.isArray(entry.tags) &&
+      entry.tags.includes('free')
+
+    return {
+      approved: zeroCost,
+      model,
+      reason: zeroCost
+        ? 'Modelo -free presente no catálogo com entrada e saída a custo zero.'
+        : 'O catálogo não confirma custo zero para este modelo.',
+    }
+  } catch {
+    return {approved: false, model, reason: 'Não foi possível verificar o preço em tempo real.'}
+  }
+}
 
 function extractOutputText(response: JsonObject): string {
   if (typeof response.output_text === 'string' && response.output_text.trim()) {
@@ -75,7 +117,7 @@ async function callAgent(args: {
     process.env.CONTENT_AGENT_MODEL ||
     process.env.OPENAI_CONTENT_MODEL ||
     (usingGateway ? DEFAULT_MODEL : 'gpt-6-luna')
-  const freePilotMode = model === 'inclusionai/ling-3.1-flash-free'
+  const freePilotMode = model.endsWith('-free')
   const freePilotInstruction =
     args.instructions +
     (args.webSearch
@@ -89,7 +131,6 @@ async function callAgent(args: {
           {role: 'system', content: freePilotInstruction},
           {role: 'user', content: args.input},
         ],
-        reasoning: {effort: 'none'},
         max_completion_tokens: args.maxOutputTokens || 5000,
       }
     : {
@@ -175,6 +216,8 @@ function deterministicEditorialIssues(
   if (!webSearchActive) {
     // The promotional free model disables native search. Neither a fabricated
     // source URL nor a self-reported confidence score counts as verification.
+    // Any unverified workflow must remain in human review regardless of AI score.
+    issues.push('Pesquisa web independente desativada; fact-check humano obrigatório.')
     if (Array.isArray(article.sources) && article.sources.length) {
       issues.push('Fontes listadas sem pesquisa web ativa; validação humana obrigatória.')
     }
@@ -379,6 +422,15 @@ function isAuthorized(request: NextRequest) {
 export async function GET(request: NextRequest) {
   if (
     process.env.VERCEL_ENV === 'preview' &&
+    request.nextUrl.searchParams.get('check') === 'model'
+  ) {
+    const model = process.env.CONTENT_AGENT_MODEL || DEFAULT_MODEL
+    const status = await checkZeroCostModel(model)
+    return NextResponse.json({...status, aiCalls: 0, sanityWrites: 0})
+  }
+
+  if (
+    process.env.VERCEL_ENV === 'preview' &&
     request.nextUrl.searchParams.get('check') === 'selftest'
   ) {
     const result = runZeroCostSelfTests()
@@ -470,6 +522,15 @@ export async function POST(request: NextRequest) {
   }
   if (!isAuthorized(request)) {
     return NextResponse.json({error: 'Não autorizado.'}, {status: 401})
+  }
+
+  const selectedModel = process.env.CONTENT_AGENT_MODEL || process.env.OPENAI_CONTENT_MODEL || DEFAULT_MODEL
+  const costCheck = await checkZeroCostModel(selectedModel)
+  if (!costCheck.approved) {
+    return NextResponse.json(
+      {ok: false, error: 'Execução bloqueada: modelo não comprovadamente gratuito.', costCheck, aiCalls: 0},
+      {status: 403},
+    )
   }
 
   const hasAiAuth = Boolean(
