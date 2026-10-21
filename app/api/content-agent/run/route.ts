@@ -438,6 +438,22 @@ function isAuthorized(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  if (process.env.VERCEL_ENV === 'preview' && request.nextUrl.searchParams.get('check') === 'latest-qa') {
+    const latest = await writeClient.fetch(
+      '*[_type == "aiContentJob"] | order(createdAt desc)[0]{topic,status,qaScore,qaRaw,createdAt}',
+    )
+    if (!latest) return NextResponse.json({ok: false, error: 'Sem histórico de QA.'}, {status: 404})
+    let qa: JsonObject = {}
+    try { qa = JSON.parse(latest.qaRaw || '{}') } catch {}
+    return NextResponse.json({
+      ok: true, topic: latest.topic, status: latest.status, qaScore: latest.qaScore,
+      passed: qa.passed || false, risk: qa.publicationRisk || null,
+      issues: Array.isArray(qa.issues) ? qa.issues.slice(0, 25) : [],
+      fixes: Array.isArray(qa.fixes) ? qa.fixes.slice(0, 20) : [],
+      aiCalls: 0, sanityWrites: 0,
+    })
+  }
+
   if (
     process.env.VERCEL_ENV === 'preview' &&
     request.nextUrl.searchParams.get('check') === 'latest-evidence'
@@ -756,7 +772,8 @@ export async function POST(request: NextRequest) {
     // One bounded editorial rewrite, only when the underlying facts themselves
     // have traceable evidence; never use rewrites to wash unverified facts.
     if (
-      factEvidenceIssues.length === 0 &&
+      Array.isArray(safeFactCheck.approvedFacts) &&
+      safeFactCheck.approvedFacts.length >= 2 &&
       (!qaResult.passed || Number(qaResult.score || 0) < 85 || qaResult.publicationRisk !== 'low')
     ) {
       try {
