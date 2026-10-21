@@ -12,6 +12,23 @@
 
 O score da IA **não sobrepõe** os bloqueios determinísticos. Nenhuma execução publica artigos automaticamente. Links internos não autorizados são retirados da versão rascunho. Quando não há busca web ativa, fontes alegadas pelo modelo não são adicionadas ao corpo do rascunho, e o registro fica em revisão.
 
+## Pesquisa com fontes oficiais e revisão automática
+
+- O código agora usa `app/api/content-agent/evidence.ts` para consultar páginas oficiais previamente autorizadas da **ANPD** e do **MDIC**, sem API paga e sem confiar em URLs sugeridas pelo modelo.
+- Toda execução exige pelo menos duas fontes acessíveis e **cobertura de comércio eletrônico e IA/proteção de dados**; ausência de cobertura impede chamadas ao modelo.
+- O Verificador recebe um pacote limitado de trechos textuais e precisa devolver `sourceUrl`, `evidenceQuote` literal da página e `confidence >= 90` para cada fato aprovado. A checagem de código compara as citações com as páginas obtidas.
+- O Editor e o QA recebem apenas as fontes recuperadas. Links externos gerados pelo modelo que não estiverem no pacote são eliminados do rascunho.
+- Se a nota ou o risco editorial falharem **mas os fatos já estiverem fundamentados**, há uma única revisão automática, seguida de novo QA. Se as fontes estiverem insuficientes ou sem lastro, não se permite uma revisão que 'lave' fatos inseguros.
+- A checagem de texto comprobatório **não demonstra sozinha a interpretação correta da fonte**. A revisão humana continua obrigatória antes de qualquer publicação.
+- Os dois rascunhos históricos (QA 84 e QA 78) não são alterados automaticamente.
+
+## Diagnóstico gratuito de fontes
+
+A chamada `GET /api/content-agent/run?check=evidence`, disponível somente no Preview, consulta os URLs oficiais e retorna cobertura, fontes acessíveis e indisponíveis. Não chama modelos nem grava no Sanity. O autoteste `check=selftest` tem agora **14 verificações determinísticas**.
+
+### Limitação conhecida
+No primeiro teste, algumas páginas oficiais do MDIC não responderam ao servidor; outras páginas do mesmo ministério foram incluídas como alternativas. Isso não deve ser interpretado como pesquisa web geral e o sistema não deve extrapolar os dados consultados para o mercado inteiro.
+
 ## Fatos jurídicos verificados em 21/10/2026
 
 As referências abaixo foram indevidamente usadas no artigo de teste, e **não devem ser apresentadas como marcos de IA ou regulação de plataformas**:
@@ -36,7 +53,8 @@ Para qualquer outro dispositivo citado no futuro, **verificar número, ano, obje
 ## Rotas
 
 - `GET /api/content-agent/run`: exibe status e situação da trava financeira (sem chamar IA).
-- `GET /api/content-agent/run?check=selftest`: somente no preview; 7 autotestes determinísticos, sem chamadas de IA e sem gravar no Sanity.
+- `GET /api/content-agent/run?check=selftest`: somente no preview; 14 autotestes determinísticos, sem chamadas de IA e sem gravar no Sanity.
+- `GET /api/content-agent/run?check=evidence`: somente no preview; consulta fontes oficiais em tempo real, sem chamadas de IA nem escrita no Sanity.
 - `GET /api/content-agent/run?check=model`: somente no preview; verifica catálogo e preço real do modelo gratuito, sem chamadas de geração e sem gravar no Sanity.
 - `GET /api/content-agent/run?check=sanity`: somente no preview; grava e remove um registro temporário no Sanity para testar permissões.
 - `GET /api/content-agent/run?latest=1`: somente no preview; lê o histórico do último job, sem chamar IA.
@@ -49,7 +67,7 @@ Após mudar variáveis de ambiente, realizar novo deploy de preview para recarre
 
 - [ ] Executar `check=model` para validar o preço do modelo gratuito no catálogo do Vercel AI Gateway.
 - [ ] Configurar orçamento e alerta de gastos restritivos antes de usar modelo pago.
-- [ ] Verificar os 7 autotestes em `check=selftest` (inclui os três erros jurídicos conhecidos).
+- [ ] Verificar os 14 autotestes em `check=selftest` (inclui os três erros jurídicos conhecidos).
 - [ ] Conferir o resultado de build do preview.
 - [ ] Revisar rascunho, fontes, links, autoria, data, FAQ e informações legais por humano.
 - [ ] Manter publicação automática inativa.
