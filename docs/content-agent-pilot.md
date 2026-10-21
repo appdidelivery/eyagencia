@@ -27,7 +27,7 @@ O score da IA **não sobrepõe** os bloqueios determinísticos. Nenhuma execuç�
 A chamada `GET /api/content-agent/run?check=evidence`, disponível somente no Preview, consulta os URLs oficiais e retorna cobertura, fontes acessíveis e indisponíveis. Não chama modelos nem grava no Sanity. O autoteste `check=selftest` tem agora **15 verificações determinísticas**.
 
 ### Limitação conhecida
-Em testes sucessivos, páginas de ANPD e MDIC tiveram disponibilidade intermitente. A consulta agora usa ondas pequenas com páginas alternativas, exige cobertura das duas áreas e interrompe a geração em caso de falta de fontes. Isso não deve ser interpretado como pesquisa web geral e o sistema não deve extrapolar os dados consultados para o mercado inteiro.
+Em testes sucessivos, páginas de ANPD e MDIC tiveram disponibilidade intermitente. A consulta agora usa ondas pequenas com páginas alternativas e cache HTTP de até 30 minutos, exige cobertura das duas áreas e interrompe a geração em caso de falta de fontes. O cache é um compromisso de disponibilidade; a data e as citações ainda precisam ser revistas para temas sensíveis. Isso não deve ser interpretado como pesquisa web geral e o sistema não deve extrapolar os dados consultados para o mercado inteiro.
 
 ## Fatos jurídicos verificados em 21/10/2026
 
