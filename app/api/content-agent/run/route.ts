@@ -148,15 +148,15 @@ const ALLOWED_INTERNAL_PATHS = new Set([
 // This list is a safety backstop, NOT a replacement for source verification.
 const INCORRECT_LEGAL_REFERENCES = [
   {
-    pattern: /lei\\s*(?:n[º°o.]*)?\\s*15[.]?070\\s*\\/\\s*2024/i,
+    pattern: /lei\s*(?:n[º°o.]*)?\s*15[.]?070\s*\/\s*2024/i,
     issue: 'Lei 15.070/2024 regula bioinsumos, não inteligência artificial.',
   },
   {
-    pattern: /lei\\s*(?:n[º°o.]*)?\\s*14[.]?811\\s*\\/\\s*2024/i,
+    pattern: /lei\s*(?:n[º°o.]*)?\s*14[.]?811\s*\/\s*2024/i,
     issue: 'Lei 14.811/2024 não é uma lei geral sobre mercados digitais ou IA.',
   },
   {
-    pattern: /decreto\\s*(?:n[º°o.]*)?\\s*11[.]?157\\s*\\/\\s*2023/i,
+    pattern: /decreto\s*(?:n[º°o.]*)?\s*11[.]?157\s*\/\s*2023/i,
     issue: 'Decreto 11.157 é de 2022, foi revogado e não regula plataformas digitais.',
   },
 ]
@@ -178,7 +178,7 @@ function deterministicEditorialIssues(
     if (Array.isArray(article.sources) && article.sources.length) {
       issues.push('Fontes listadas sem pesquisa web ativa; validação humana obrigatória.')
     }
-    if (/\\b(?:lei|decreto|portaria|resolu[cç][aã]o)\\s*(?:n[º°o.]*)?\\s*\\d/i.test(content)) {
+    if (/\b(?:lei|decreto|portaria|resolu[cç][aã]o)\s*(?:n[º°o.]*)?\s*\d/i.test(content)) {
       issues.push('Citação normativa produzida sem busca web ativa; conferir texto oficial.')
     }
   }
