@@ -40,6 +40,20 @@ const CATALOG: CatalogEntry[] = [
     area: 'comercio',
   },
   {
+    id: 'mdic-observatorio',
+    title: 'MDIC — Observatório do Comércio Eletrônico Nacional',
+    publisher: 'MDIC',
+    url: 'https://www.gov.br/mdic/pt-br/assuntos/sdic/observatorio/projetos',
+    area: 'comercio',
+  },
+  {
+    id: 'mdic-dados',
+    title: 'MDIC — Perguntas frequentes sobre dados do comércio eletrônico',
+    publisher: 'MDIC',
+    url: 'https://www.gov.br/mdic/pt-br/assuntos/sdic/observatorio/perguntas-frequentes/perguntas-frequentes-sobre-o-dashboard-de-comercio-eletronico',
+    area: 'comercio',
+  },
+  {
     id: 'anpd-sandbox',
     title: 'ANPD — Metodologia de testagem do Sandbox Regulatório de IA',
     publisher: 'ANPD',
