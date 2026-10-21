@@ -90,6 +90,8 @@ function readableText(html: string): string {
   const segment = (main || article)?.[1] || html
   return segment
     .replace(/<(script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+    // Preserve adjacent text broken up by inline HTML spans (common in gov.br).
+    .replace(/<\/?(?:span|strong|b|i|em|u|small)\b[^>]*>/gi, '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&(?:nbsp|#160);/gi, ' ')
     .replace(/&amp;/gi, '&')
@@ -97,7 +99,7 @@ function readableText(html: string): string {
     .replace(/&#(?:39|x27);/gi, "'")
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 5500)
+    .slice(0, 14000)
 }
 
 async function retrieveSource(entry: CatalogEntry): Promise<EvidenceSource | null> {
@@ -190,11 +192,29 @@ export function inspectFactEvidence(factCheck: Record<string, any>, bundle: Evid
     if (!Number.isFinite(confidence) || confidence < 90) {
       problems.push('Fato ' + (index + 1) + ': confiança inferior a 90%.')
     }
-    if (!source || quote.length < 25 || !normalizeEvidence(source.excerpt).includes(quote)) {
-      problems.push('Fato ' + (index + 1) + ': URL ou trecho comprobatório não corresponde à fonte consultada.')
+    if (!source) {
+      problems.push('Fato ' + (index + 1) + ': URL não corresponde a uma fonte consultada.')
+    } else if (quote.length < 25 || !normalizeEvidence(source.excerpt).includes(quote)) {
+      problems.push('Fato ' + (index + 1) + ': citação deve ser trecho LITERAL e CONTÍNUO da fonte consultada.')
     }
   }
   return problems
+}
+
+export function keepFactsWithVerbatimEvidence(
+  factCheck: Record<string, any>,
+  bundle: EvidenceBundle,
+): Array<Record<string, any>> {
+  if (!Array.isArray(factCheck.approvedFacts)) return []
+  return factCheck.approvedFacts.filter((fact: Record<string, any>) => {
+    const source = bundle.sources.find((entry) => entry.url === fact?.sourceUrl)
+    const quote = normalizeEvidence(fact?.evidenceQuote)
+    return source &&
+      Number.isFinite(Number(fact?.confidence)) &&
+      Number(fact.confidence) >= 90 &&
+      quote.length >= 25 &&
+      normalizeEvidence(source.excerpt).includes(quote)
+  })
 }
 
 export function sanitizeArticleSources(
@@ -233,5 +253,9 @@ export function testEditorialEvidence(): Array<{name: string; passed: boolean}> 
     {name: 'Não inclui links não consultados nas referências', passed: sanitizeArticleSources({sources: [{url: CATALOG[0].url}, {url: 'https://fake.example'}]}, testBundle).length === 1},
     {name: 'Exige cobertura de IA e de comércio eletrônico', passed: evidenceCoverage(testBundle).ready},
     {name: 'Bloqueia dossiê só de IA, sem mercado', passed: !evidenceCoverage({...testBundle, sources: [testBundle.sources[0]]}).ready},
+    {name: 'Conserva apenas fatos comprovados por citação literal', passed: keepFactsWithVerbatimEvidence({approvedFacts: [
+      {confidence: 96, sourceUrl: CATALOG[0].url, evidenceQuote: 'A proteção de dados pessoais exige finalidades claras, proporcionais'},
+      {confidence: 96, sourceUrl: CATALOG[0].url, evidenceQuote: 'frase inventada que não está na fonte consultada'},
+    ]}, testBundle).length === 1},
   ]
 }
