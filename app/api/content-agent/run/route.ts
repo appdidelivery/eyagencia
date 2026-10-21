@@ -210,6 +210,65 @@ function deterministicEditorialIssues(
   return issues
 }
 
+
+function runZeroCostSelfTests() {
+  const verified = {approvedFacts: [{confidence: 100}]}
+  const legalInputs = [
+    'Lei nº 15.070/2024',
+    'Lei nº 14.811/2024',
+    'Decreto nº 11.157/2023',
+  ]
+  const tests = legalInputs.map((text) => ({
+    name: 'Bloqueio de referência incorreta: ' + text,
+    passed: deterministicEditorialIssues(
+      {sections: [{heading: text, paragraphs: []}], sources: [], internalLinks: []},
+      verified,
+      true,
+    ).length === 1,
+  }))
+
+  tests.push({
+    name: 'Rejeição de fonte não verificada quando busca desativada',
+    passed: deterministicEditorialIssues(
+      {sources: [{title: 'Fonte alegada', url: 'https://example.com'}], internalLinks: []},
+      verified,
+      false,
+    ).some((issue) => issue.includes('sem pesquisa web ativa')),
+  })
+  tests.push({
+    name: 'Bloqueio de link interno fora da allowlist',
+    passed: deterministicEditorialIssues(
+      {sources: [], internalLinks: [{url: '/blog/slug-inexistente', anchor: 'Link'}]},
+      verified,
+      true,
+    ).some((issue) => issue.includes('não validados')),
+  })
+  tests.push({
+    name: 'Bloqueio de fatos com confiança inferior a 90%',
+    passed: deterministicEditorialIssues(
+      {sources: [], internalLinks: []},
+      {approvedFacts: [{confidence: 45}]},
+      true,
+    ).some((issue) => issue.includes('inferior a 90%')),
+  })
+  tests.push({
+    name: 'Exemplo básico válido não dispara bloqueios',
+    passed: deterministicEditorialIssues(
+      {sections: [{heading: 'Melhorias operacionais sem dados não verificados'}], internalLinks: [{url: '/blog', anchor: 'Blog'}], sources: []},
+      verified,
+      true,
+    ).length === 0,
+  })
+
+  return {
+    ok: tests.every((test) => test.passed),
+    service: 'eYagencia Content Agent',
+    tests,
+    aiCalls: 0,
+    sanityWrites: 0,
+  }
+}
+
 function slugify(value: string) {
   return value
     .normalize('NFD')
@@ -320,6 +379,14 @@ function isAuthorized(request: NextRequest) {
 export async function GET(request: NextRequest) {
   if (
     process.env.VERCEL_ENV === 'preview' &&
+    request.nextUrl.searchParams.get('check') === 'selftest'
+  ) {
+    const result = runZeroCostSelfTests()
+    return NextResponse.json(result, {status: result.ok ? 200 : 500})
+  }
+
+  if (
+    process.env.VERCEL_ENV === 'preview' &&
     request.nextUrl.searchParams.get('latest') === '1'
   ) {
     const latest = await writeClient.fetch(
@@ -369,11 +436,18 @@ export async function GET(request: NextRequest) {
   }
 
   // Temporary preview-only pilot trigger. It is removed before merging to main.
-  if (
-    process.env.VERCEL_ENV === 'preview' &&
-    process.env.CONTENT_AGENT_PILOT_ENABLED === 'true' &&
-    request.nextUrl.searchParams.get('pilot') === '1'
-  ) {
+  // Always refuse an explicit pilot request when the cost gate is disabled.
+  if (request.nextUrl.searchParams.get('pilot') === '1') {
+    if (
+      process.env.VERCEL_ENV !== 'preview' ||
+      process.env.CONTENT_AGENT_PILOT_ENABLED !== 'true' ||
+      process.env.CONTENT_AGENT_AI_ENABLED !== 'true'
+    ) {
+      return NextResponse.json(
+        {ok: false, error: 'Piloto desabilitado; nenhuma chamada de IA realizada.', aiCalls: 0},
+        {status: 403},
+      )
+    }
     return POST(request)
   }
 
@@ -381,11 +455,19 @@ export async function GET(request: NextRequest) {
     service: 'eYagencia Content Agent',
     status: 'ready',
     mode: 'draft-only',
+    generation: process.env.CONTENT_AGENT_AI_ENABLED === 'true' ? 'enabled' : 'blocked-by-cost-gate',
     flow: ['radar', 'verifier', 'editor', 'qa', 'sanity-draft'],
   })
 }
 
 export async function POST(request: NextRequest) {
+  // Enforce the spending gate for both POST and GET pilot, before any model call.
+  if (process.env.CONTENT_AGENT_AI_ENABLED !== 'true') {
+    return NextResponse.json(
+      {ok: false, error: 'Geração de IA desabilitada até aprovação do orçamento.', aiCalls: 0},
+      {status: 403},
+    )
+  }
   if (!isAuthorized(request)) {
     return NextResponse.json({error: 'Não autorizado.'}, {status: 401})
   }
