@@ -1,7 +1,7 @@
 import {randomUUID} from 'crypto'
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
-import {fetchEditorialEvidence, inspectFactEvidence, sanitizeArticleSources, testEditorialEvidence} from '../evidence'
+import {fetchEditorialEvidence, evidenceCoverage, inspectFactEvidence, sanitizeArticleSources, testEditorialEvidence} from '../evidence'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -441,7 +441,8 @@ export async function GET(request: NextRequest) {
   if (process.env.VERCEL_ENV === 'preview' && request.nextUrl.searchParams.get('check') === 'evidence') {
     const evidence = await fetchEditorialEvidence(DEFAULT_TOPIC)
     return NextResponse.json({
-      ok: evidence.sources.length >= 2,
+      ok: evidenceCoverage(evidence).ready,
+      coverage: evidenceCoverage(evidence),
       mode: evidence.mode,
       count: evidence.sources.length,
       missing: evidence.missing,
@@ -596,11 +597,12 @@ export async function POST(request: NextRequest) {
     // Source retrieval is independent of the language model and never invokes a paid API.
     // Fail closed if official references are inaccessible: no hallucinated citations.
     const evidenceBundle = await fetchEditorialEvidence(topic)
-    if (evidenceBundle.sources.length < 2) {
+    if (!evidenceCoverage(evidenceBundle).ready) {
       return NextResponse.json({
         ok: false,
         stage: 'evidence',
-        error: 'Fontes oficiais insuficientes para geração fundamentada; nenhuma chamada de IA realizada.',
+        error: 'Fontes oficiais de IA e comércio eletrônico insuficientes; nenhuma chamada de IA realizada.',
+        coverage: evidenceCoverage(evidenceBundle),
         sourcesAvailable: evidenceBundle.sources.length,
         missing: evidenceBundle.missing,
         aiCalls: 0,
@@ -728,7 +730,7 @@ export async function POST(request: NextRequest) {
     }
     const deterministicIssues = [
       ...factEvidenceIssues,
-      ...deterministicEditorialIssues(article, factCheck, evidenceBundle.sources.length >= 2),
+      ...deterministicEditorialIssues(article, factCheck, evidenceCoverage(evidenceBundle).ready),
     ]
     // The model cannot override deterministic factual checks or medium/high risk.
     const qaPassed =
