@@ -16,7 +16,7 @@ type AgentRequest = {
 const DEFAULT_TOPIC = 'E-commerce + Inteligência Artificial em 2026'
 const DEFAULT_KEYWORD = 'inteligência artificial no e-commerce'
 const DEFAULT_AUDIENCE = 'gestores de e-commerce, marketing e negócios digitais no Brasil'
-const DEFAULT_MODEL = 'reflection/beam-free'
+const DEFAULT_MODEL = 'nvidia/nemotron-3.5-lightning-free'
 
 // Never silently switch the free pilot to a billable model. Only model IDs
 // ending in -free are considered; confirm their live price before any inference.
@@ -44,15 +44,15 @@ async function checkZeroCostModel(model: string) {
       entry.type === 'language' &&
       Number(entry.pricing?.input) === 0 &&
       Number(entry.pricing?.output) === 0 &&
-      entry.pricing?.varies_by_provider !== true &&
-      Array.isArray(entry.tags) &&
-      entry.tags.includes('free')
+      entry.pricing?.varies_by_provider !== true
 
     return {
       approved: zeroCost,
       model,
+      priceVerified: zeroCost,
+      accountAccessVerified: false,
       reason: zeroCost
-        ? 'Modelo -free presente no catálogo com entrada e saída a custo zero.'
+        ? 'Modelo -free com preço zero no catálogo; permissão da conta será verificada apenas na execução.'
         : 'O catálogo não confirma custo zero para este modelo.',
     }
   } catch {
@@ -162,7 +162,7 @@ async function callAgent(args: {
 
   if (!response.ok) {
     const detail = await response.text()
-    throw new Error('OpenAI Responses API ' + response.status + ': ' + detail.slice(0, 700))
+    throw new Error('AI Gateway ' + response.status + ': ' + detail.slice(0, 700))
   }
 
   const data = await response.json()
