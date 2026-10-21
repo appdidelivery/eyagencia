@@ -140,9 +140,24 @@ export async function fetchEditorialEvidence(topic: string): Promise<EvidenceBun
   }
 }
 
+export function evidenceCoverage(bundle: EvidenceBundle) {
+  const commerce = bundle.sources.some((source) => source.area === 'comercio')
+  const artificialIntelligence = bundle.sources.some(
+    (source) => source.area === 'ia-e-dados' || source.area === 'regulacao',
+  )
+  return {
+    commerce,
+    artificialIntelligence,
+    ready: bundle.sources.length >= 2 && commerce && artificialIntelligence,
+  }
+}
+
 export function inspectFactEvidence(factCheck: Record<string, any>, bundle: EvidenceBundle): string[] {
   const problems: string[] = []
-  if (bundle.sources.length < 2) problems.push('Menos de duas fontes oficiais puderam ser consultadas em tempo real.')
+  const coverage = evidenceCoverage(bundle)
+  if (!coverage.ready) {
+    problems.push('Fontes insuficientes: são exigidas referências de comércio eletrônico e IA/proteção de dados.')
+  }
   if (!Array.isArray(factCheck.approvedFacts) || !factCheck.approvedFacts.length) {
     problems.push('Nenhum fato aprovado com evidência rastreável.')
     return problems
@@ -195,5 +210,7 @@ export function testEditorialEvidence(): Array<{name: string; passed: boolean}> 
     {name: 'Bloqueia fonte inventada', passed: inspectFactEvidence({approvedFacts: [{confidence: 99, sourceUrl: 'https://fake.example', evidenceQuote: 'A proteção de dados pessoais exige finalidades claras'}]}, testBundle).length > 0},
     {name: 'Aceita citação textual ligada à fonte lida', passed: inspectFactEvidence({approvedFacts: [{confidence: 95, sourceUrl: CATALOG[0].url, evidenceQuote: 'A proteção de dados pessoais exige finalidades claras, proporcionais e transparentes'}]}, testBundle).length === 0},
     {name: 'Não inclui links não consultados nas referências', passed: sanitizeArticleSources({sources: [{url: CATALOG[0].url}, {url: 'https://fake.example'}]}, testBundle).length === 1},
+    {name: 'Exige cobertura de IA e de comércio eletrônico', passed: evidenceCoverage(testBundle).ready},
+    {name: 'Bloqueia dossiê só de IA, sem mercado', passed: !evidenceCoverage({...testBundle, sources: [testBundle.sources[0]]}).ready},
   ]
 }
