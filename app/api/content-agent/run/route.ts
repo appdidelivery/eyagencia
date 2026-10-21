@@ -78,7 +78,7 @@ function extractOutputText(response: JsonObject): string {
   return parts.join('\n').trim()
 }
 
-function parseJson(text: string): JsonObject {
+function parseJson(text: string, stage: string): JsonObject {
   const cleaned = text
     .replace(/^\s*```json\s*/i, '')
     .replace(/^\s*```\s*/i, '')
@@ -91,9 +91,13 @@ function parseJson(text: string): JsonObject {
     const start = cleaned.indexOf('{')
     const end = cleaned.lastIndexOf('}')
     if (start >= 0 && end > start) {
-      return JSON.parse(cleaned.slice(start, end + 1))
+      try {
+        return JSON.parse(cleaned.slice(start, end + 1))
+      } catch (error) {
+        throw new Error('JSON inválido na etapa ' + stage + ': ' + (error instanceof Error ? error.message : 'erro desconhecido'))
+      }
     }
-    throw new Error('O agente não retornou JSON válido.')
+    throw new Error('O agente não retornou JSON válido na etapa ' + stage + '.')
   }
 }
 
@@ -132,6 +136,7 @@ async function callAgent(args: {
           {role: 'user', content: args.input},
         ],
         reasoning: {effort: 'none'},
+        response_format: {type: 'json_object'},
         max_completion_tokens: args.maxOutputTokens || 5000,
       }
     : {
@@ -587,7 +592,7 @@ export async function POST(request: NextRequest) {
         audience +
         '\n\nGere um briefing JSON com: searchIntent, angle, readerQuestions, entities, keyFacts, counterpoints, internalLinkIdeas e sources. Em sources use objetos com title, url, publisher, publishedAt quando disponível e whyRelevant.',
     })
-    const brief = parseJson(radar.text)
+    const brief = parseJson(radar.text, 'radar')
 
     const verifier = await callAgent({
       webSearch: true,
@@ -601,7 +606,7 @@ export async function POST(request: NextRequest) {
         JSON.stringify(brief) +
         '\n\nRetorne JSON com: approvedFacts, rejectedClaims, nuances, sources, warnings e confidence de 0 a 100.',
     })
-    const factCheck = parseJson(verifier.text)
+    const factCheck = parseJson(verifier.text, 'verificador')
 
     const editor = await callAgent({
       maxOutputTokens: 8000,
@@ -620,7 +625,7 @@ export async function POST(request: NextRequest) {
         JSON.stringify(factCheck) +
         '\n\nGere JSON com: title, slug, seoTitle (50-60 caracteres), seoDescription (150-160 caracteres), excerpt, searchIntent, sections (cada item com heading, paragraphs e bullets opcionais), faq (question/answer), internalLinks (anchor/url usando SOMENTE esta allowlist: /ia-ecommerce, /ia-ecommerce/ferramentas, /ia-ecommerce/guias, /ia-ecommerce/metodologia, /blog, /clientes, /parceiros) e sources (title/url apenas das fontes verificadas). O artigo deve ser aprofundado, útil e acionável.',
     })
-    const article = parseJson(editor.text)
+    const article = parseJson(editor.text, 'editor')
 
     const qa = await callAgent({
       maxOutputTokens: 3500,
@@ -635,7 +640,7 @@ export async function POST(request: NextRequest) {
         JSON.stringify(article) +
         '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 85 e sem problema factual crítico.',
     })
-    const qaResult = parseJson(qa.text)
+    const qaResult = parseJson(qa.text, 'qa')
     const deterministicIssues = deterministicEditorialIssues(
       article,
       factCheck,
