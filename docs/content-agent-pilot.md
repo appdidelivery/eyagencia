@@ -24,10 +24,19 @@ O score da IA **não sobrepõe** os bloqueios determinísticos. Nenhuma execuç�
 
 ## Diagnóstico gratuito de fontes
 
-A chamada `GET /api/content-agent/run?check=evidence`, disponível somente no Preview, consulta os URLs oficiais e retorna cobertura, fontes acessíveis e indisponíveis. Não chama modelos nem grava no Sanity. O autoteste `check=selftest` tem agora **15 verificações determinísticas**.
+A chamada `GET /api/content-agent/run?check=evidence`, disponível somente no Preview, consulta os URLs oficiais e retorna cobertura, fontes acessíveis e indisponíveis. Não chama modelos nem grava no Sanity. O autoteste `check=selftest` tem agora **21 verificações determinísticas**.
 
 ### Limitação conhecida
 Em testes sucessivos, páginas de ANPD e MDIC tiveram disponibilidade intermitente. A consulta agora usa ondas pequenas com páginas alternativas e cache HTTP de até 30 minutos, exige cobertura das duas áreas e interrompe a geração em caso de falta de fontes. O cache é um compromisso de disponibilidade; a data e as citações ainda precisam ser revistas para temas sensíveis. Isso não deve ser interpretado como pesquisa web geral e o sistema não deve extrapolar os dados consultados para o mercado inteiro.
+
+## Critério de liberação da versão operacional
+
+- A geração deve permanecer desligada por padrão mesmo após deploy em production.
+- O novo `quality.ts` exige artigo substantivo, resumo executivo, SEO, ausência de promessas absolutas e de dados numéricos sem fato comprovado. Não existe redução de nota para acelerar aprovação.
+- Há um guia metodológico restrito para conteúdo de **IA aplicada ao e-commerce**, usado somente se outro texto falhar, e apenas se passar por um **novo QA independente** com nota mínima 85 e risco baixo. Não usar esse guia como produção ilimitada de artigos duplicados.
+- Mesmo com `qa_passed`, o documento é salvo apenas como **draft**; um humano deve revisar fontes, autoria, possível duplicação de slug, informações jurídicas e conteúdo antes de publicar.
+- `release/content-agent-draft-safe` parte da versão atual da `main`, ao contrário da branch de investigação, que divergiu de commits recentes.
+- Nunca habilitar `CONTENT_AGENT_AI_ENABLED` em produção sem credenciais, limite financeiro e autorização explícita; `CONTENT_AGENT_PILOT_ENABLED` é apenas para preview.
 
 ## Fatos jurídicos verificados em 21/10/2026
 
@@ -53,7 +62,7 @@ Para qualquer outro dispositivo citado no futuro, **verificar número, ano, obje
 ## Rotas
 
 - `GET /api/content-agent/run`: exibe status e situação da trava financeira (sem chamar IA).
-- `GET /api/content-agent/run?check=selftest`: somente no preview; 15 autotestes determinísticos, sem chamadas de IA e sem gravar no Sanity.
+- `GET /api/content-agent/run?check=selftest`: somente no preview; 21 autotestes determinísticos, sem chamadas de IA e sem gravar no Sanity.
 - `GET /api/content-agent/run?check=evidence`: somente no preview; consulta fontes oficiais em tempo real, sem chamadas de IA nem escrita no Sanity.
 - `GET /api/content-agent/run?check=model`: somente no preview; verifica catálogo e preço real do modelo gratuito, sem chamadas de geração e sem gravar no Sanity.
 - `GET /api/content-agent/run?check=sanity`: somente no preview; grava e remove um registro temporário no Sanity para testar permissões.
@@ -67,7 +76,7 @@ Após mudar variáveis de ambiente, realizar novo deploy de preview para recarre
 
 - [ ] Executar `check=model` para validar o preço do modelo gratuito no catálogo do Vercel AI Gateway.
 - [ ] Configurar orçamento e alerta de gastos restritivos antes de usar modelo pago.
-- [ ] Verificar os 15 autotestes em `check=selftest` (inclui os três erros jurídicos conhecidos).
+- [ ] Verificar os 21 autotestes em `check=selftest` (inclui os três erros jurídicos conhecidos).
 - [ ] Conferir o resultado de build do preview.
 - [ ] Revisar rascunho, fontes, links, autoria, data, FAQ e informações legais por humano.
 - [ ] Manter publicação automática inativa.
