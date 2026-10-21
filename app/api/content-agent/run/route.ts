@@ -1,6 +1,7 @@
 import {randomUUID} from 'crypto'
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
+import {fetchEditorialEvidence, inspectFactEvidence, sanitizeArticleSources, testEditorialEvidence} from '../evidence'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -319,6 +320,7 @@ function runZeroCostSelfTests() {
     ).length === 0,
   })
 
+  tests.push(...testEditorialEvidence())
   return {
     ok: tests.every((test) => test.passed),
     service: 'eYagencia Content Agent',
@@ -436,6 +438,21 @@ function isAuthorized(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  if (process.env.VERCEL_ENV === 'preview' && request.nextUrl.searchParams.get('check') === 'evidence') {
+    const evidence = await fetchEditorialEvidence(DEFAULT_TOPIC)
+    return NextResponse.json({
+      ok: evidence.sources.length >= 2,
+      mode: evidence.mode,
+      count: evidence.sources.length,
+      missing: evidence.missing,
+      sources: evidence.sources.map(({id, title, url, retrievedAt, excerpt}) => ({
+        id, title, url, retrievedAt, preview: excerpt.slice(0, 220),
+      })),
+      aiCalls: 0,
+      sanityWrites: 0,
+    })
+  }
+
   if (
     process.env.VERCEL_ENV === 'preview' &&
     request.nextUrl.searchParams.get('check') === 'model'
