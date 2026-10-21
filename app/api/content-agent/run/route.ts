@@ -438,6 +438,37 @@ function isAuthorized(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  if (
+    process.env.VERCEL_ENV === 'preview' &&
+    request.nextUrl.searchParams.get('check') === 'latest-evidence'
+  ) {
+    const latest = await writeClient.fetch(
+      '*[_type == "aiContentJob"] | order(createdAt desc)[0]{topic,qaScore,qaPassed,status,createdAt,factCheckRaw}',
+    )
+    if (!latest) return NextResponse.json({ok: false, error: 'Sem histórico de execução.'}, {status: 404})
+    let report: JsonObject = {}
+    try { report = JSON.parse(latest.factCheckRaw || '{}') } catch {}
+    return NextResponse.json({
+      ok: true,
+      topic: latest.topic,
+      qaScore: latest.qaScore,
+      qaPassed: latest.qaPassed,
+      status: latest.status,
+      approvedFacts: Array.isArray(report.approvedFacts)
+        ? report.approvedFacts.slice(0, 20).map((fact: JsonObject, index: number) => ({
+            index: index + 1,
+            claim: String(fact?.claim || '').slice(0, 280),
+            confidence: fact?.confidence,
+            sourceUrl: fact?.sourceUrl || null,
+            evidenceQuote: String(fact?.evidenceQuote || '').slice(0, 280),
+          }))
+        : [],
+      evidenceIssues: report.evidenceIssues || [],
+      officialSources: report.primarySources || [],
+      aiCalls: 0,
+      sanityWrites: 0,
+    })
+  }
   if (process.env.VERCEL_ENV === 'preview' && request.nextUrl.searchParams.get('check') === 'evidence') {
     const evidence = await fetchEditorialEvidence(DEFAULT_TOPIC)
     return NextResponse.json({
