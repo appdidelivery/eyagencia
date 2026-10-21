@@ -105,7 +105,8 @@ function readableText(html: string): string {
 async function retrieveSource(entry: CatalogEntry): Promise<EvidenceSource | null> {
   try {
     const response = await fetch(entry.url, {
-      cache: 'no-store',
+      // Cache official pages up to 30 minutes to reduce transient throttling.
+      next: {revalidate: 1800},
       signal: AbortSignal.timeout(9000),
       headers: {Accept: 'text/html'},
       redirect: 'follow',
