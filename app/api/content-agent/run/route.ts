@@ -130,7 +130,84 @@ async function callAgent(args: {
     : extractOutputText(data)
   if (!text) throw new Error('Resposta vazia do agente.')
 
-  return {text, model, responseId: data.id as string | undefined}
+  return {text, model, responseId: data.id as string | undefined, webSearchActive: Boolean(args.webSearch && !freePilotMode)}
+}
+
+
+const ALLOWED_INTERNAL_PATHS = new Set([
+  '/ia-ecommerce',
+  '/ia-ecommerce/ferramentas',
+  '/ia-ecommerce/guias',
+  '/ia-ecommerce/metodologia',
+  '/blog',
+  '/clientes',
+  '/parceiros',
+])
+
+// Confirmed against primary Brazilian legal sources on 2026-10-21.
+// This list is a safety backstop, NOT a replacement for source verification.
+const INCORRECT_LEGAL_REFERENCES = [
+  {
+    pattern: /lei\\s*(?:n[º°o.]*)?\\s*15[.]?070\\s*\\/\\s*2024/i,
+    issue: 'Lei 15.070/2024 regula bioinsumos, não inteligência artificial.',
+  },
+  {
+    pattern: /lei\\s*(?:n[º°o.]*)?\\s*14[.]?811\\s*\\/\\s*2024/i,
+    issue: 'Lei 14.811/2024 não é uma lei geral sobre mercados digitais ou IA.',
+  },
+  {
+    pattern: /decreto\\s*(?:n[º°o.]*)?\\s*11[.]?157\\s*\\/\\s*2023/i,
+    issue: 'Decreto 11.157 é de 2022, foi revogado e não regula plataformas digitais.',
+  },
+]
+
+function deterministicEditorialIssues(
+  article: JsonObject,
+  factCheck: JsonObject,
+  webSearchActive: boolean,
+): string[] {
+  const issues: string[] = []
+  const content = JSON.stringify(article)
+  for (const reference of INCORRECT_LEGAL_REFERENCES) {
+    if (reference.pattern.test(content)) issues.push(reference.issue)
+  }
+
+  if (!webSearchActive) {
+    // The promotional free model disables native search. Neither a fabricated
+    // source URL nor a self-reported confidence score counts as verification.
+    if (Array.isArray(article.sources) && article.sources.length) {
+      issues.push('Fontes listadas sem pesquisa web ativa; validação humana obrigatória.')
+    }
+    if (/\\b(?:lei|decreto|portaria|resolu[cç][aã]o)\\s*(?:n[º°o.]*)?\\s*\\d/i.test(content)) {
+      issues.push('Citação normativa produzida sem busca web ativa; conferir texto oficial.')
+    }
+  }
+
+  if (!Array.isArray(factCheck.approvedFacts)) {
+    issues.push('Verificação factual sem lista estruturada de fatos aprovados.')
+  } else {
+    const lowConfidenceFacts = factCheck.approvedFacts.filter(
+      (fact: JsonObject) =>
+        typeof fact?.confidence === 'number' && fact.confidence < 90,
+    )
+    if (lowConfidenceFacts.length) {
+      issues.push(
+        String(lowConfidenceFacts.length) +
+          ' afirmação(ões) com confiança inferior a 90% no fact-check; revisão necessária.',
+      )
+    }
+  }
+
+  const unsafeLinks = Array.isArray(article.internalLinks)
+    ? article.internalLinks.filter(
+        (link: JsonObject) =>
+          !link?.url || !ALLOWED_INTERNAL_PATHS.has(String(link.url)),
+      )
+    : []
+  if (unsafeLinks.length) {
+    issues.push(String(unsafeLinks.length) + ' link(s) internos não validados foram descartados.')
+  }
+  return issues
 }
 
 function slugify(value: string) {
@@ -361,7 +438,7 @@ export async function POST(request: NextRequest) {
       webSearch: true,
       maxOutputTokens: 4500,
       instructions:
-        'Você é o Verificador Editorial da eYagencia. Confirme cada afirmação factual importante com pesquisa atual. Diferencie fato, estimativa e opinião. Rejeite números sem fonte rastreável. Retorne SOMENTE JSON válido, sem markdown.',
+        'Você é o Verificador Editorial da eYagencia. Confirme cada afirmação factual importante com pesquisa atual em fontes primárias. Para leis e decretos brasileiros, valide número, ano, assunto, vigência e tramitação em Planalto, Câmara ou Senado. Nunca confunda aprovação do Senado com lei sancionada. Diferencie fato, estimativa e opinião. Se a pesquisa web não estiver disponível, declare a limitação e não aprove fatos normativos ou números com confiança fictícia. Em approvedFacts inclua confidence numérico de 0 a 100. Rejeite afirmações sem fonte rastreável. Retorne SOMENTE JSON válido, sem markdown.',
       input:
         'Pauta: ' +
         topic +
@@ -374,7 +451,7 @@ export async function POST(request: NextRequest) {
     const editor = await callAgent({
       maxOutputTokens: 8000,
       instructions:
-        'Você é o Editor SEO/GEO/E-E-A-T da eYagencia. Escreva em português do Brasil para público B2B. O texto deve soar editorial e especializado, sem clichês de IA, sem inventar experiência própria e sem linguagem inflada. Use apenas fatos aprovados pelo verificador. Estruture respostas claras para busca tradicional e mecanismos generativos. Retorne SOMENTE JSON válido, sem markdown.',
+        'Você é o Editor SEO/GEO/E-E-A-T da eYagencia. Escreva em português do Brasil para público B2B sem clichês de IA, experiência inventada ou promessas de ROI não verificadas. Utilize SOMENTE fatos verificados com confiança >=90 e fonte primária; descarte referências normativas não comprovadas. Não apresente projeto de lei como lei em vigor. Use uma seção única de controles de risco e FAQs breves sem duplicar seções. Diferencie fato verificado, tendência e opinião. Sugira métricas, evidências e riscos para casos de uso sem fabricar resultados. Utilize somente links internos da allowlist e nunca invente autoria, revisão jurídica ou data de publicação. Estruture para SEO/GEO/E-E-A-T e retorne SOMENTE JSON válido, sem markdown.',
       input:
         'Pauta: ' +
         topic +
@@ -393,7 +470,7 @@ export async function POST(request: NextRequest) {
     const qa = await callAgent({
       maxOutputTokens: 3500,
       instructions:
-        'Você é o QA Editorial da eYagencia. Audite o artigo contra briefing e fact-check. Seja rigoroso com factualidade, SEO, GEO, E-E-A-T, clareza, duplicação, tom B2B e promessas não sustentadas. Retorne SOMENTE JSON válido, sem markdown.',
+        'Você é o QA Editorial da eYagencia. Audite fatos contra fontes primárias e fact-check. REFERÊNCIAS INCORRETAS: Lei 15.070/2024 é sobre bioinsumos, Lei 14.811/2024 não regulamenta mercados digitais em geral e Decreto 11.157 é de 2022 e foi revogado. Qualquer menção com enquadramento falso reprova o artigo, independentemente da nota. Se houver fato normativo não verificado, marque passed=false e publicationRisk=high. Avalie SEO, GEO, E-E-A-T, clareza, repetição entre FAQ e corpo, links existentes, dados de ROI e promessas. Não invente revisão humana. Retorne SOMENTE JSON válido, sem markdown.',
       input:
         'Briefing:\n' +
         JSON.stringify(brief) +
@@ -404,7 +481,38 @@ export async function POST(request: NextRequest) {
         '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 85 e sem problema factual crítico.',
     })
     const qaResult = parseJson(qa.text)
-    const qaPassed = Boolean(qaResult.passed) && Number(qaResult.score || 0) >= 85
+    const deterministicIssues = deterministicEditorialIssues(
+      article,
+      factCheck,
+      radar.webSearchActive,
+    )
+    // The model cannot override deterministic factual checks or medium/high risk.
+    const qaPassed =
+      Boolean(qaResult.passed) &&
+      Number(qaResult.score || 0) >= 85 &&
+      qaResult.publicationRisk === 'low' &&
+      deterministicIssues.length === 0
+    const editorialReview = {
+      ...qaResult,
+      passed: qaPassed,
+      issues: [
+        ...(Array.isArray(qaResult.issues) ? qaResult.issues : []),
+        ...deterministicIssues.map((detail) => ({
+          severity: 'high',
+          dimension: 'verificacao_deterministica',
+          detail,
+        })),
+      ],
+      publicationRisk: deterministicIssues.length ? 'high' : qaResult.publicationRisk,
+    }
+    const safeArticle = {
+      ...article,
+      internalLinks: Array.isArray(article.internalLinks)
+        ? article.internalLinks.filter(
+            (link: JsonObject) => link?.url && ALLOWED_INTERNAL_PATHS.has(String(link.url)),
+          )
+        : [],
+    }
 
     const slug = slugify(String(article.slug || article.title || topic)) || 'conteudo-ia'
     const timestamp = Date.now()
@@ -419,7 +527,7 @@ export async function POST(request: NextRequest) {
       seoTitle: String(article.seoTitle || article.title || topic).slice(0, 70),
       seoDescription: String(article.seoDescription || article.excerpt || '').slice(0, 240),
       excerpt: String(article.excerpt || ''),
-      body: articleToPortableText(article),
+      body: articleToPortableText(safeArticle),
     }
 
     await writeClient.create(postDraft)
@@ -437,8 +545,8 @@ export async function POST(request: NextRequest) {
       createdAt: startedAt,
       briefRaw: JSON.stringify(brief, null, 2),
       factCheckRaw: JSON.stringify(factCheck, null, 2),
-      articleRaw: JSON.stringify(article, null, 2),
-      qaRaw: JSON.stringify(qaResult, null, 2),
+      articleRaw: JSON.stringify(safeArticle, null, 2),
+      qaRaw: JSON.stringify(editorialReview, null, 2),
     })
 
     return NextResponse.json({
@@ -452,7 +560,8 @@ export async function POST(request: NextRequest) {
       qa: {
         passed: qaPassed,
         score: Number(qaResult.score || 0),
-        risk: qaResult.publicationRisk || null,
+        risk: editorialReview.publicationRisk || null,
+        deterministicIssues,
       },
       nextStep: 'Revisar no Sanity Studio antes de publicar.',
     })
