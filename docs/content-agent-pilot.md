@@ -27,7 +27,7 @@ Para qualquer outro dispositivo citado no futuro, **verificar número, ano, obje
 
 - `SANITY_API_WRITE_TOKEN`: necessário para criar rascunho.
 - `AI_GATEWAY_API_KEY`: chave do gateway.
-- `CONTENT_AGENT_MODEL`: opcional. A implementação antiga usa `inclusionai/ling-3.1-flash-free` como padrão do piloto, uma opção promocional que **não deve ser presumida disponível**. Antes de rodar novamente, conferir o catálogo atual do AI Gateway e limites de gastos.
+- `CONTENT_AGENT_MODEL`: opcional. Padrão do piloto: `reflection/beam-free`, ofertado gratuitamente em 21/10/2026 por período promocional, sem migração automática para cobrança quando a oferta termina. Antes de CADA geração, o código exige sufixo `-free` e consulta `/v1/models` para confirmar preços de entrada e saída iguais a zero; em caso de dúvida ou falha de consulta, bloqueia a execução. **Sem pesquisa web nativa, o QA exige revisão factual humana**.
 - `CONTENT_AGENT_AI_ENABLED=true`: **trava financeira obrigatória**, compartilhada por POST e pelo atalho GET. Ausente/desativado por padrão: nenhuma chamada à IA ocorre, mesmo que alguém tente invocar o endpoint diretamente.
 - `CONTENT_AGENT_PILOT_ENABLED=true`: habilita temporariamente o gatilho GET no preview somente quando a trava financeira acima também estiver ativada.
 - `CONTENT_AGENT_SECRET`: necessário para chamada POST em produção.
@@ -37,6 +37,7 @@ Para qualquer outro dispositivo citado no futuro, **verificar número, ano, obje
 
 - `GET /api/content-agent/run`: exibe status e situação da trava financeira (sem chamar IA).
 - `GET /api/content-agent/run?check=selftest`: somente no preview; 7 autotestes determinísticos, sem chamadas de IA e sem gravar no Sanity.
+- `GET /api/content-agent/run?check=model`: somente no preview; verifica catálogo e preço real do modelo gratuito, sem chamadas de geração e sem gravar no Sanity.
 - `GET /api/content-agent/run?check=sanity`: somente no preview; grava e remove um registro temporário no Sanity para testar permissões.
 - `GET /api/content-agent/run?latest=1`: somente no preview; lê o histórico do último job, sem chamar IA.
 - `GET /api/content-agent/run?pilot=1`: somente no preview e com `CONTENT_AGENT_PILOT_ENABLED=true`; **executa IA e pode consumir créditos**.
@@ -46,7 +47,7 @@ Após mudar variáveis de ambiente, realizar novo deploy de preview para recarre
 
 ## Antes de liberar uma nova execução
 
-- [ ] Verificar catálogo e preço do modelo escolhido no Vercel AI Gateway.
+- [ ] Executar `check=model` para validar o preço do modelo gratuito no catálogo do Vercel AI Gateway.
 - [ ] Configurar orçamento e alerta de gastos restritivos antes de usar modelo pago.
 - [ ] Verificar os 7 autotestes em `check=selftest` (inclui os três erros jurídicos conhecidos).
 - [ ] Conferir o resultado de build do preview.
