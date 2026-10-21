@@ -131,6 +131,7 @@ async function callAgent(args: {
           {role: 'system', content: freePilotInstruction},
           {role: 'user', content: args.input},
         ],
+        reasoning: {effort: 'none'},
         max_completion_tokens: args.maxOutputTokens || 5000,
       }
     : {
@@ -169,7 +170,17 @@ async function callAgent(args: {
   const text = freePilotMode
     ? String(data?.choices?.[0]?.message?.content || '').trim()
     : extractOutputText(data)
-  if (!text) throw new Error('Resposta vazia do agente.')
+  if (!text) {
+    const choice = data?.choices?.[0]
+    const metadata = {
+      model,
+      finishReason: choice?.finish_reason || null,
+      messageFields: choice?.message ? Object.keys(choice.message) : [],
+      completionTokens: data?.usage?.completion_tokens || null,
+      reasoningTokens: data?.usage?.completion_tokens_details?.reasoning_tokens || null,
+    }
+    throw new Error('Resposta vazia do agente (metadados): ' + JSON.stringify(metadata))
+  }
 
   return {text, model, responseId: data.id as string | undefined, webSearchActive: Boolean(args.webSearch && !freePilotMode)}
 }
