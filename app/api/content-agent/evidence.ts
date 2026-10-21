@@ -130,12 +130,33 @@ export async function fetchEditorialEvidence(topic: string): Promise<EvidenceBun
   const now = new Date().toISOString()
   const inScope = /(?:e[\s-]?commerce|com[eé]rcio eletr[oô]nico|intelig[eê]ncia artificial|\bia\b|lgpd|marketing digital)/i.test(topic)
   if (!inScope) return {topic, retrievedAt: now, sources: [], missing: [], mode: 'out-of-scope'}
-  const results = await Promise.all(CATALOG.map(retrieveSource))
+  const sources: EvidenceSource[] = []
+  const missing: string[] = []
+  // Avoid concurrent bursts to gov.br, which intermittently rate-limits requests.
+  // In each wave read one AI/governance source and one commerce source. Stop
+  // early when both areas have verified pages, but retry with alternatives
+  // when an official endpoint fails.
+  const waves: string[][] = [
+    ['anpd-ia', 'mdic-dados'],
+    ['anpd-sandbox', 'mdic-ecommerce'],
+    ['anpd-pl', 'mdic-observatorio'],
+  ]
+  for (const ids of waves) {
+    const entries = ids.map((id) => CATALOG.find((entry) => entry.id === id)!)
+    const fetched = await Promise.all(entries.map(retrieveSource))
+    fetched.forEach((source, index) => {
+      if (source) sources.push(source)
+      else missing.push(entries[index].id)
+    })
+    if (sources.some((source) => source.area === 'comercio') &&
+        sources.some((source) => source.area !== 'comercio') &&
+        sources.length >= 2) break
+  }
   return {
     topic,
     retrievedAt: now,
-    sources: results.filter((entry): entry is EvidenceSource => entry !== null),
-    missing: CATALOG.filter((_, index) => results[index] === null).map((entry) => entry.id),
+    sources,
+    missing,
     mode: 'official-sources',
   }
 }
