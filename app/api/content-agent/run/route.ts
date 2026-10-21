@@ -1,4 +1,5 @@
 import {randomUUID} from 'crypto'
+import {checkArticleQuality, testArticleQuality} from '../quality'
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
 import {fetchEditorialEvidence, evidenceCoverage, inspectFactEvidence, keepFactsWithVerbatimEvidence, sanitizeArticleSources, testEditorialEvidence} from '../evidence'
@@ -14,8 +15,8 @@ type AgentRequest = {
   audience?: string
 }
 
-const DEFAULT_TOPIC = 'E-commerce + Inteligência Artificial em 2026'
-const DEFAULT_KEYWORD = 'inteligência artificial no e-commerce'
+const DEFAULT_TOPIC = 'IA no e-commerce: casos de uso, medição e governança de dados'
+const DEFAULT_KEYWORD = 'IA no e-commerce para gestores'
 const DEFAULT_AUDIENCE = 'gestores de e-commerce, marketing e negócios digitais no Brasil'
 const DEFAULT_MODEL = 'nvidia/nemotron-3.5-lightning-free'
 
@@ -320,7 +321,7 @@ function runZeroCostSelfTests() {
     ).length === 0,
   })
 
-  tests.push(...testEditorialEvidence())
+  tests.push(...testEditorialEvidence(), ...testArticleQuality())
   return {
     ok: tests.every((test) => test.passed),
     service: 'eYagencia Content Agent',
@@ -726,6 +727,26 @@ export async function POST(request: NextRequest) {
       ...factCheck,
       approvedFacts: keepFactsWithVerbatimEvidence(factCheck, evidenceBundle),
     }
+    const supportedFacts = safeFactCheck.approvedFacts as JsonObject[]
+    const sourceByArea = (area: string) => supportedFacts.some((fact) =>
+      evidenceBundle.sources.some((source) => source.url === fact.sourceUrl && source.area === area),
+    )
+    const evidenceReady = supportedFacts.length >= 2 &&
+      sourceByArea('comercio') &&
+      (sourceByArea('ia-e-dados') || sourceByArea('regulacao'))
+    // The rejected candidate claims are tracked, but they are not used in
+    // generation. The final text is evaluated on retained evidence only.
+    const evidenceGuardIssues = evidenceReady
+      ? []
+      : ['Faltam pelo menos dois fatos comprovados, incluindo comércio eletrônico e IA/proteção de dados.']
+    if (!evidenceReady) {
+      return NextResponse.json({
+        ok: false, stage: 'fact-check',
+        message: 'Lastro factual insuficiente; rascunho não gerado.',
+        validatedFacts: supportedFacts.length,
+        rejectedFacts: Array.isArray(factCheck.approvedFacts) ? factCheck.approvedFacts.length - supportedFacts.length : 0,
+      }, {status: 422})
+    }
 
     const editor = await callAgent({
       maxOutputTokens: 8000,
@@ -744,11 +765,13 @@ export async function POST(request: NextRequest) {
         JSON.stringify(safeFactCheck) +
         '\n\nProblemas de lastro documental identificados pelo código:\n' +
         JSON.stringify(factEvidenceIssues) +
+        '\n\nREGRA OBRIGATÓRIA: não use afirmações rejeitadas; use apenas as aprovadas. Redija um guia metodológico perene, não uma previsão de 2026. Evite números monetários e percentuais caso não constem das afirmações aprovadas. Produza 5 seções, pelo menos 550 palavras, FAQ concisa e resumo executivo. Não invente ganhos de IA.\n' +
         '\n\nFONTES EXTERNAS PERMITIDAS:\n' +
         JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))) +
         '\n\nGere JSON com: title, slug, seoTitle (50-60 caracteres), seoDescription (150-160 caracteres), excerpt, searchIntent, sections (cada item com heading, paragraphs e bullets opcionais), faq (question/answer), internalLinks (anchor/url usando SOMENTE esta allowlist: /ia-ecommerce, /ia-ecommerce/ferramentas, /ia-ecommerce/guias, /ia-ecommerce/metodologia, /blog, /clientes, /parceiros) e sources (title/url apenas das fontes verificadas). O artigo deve ser aprofundado, útil e acionável.',
     })
     let article = parseJson(editor.text, 'editor')
+    let structuralIssues = checkArticleQuality(article, supportedFacts)
 
     const qa = await callAgent({
       maxOutputTokens: 3500,
@@ -765,6 +788,7 @@ export async function POST(request: NextRequest) {
         JSON.stringify(factEvidenceIssues) +
         '\n\nArtigo:\n' +
         JSON.stringify(article) +
+        '\n\nPROBLEMAS ESTRUTURAIS (validação independente):\n' + JSON.stringify(structuralIssues) +
         '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 85 e sem problema factual crítico.',
     })
     let qaResult = parseJson(qa.text, 'qa')
@@ -774,7 +798,7 @@ export async function POST(request: NextRequest) {
     if (
       Array.isArray(safeFactCheck.approvedFacts) &&
       safeFactCheck.approvedFacts.length >= 2 &&
-      (!qaResult.passed || Number(qaResult.score || 0) < 85 || qaResult.publicationRisk !== 'low')
+      (!qaResult.passed || Number(qaResult.score || 0) < 85 || qaResult.publicationRisk !== 'low' || structuralIssues.length > 0)
     ) {
       try {
         const repair = await callAgent({
@@ -784,6 +808,7 @@ export async function POST(request: NextRequest) {
           input:
             'ARTIGO ORIGINAL:\n' + JSON.stringify(article) +
             '\n\nPROBLEMAS QA:\n' + JSON.stringify(qaResult) +
+            '\n\nFALHAS INDEPENDENTES DE ESTRUTURA E NÚMEROS:\n' + JSON.stringify(structuralIssues) +
             '\n\nFACT-CHECK FUNDAMENTADO:\n' + JSON.stringify(safeFactCheck) +
             '\n\nFONTES PERMITIDAS:\n' +
             JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))),
@@ -792,6 +817,7 @@ export async function POST(request: NextRequest) {
         if (revisedArticle && typeof revisedArticle.title === 'string' && Array.isArray(revisedArticle.sections)) {
           article = revisedArticle
           revisionAttempted = true
+          structuralIssues = checkArticleQuality(article, supportedFacts)
           const finalQa = await callAgent({
             maxOutputTokens: 3000,
             instructions:
@@ -799,7 +825,8 @@ export async function POST(request: NextRequest) {
             input:
               'FACT-CHECK:\n' + JSON.stringify(safeFactCheck) +
               '\n\nARTIGO REVISADO:\n' + JSON.stringify(article) +
-              '\n\nFALHAS DOCUMENTAIS:\n' + JSON.stringify(factEvidenceIssues),
+              '\n\nFALHAS DOCUMENTAIS DE RASCUNHOS ANTERIORES (já descartadas):\n' + JSON.stringify(factEvidenceIssues) +
+              '\n\nFALHAS INDEPENDENTES NA VERSÃO REVISADA:\n' + JSON.stringify(structuralIssues),
           })
           qaResult = parseJson(finalQa.text, 'QA pós-revisão')
         }
@@ -808,7 +835,8 @@ export async function POST(request: NextRequest) {
       }
     }
     const deterministicIssues = [
-      ...factEvidenceIssues,
+      ...evidenceGuardIssues,
+      ...structuralIssues,
       ...deterministicEditorialIssues(article, safeFactCheck, evidenceCoverage(evidenceBundle).ready),
     ]
     // The model cannot override deterministic factual checks or medium/high risk.
@@ -879,6 +907,7 @@ export async function POST(request: NextRequest) {
         primarySources: evidenceBundle.sources.map(({id, title, url, publisher, retrievedAt}) =>
           ({id, title, url, publisher, retrievedAt})),
         evidenceIssues: factEvidenceIssues,
+        editorialStructuralIssues: structuralIssues,
         initialEvidenceIssues,
         verificationRepairAttempted,
         droppedUnverifiedFacts: Array.isArray(factCheck.approvedFacts)
@@ -903,6 +932,7 @@ export async function POST(request: NextRequest) {
         score: Number(qaResult.score || 0),
         risk: editorialReview.publicationRisk || null,
         deterministicIssues,
+        validatedFacts: supportedFacts.length,
         verifiedSources: evidenceBundle.sources.length,
         revisionAttempted,
         verificationRepairAttempted,
