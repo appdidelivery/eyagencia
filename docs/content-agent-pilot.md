@@ -27,7 +27,7 @@ Para qualquer outro dispositivo citado no futuro, **verificar número, ano, obje
 
 - `SANITY_API_WRITE_TOKEN`: necessário para criar rascunho.
 - `AI_GATEWAY_API_KEY`: chave do gateway.
-- `CONTENT_AGENT_MODEL`: opcional. Padrão do piloto: `reflection/beam-free`, ofertado gratuitamente em 21/10/2026 por período promocional, sem migração automática para cobrança quando a oferta termina. Antes de CADA geração, o código exige sufixo `-free` e consulta `/v1/models` para confirmar preços de entrada e saída iguais a zero; em caso de dúvida ou falha de consulta, bloqueia a execução. **Sem pesquisa web nativa, o QA exige revisão factual humana**.
+- `CONTENT_AGENT_MODEL`: opcional. Padrão do piloto: `nvidia/nemotron-3.5-lightning-free`. O modelo `reflection/beam-free` retornou HTTP 403 para a conta atual, apesar do catálogo informar custo zero; disponibilidade de cobrança não equivale a permissão de acesso. Antes de CADA geração, o código exige sufixo `-free` e consulta `/v1/models` para confirmar preços de entrada e saída iguais a zero; em caso de dúvida ou falha de consulta, bloqueia a execução. A checagem de catálogo não garante permissão de uso na conta. **Sem pesquisa web nativa, o QA exige revisão factual humana**.
 - `CONTENT_AGENT_AI_ENABLED=true`: **trava financeira obrigatória**, compartilhada por POST e pelo atalho GET. Ausente/desativado por padrão: nenhuma chamada à IA ocorre, mesmo que alguém tente invocar o endpoint diretamente.
 - `CONTENT_AGENT_PILOT_ENABLED=true`: habilita temporariamente o gatilho GET no preview somente quando a trava financeira acima também estiver ativada.
 - `CONTENT_AGENT_SECRET`: necessário para chamada POST em produção.
