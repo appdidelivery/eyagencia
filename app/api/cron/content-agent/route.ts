@@ -107,6 +107,20 @@ export async function GET(request: NextRequest) {
     const response = await createDraft(internalRequest)
     const payload = await response.json().catch(() => ({}))
     const created = response.ok && payload?.ok === true && payload?.mode === 'draft-only'
+    let published = false
+    let publicUrl: string | null = null
+    let publicationReasons: string[] = []
+    if (created && process.env.CONTENT_AGENT_AUTO_PUBLISH_ENABLED === 'true') {
+      try {
+        const outcome = await attemptAutonomousPublish(String(payload.jobId), String(payload.postDraftId))
+        published = outcome.published
+        if (outcome.published) publicUrl = outcome.url
+        else publicationReasons = outcome.reasons
+      } catch (error) {
+        publicationReasons = ['Erro na publicação automática; rascunho preservado.']
+        console.error('[content-agent] Publish error:', error instanceof Error ? error.message : 'unexpected')
+      }
+    }
     await writeClient.patch(lockId).set({
       status: created ? 'completed' : 'error',
       finishedAt: new Date().toISOString(),
