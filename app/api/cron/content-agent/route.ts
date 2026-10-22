@@ -129,6 +129,10 @@ export async function GET(request: NextRequest) {
       qaScore: created ? Number(payload.qa?.score || 0) : null,
       qaPassed: created ? payload.qa?.passed === true : false,
       httpStatus: response.status,
+      publicationStatus: published ? 'published' : created ? 'blocked_or_pending' : 'not_generated',
+      publicationReasons,
+      publicUrl,
+      publishedAt: published ? new Date().toISOString() : null,
     }).commit()
     return NextResponse.json({
       ok: created, day,
