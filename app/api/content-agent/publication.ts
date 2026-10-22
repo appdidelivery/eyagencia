@@ -122,6 +122,16 @@ export async function attemptAutonomousPublish(jobId: string, draftId: string) {
   const evidenceIssues = evidenceCoverage(evidence).ready
     ? inspectFactEvidence({approvedFacts: facts!.approvedFacts}, evidence)
     : ['Não foi possível recuperar as fontes oficiais novamente.']
+  const commerceConfirmed = (facts!.approvedFacts as RecordObject[]).some((fact) =>
+    evidence.sources.some((source) => source.url === fact.sourceUrl && source.area === 'comercio')
+  )
+  const aiConfirmed = (facts!.approvedFacts as RecordObject[]).some((fact) =>
+    evidence.sources.some((source) => source.url === fact.sourceUrl &&
+      (source.area === 'ia-e-dados' || source.area === 'regulacao'))
+  )
+  if (!commerceConfirmed || !aiConfirmed) {
+    return {published: false, reasons: ['Fatos comprovados não cobrem comércio eletrônico e governança de IA.']}
+  }
   const officialUrls = new Set(evidence.sources.map((source) => source.url))
   const sourceUrls = (article!.sources as RecordObject[]).map((source) => source.url)
   if (evidenceIssues.length || sourceUrls.some((url) => !officialUrls.has(url))) {
