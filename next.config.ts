@@ -4,13 +4,10 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
+      {protocol: 'https', hostname: 'images.unsplash.com'},
+      {protocol: 'https', hostname: 'cdn.sanity.io'},
     ],
   },
-  // Força a Vercel a ignorar erros de TS e concluir o Deploy
   typescript: {
     ignoreBuildErrors: true,
   },
