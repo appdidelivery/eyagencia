@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
       }
     }
     await writeClient.patch(lockId).set({
-      status: created ? 'completed' : 'error',
+      status: published ? 'published' : created ? 'completed' : 'error',
       finishedAt: new Date().toISOString(),
       jobId: created ? payload.jobId : null,
       postDraftId: created ? payload.postDraftId : null,
