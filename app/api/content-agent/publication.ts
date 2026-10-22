@@ -1,6 +1,7 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
 import {checkArticleQuality} from './quality'
 import {evidenceCoverage, fetchEditorialEvidence, inspectFactEvidence} from './evidence'
+import {generateUploadAndAttachFeaturedImage} from './image'
 
 type RecordObject = Record<string, any>
 type Decision = {eligible: boolean; reasons: string[]}
@@ -151,6 +152,22 @@ export async function attemptAutonomousPublish(jobId: string, draftId: string) {
   // The user can still edit the published document through Sanity Studio.
   const publishedAt = new Date().toISOString()
   const {_id, _rev, _createdAt, _updatedAt, ...fields} = draft!
+
+  // Generate the cover only after every factual/editorial publication gate passed.
+  // Image failure never forces a factual article to fail publishing; the frontend
+  // has a branded fallback and the job records the error for later retry.
+  const imageResult = await generateUploadAndAttachFeaturedImage({
+    postId: draftId,
+    article: article!,
+    jobId,
+  })
+  if (imageResult.ok) {
+    fields.mainImage = imageResult.mainImage
+    fields.imageStatus = 'generated'
+  } else {
+    fields.imageStatus = imageResult.status === 'disabled' ? 'pending' : 'failed'
+  }
+
   const body = [...draft!.body]
   body.push({
     _type: 'block',
@@ -179,5 +196,6 @@ export async function attemptAutonomousPublish(jobId: string, draftId: string) {
     published: true,
     url: 'https://www.eyagencia.com.br/blog/' + encodeURIComponent(draft!.slug.current),
     publishedAt,
+    imageStatus: imageResult.ok ? 'generated' : imageResult.status,
   }
 }
