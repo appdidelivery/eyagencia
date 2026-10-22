@@ -136,7 +136,10 @@ export async function GET(request: NextRequest) {
     }).commit()
     return NextResponse.json({
       ok: created, day,
-      result: created ? 'draft_created' : 'generation_failed',
+      result: published ? 'article_published' : created ? 'draft_created' : 'generation_failed',
+      published,
+      publicUrl,
+      publicationReasons: publicationReasons.slice(0, 4),
       qaScore: created ? payload.qa?.score : null,
       qaPassed: created ? payload.qa?.passed : false,
       // Never reveal an internal auth token or raw model response.
