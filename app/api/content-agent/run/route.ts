@@ -1,6 +1,7 @@
 import {randomUUID} from 'crypto'
 import {checkArticleQuality, testArticleQuality} from '../quality'
 import {createMethodologicalDraft} from '../editorialTemplate'
+import {attemptAutonomousPublish} from '../publication'
 import {testAutonomousPublishing} from '../publication'
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
@@ -447,7 +448,132 @@ function isAuthorized(request: NextRequest) {
   return Boolean(secret && authorization === 'Bearer ' + secret)
 }
 
+
+async function repairLatestBlockedDraftAndPublish() {
+  const selectedModel = process.env.CONTENT_AGENT_MODEL || process.env.OPENAI_CONTENT_MODEL || DEFAULT_MODEL
+  const costCheck = await checkZeroCostModel(selectedModel)
+  if (!costCheck.approved) {
+    return {ok: false, status: 403, error: 'Modelo do reparo não está comprovadamente gratuito.', costCheck}
+  }
+
+  const rawClient = writeClient.withConfig({perspective: 'raw'})
+  const job = await rawClient.fetch(
+    '*[_type == "aiContentJob" && status == "needs_review"] | order(createdAt desc)[0]{_id,topic,status,qaScore,qaPassed,postDraftId,factCheckRaw,articleRaw,qaRaw}'
+  )
+  if (!job?.postDraftId) return {ok: false, status: 404, error: 'Nenhum draft bloqueado encontrado.'}
+
+  const draft = await rawClient.getDocument<JsonObject>(String(job.postDraftId))
+  if (!draft) return {ok: false, status: 404, error: 'Draft do último job não encontrado.'}
+
+  let factCheck: JsonObject = {}
+  let article: JsonObject = {}
+  try { factCheck = JSON.parse(String(job.factCheckRaw || '{}')) } catch {}
+  try { article = JSON.parse(String(job.articleRaw || '{}')) } catch {}
+
+  const evidenceBundle = await fetchEditorialEvidence(String(job.topic || DEFAULT_TOPIC))
+  const supportedFacts = keepFactsWithVerbatimEvidence(factCheck, evidenceBundle)
+  if (supportedFacts.length < 2 || !evidenceCoverage(evidenceBundle).ready) {
+    return {ok: false, status: 422, error: 'Lastro oficial insuficiente para reparo seguro.'}
+  }
+
+  let lastQa: JsonObject = {}
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const repair = await callAgent({
+      maxOutputTokens: 8000,
+      instructions:
+        'Você é o revisor final da eYagencia. Reescreva o artigo em português do Brasil para publicação B2B. Retorne SOMENTE JSON válido com os mesmos campos. Use apenas fatos do FACT-CHECK. REGRA ABSOLUTA: qualquer menção nominal a ANPD ou MDIC, ou qualquer frase apresentada como conclusão desses órgãos, deve conter NO MESMO PARÁGRAFO um evidenceQuote LITERAL, CONTÍNUO e IDÊNTICO ao fact-check. Não parafraseie órgãos públicos. Se não houver quote suficiente, remova a atribuição e transforme em recomendação metodológica. Explique claramente que o escopo do MDIC não representa todo o universo de e-commerce quando os fatos aprovados suportarem essa limitação. Não invente leis, números, ROI, causalidade ou situação regulatória atual. Mantenha seoTitle entre 50-60 caracteres e seoDescription entre 150-160 caracteres.',
+      input:
+        'ARTIGO A REPARAR:\n' + JSON.stringify(article) +
+        '\n\nFACT-CHECK COM QUOTES VERIFICADAS PELO SERVIDOR:\n' +
+        JSON.stringify({...factCheck, approvedFacts: supportedFacts}) +
+        '\n\nFONTES OFICIAIS CONSULTADAS:\n' +
+        JSON.stringify(evidenceBundle.sources.map(({title,url,publisher}) => ({title,url,publisher}))) +
+        '\n\nTENTATIVA: ' + attempt,
+    })
+    article = parseJson(repair.text, 'reparo editorial para publicação')
+    const structuralIssues = checkArticleQuality(article, supportedFacts)
+    const deterministicIssues = [
+      ...structuralIssues,
+      ...deterministicEditorialIssues(article, {...factCheck, approvedFacts: supportedFacts}, true),
+    ]
+
+    const qa = await callAgent({
+      maxOutputTokens: 3500,
+      instructions:
+        'Você é o QA final de publicação da eYagencia. Seja rigoroso, mas não invente falhas. Confirme que toda atribuição nominal a ANPD/MDIC contém no mesmo parágrafo um evidenceQuote literal fornecido no fact-check. Confirme limitações do MDIC quando aplicáveis. Reprove fatos sem lastro, normas não verificadas, causalidade, ROI, fontes inventadas e SEO fora das faixas. Retorne SOMENTE JSON com passed, score, issues, fixes, publicationRisk. Para passed=true exija score >=90, publicationRisk=low e issues vazio.',
+      input:
+        'FACT-CHECK:\n' + JSON.stringify({...factCheck, approvedFacts: supportedFacts}) +
+        '\n\nARTIGO REVISADO:\n' + JSON.stringify(article) +
+        '\n\nVALIDAÇÃO DETERMINÍSTICA:\n' + JSON.stringify(deterministicIssues),
+    })
+    lastQa = parseJson(qa.text, 'QA final do reparo')
+    const eligible =
+      lastQa.passed === true &&
+      Number(lastQa.score || 0) >= 90 &&
+      lastQa.publicationRisk === 'low' &&
+      Array.isArray(lastQa.issues) && lastQa.issues.length === 0 &&
+      deterministicIssues.length === 0
+    if (eligible) break
+  }
+
+  const finalStructural = checkArticleQuality(article, supportedFacts)
+  const finalDeterministic = [
+    ...finalStructural,
+    ...deterministicEditorialIssues(article, {...factCheck, approvedFacts: supportedFacts}, true),
+  ]
+  const qaPassed =
+    lastQa.passed === true &&
+    Number(lastQa.score || 0) >= 90 &&
+    lastQa.publicationRisk === 'low' &&
+    Array.isArray(lastQa.issues) && lastQa.issues.length === 0 &&
+    finalDeterministic.length === 0
+
+  const safeArticle = {
+    ...article,
+    internalLinks: Array.isArray(article.internalLinks)
+      ? article.internalLinks.filter((link: JsonObject) => link?.url && ALLOWED_INTERNAL_PATHS.has(String(link.url)))
+      : [],
+    sources: sanitizeArticleSources(article, evidenceBundle),
+  }
+
+  await writeClient.transaction()
+    .patch(String(job.postDraftId), (patch) => patch.set({
+      title: String(safeArticle.title || draft.title || job.topic),
+      slug: draft.slug,
+      seoTitle: String(safeArticle.seoTitle || safeArticle.title || '').trim().slice(0, 70),
+      seoDescription: String(safeArticle.seoDescription || safeArticle.excerpt || '').trim().slice(0, 165),
+      excerpt: String(safeArticle.excerpt || ''),
+      body: articleToPortableText(safeArticle),
+    }))
+    .patch(String(job._id), (patch) => patch.set({
+      articleRaw: JSON.stringify(safeArticle, null, 2),
+      qaRaw: JSON.stringify({...lastQa, passed: qaPassed}, null, 2),
+      qaPassed,
+      qaScore: Number(lastQa.score || 0),
+      status: qaPassed ? 'qa_passed' : 'needs_review',
+    }))
+    .commit()
+
+  if (!qaPassed) {
+    return {
+      ok: false, status: 422, published: false,
+      qaScore: Number(lastQa.score || 0),
+      risk: lastQa.publicationRisk || null,
+      issues: Array.isArray(lastQa.issues) ? lastQa.issues.slice(0, 8) : [],
+      deterministicIssues: finalDeterministic,
+    }
+  }
+
+  const outcome = await attemptAutonomousPublish(String(job._id), String(job.postDraftId))
+  return {ok: outcome.published, status: outcome.published ? 200 : 422, ...outcome, qaScore: Number(lastQa.score || 0)}
+}
+
 export async function GET(request: NextRequest) {
+  if (process.env.VERCEL_ENV === 'preview' && request.nextUrl.searchParams.get('repairPublish') === '1') {
+    const result = await repairLatestBlockedDraftAndPublish()
+    return NextResponse.json(result, {status: Number(result.status || 500)})
+  }
+
   if (process.env.VERCEL_ENV === 'preview' && request.nextUrl.searchParams.get('check') === 'latest-qa') {
     const latest = await writeClient.fetch(
       '*[_type == "aiContentJob"] | order(createdAt desc)[0]{topic,status,qaScore,qaRaw,createdAt}',
@@ -696,7 +822,7 @@ export async function POST(request: NextRequest) {
     const verifier = await callAgent({
       maxOutputTokens: 4500,
       instructions:
-        'Você é o Verificador Editorial da eYagencia. Uma fonte oficial alcançável não comprova qualquer afirmação por si só. Valide o escopo e o trecho específico das fontes fornecidas como DADOS. Atribua confidence>=90 apenas quando houver suporte textual explícito. Em approvedFacts inclua para cada item: claim, confidence (0-100), sourceUrl (URL IDÊNTICA ao pacote) e evidenceQuote (citação exata entre 25 e 180 caracteres literalmente presente no trecho recebido). NÃO aprove fato sem citação textual específica. Não confunda projeto de lei com lei vigente; não infira ausência de legislação atual a partir de fonte antiga. Não atribua causalidade/ROI à IA sem experimento. O MDIC não mede isoladamente impacto de IA em vendas privadas; fontes sobre TCU/STJ não provam eficiência no varejo. Rejeite fatos temporais não sustentados; marque estimativas como estimativas. Retorne SOMENTE JSON válido.',
+        'Você é o Verificador Editorial da eYagencia. Uma fonte oficial alcançável não comprova qualquer afirmação por si só. Valide o escopo e o trecho específico das fontes fornecidas como DADOS. Atribua confidence>=90 apenas quando houver suporte textual explícito. Em approvedFacts inclua para cada item: claim, confidence (0-100), sourceUrl (URL IDÊNTICA ao pacote) e evidenceQuote (citação exata entre 25 e 180 caracteres literalmente presente no trecho recebido). NÃO aprove fato sem citação textual específica. Não confunda projeto de lei com lei vigente; não infira ausência de legislação atual a partir de fonte antiga. Não atribua causalidade/ROI à IA sem experimento. O MDIC não mede isoladamente impacto de IA em vendas privadas; fontes sobre TCU/STJ não provam eficiência no varejo. PRIORIZE fatos úteis para redação segura: (1) ao menos um trecho literal da ANPD sobre IA/proteção de dados; (2) ao menos um trecho literal do MDIC que descreva escopo ou limitações do dashboard, especialmente serviços digitais e importações/remessas quando constarem da página. Rejeite fatos temporais não sustentados; marque estimativas como estimativas. Retorne SOMENTE JSON válido.',
       input:
         'Pauta: ' +
         topic +
@@ -763,7 +889,7 @@ export async function POST(request: NextRequest) {
     const editor = await callAgent({
       maxOutputTokens: 8000,
       instructions:
-        'Você é o Editor SEO/GEO/E-E-A-T da eYagencia. Escreva em português do Brasil para público B2B sem clichês de IA, experiência inventada ou promessas de ROI não verificadas. Utilize SOMENTE fatos verificados com confiança >=90 e fonte primária; descarte referências normativas não comprovadas. Não apresente projeto de lei como lei em vigor. Use uma seção única de controles de risco e FAQs breves sem duplicar seções. Diferencie fato verificado, tendência e opinião. Não transponha aplicações no TCU/STJ para varejo como resultados comprovados. Números históricos devem trazer ano, escopo, tratamento de inflação e lacunas (inclusive B2B, serviços e importações), sem inferir projeções de 2026. Nunca alegue que IA causou crescimento de faturamento com base apenas no dashboard MDIC. Não afirme situação atual da regulação da IA sem fonte oficial atualizada. Sugira métricas, evidências e riscos para casos de uso sem fabricar resultados. Utilize somente links internos da allowlist e nunca invente autoria, revisão jurídica ou data de publicação. Estruture para SEO/GEO/E-E-A-T e retorne SOMENTE JSON válido, sem markdown.',
+        'Você é o Editor SEO/GEO/E-E-A-T da eYagencia. Escreva em português do Brasil para público B2B sem clichês de IA, experiência inventada ou promessas de ROI não verificadas. Utilize SOMENTE fatos verificados com confiança >=90 e fonte primária; descarte referências normativas não comprovadas. Não apresente projeto de lei como lei em vigor. REGRA DE CITAÇÃO: se mencionar ANPD, MDIC ou atribuir qualquer conclusão a uma dessas instituições, inclua no mesmo parágrafo uma citação LITERAL e CONTÍNUA copiada exatamente de evidenceQuote do fact-check; não sintetize como se fosse fala da fonte. Quando não houver quote adequada, escreva a orientação como recomendação editorial da eYagencia sem atribuí-la ao órgão. Use uma seção única de controles de risco e FAQs breves sem duplicar seções. Diferencie fato verificado, tendência e opinião. Não transponha aplicações no TCU/STJ para varejo como resultados comprovados. Números históricos devem trazer ano, escopo, tratamento de inflação e lacunas (inclusive B2B, serviços e importações), sem inferir projeções de 2026. Nunca alegue que IA causou crescimento de faturamento com base apenas no dashboard MDIC. Não afirme situação atual da regulação da IA sem fonte oficial atualizada. Sugira métricas, evidências e riscos para casos de uso sem fabricar resultados. Utilize somente links internos da allowlist e nunca invente autoria, revisão jurídica ou data de publicação. Estruture para SEO/GEO/E-E-A-T e retorne SOMENTE JSON válido, sem markdown.',
       input:
         'Pauta: ' +
         topic +
@@ -816,7 +942,7 @@ export async function POST(request: NextRequest) {
         const repair = await callAgent({
           maxOutputTokens: 7000,
           instructions:
-            'Você é o revisor editorial da eYagencia. Reescreva o JSON do artigo inteiro e devolva SOMENTE JSON válido. Elimine repetições entre FAQ e corpo, atribuições de causalidade sem testes, previsões disfarçadas de fatos, promessas de ROI e alegações jurídicas inseguras. Não projete R$ 187 bilhões de 2022 em 2026, nem transforme exemplos TCU/STJ em estudos de caso de varejo. Destaque explicitamente limitações B2B e escopo das estatísticas do MDIC. Preserve os campos e utilize apenas fatos comprovados com quote/URL no fact-check. Não inclua novas referências externas nem autoria inventada.',
+            'Você é o revisor editorial da eYagencia. Reescreva o JSON do artigo inteiro e devolva SOMENTE JSON válido. Elimine repetições entre FAQ e corpo, atribuições de causalidade sem testes, previsões disfarçadas de fatos, promessas de ROI e alegações jurídicas inseguras. Não projete R$ 187 bilhões de 2022 em 2026, nem transforme exemplos TCU/STJ em estudos de caso de varejo. Destaque explicitamente limitações B2B e escopo das estatísticas do MDIC. Toda menção nominal a ANPD ou MDIC deve conter, no MESMO parágrafo, um evidenceQuote literal e contínuo exatamente como fornecido; se não houver quote, remova a atribuição nominal e transforme a frase em orientação metodológica. Preserve os campos e utilize apenas fatos comprovados com quote/URL no fact-check. Não inclua novas referências externas nem autoria inventada.',
           input:
             'ARTIGO ORIGINAL:\n' + JSON.stringify(article) +
             '\n\nPROBLEMAS QA:\n' + JSON.stringify(qaResult) +
