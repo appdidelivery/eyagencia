@@ -7,49 +7,41 @@ export const postType = defineType({
   type: 'document',
   icon: DocumentTextIcon,
   fields: [
-    defineField({
-      name: 'title',
-      type: 'string',
-    }),
-    defineField({
-      name: 'slug',
-      type: 'slug',
-      options: {
-        source: 'title',
-      },
-    }),
-    defineField({
-      name: 'author',
-      type: 'reference',
-      to: {type: 'author'},
-    }),
+    defineField({name: 'title', type: 'string'}),
+    defineField({name: 'slug', type: 'slug', options: {source: 'title'}}),
+    defineField({name: 'author', type: 'reference', to: {type: 'author'}}),
     defineField({
       name: 'mainImage',
+      title: 'Imagem principal',
       type: 'image',
-      options: {
-        hotspot: true,
-      },
+      options: {hotspot: true},
       fields: [
-        defineField({
-          name: 'alt',
-          type: 'string',
-          title: 'Alternative text',
-        })
-      ]
+        defineField({name: 'alt', type: 'string', title: 'Texto alternativo'}),
+        defineField({name: 'prompt', type: 'text', title: 'Prompt da geração', rows: 4, readOnly: true}),
+        defineField({name: 'generatedAt', type: 'datetime', title: 'Gerada em', readOnly: true}),
+        defineField({name: 'generationSource', type: 'string', title: 'Modelo de imagem', readOnly: true}),
+      ],
+    }),
+    defineField({
+      name: 'imageStatus',
+      title: 'Status da imagem',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Pendente', value: 'pending'},
+          {title: 'Gerada automaticamente', value: 'generated'},
+          {title: 'Falhou — usando fallback', value: 'failed'},
+          {title: 'Manual', value: 'manual'},
+        ],
+      },
     }),
     defineField({
       name: 'categories',
       type: 'array',
       of: [defineArrayMember({type: 'reference', to: {type: 'category'}})],
     }),
-    defineField({
-      name: 'publishedAt',
-      type: 'datetime',
-    }),
-    defineField({
-      name: 'body',
-      type: 'blockContent',
-    }),
+    defineField({name: 'publishedAt', type: 'datetime'}),
+    defineField({name: 'body', type: 'blockContent'}),
     defineField({
       name: 'seoTitle',
       title: 'Título SEO (Meta Title)',
@@ -78,11 +70,7 @@ export const postType = defineType({
     }),
   ],
   preview: {
-    select: {
-      title: 'title',
-      author: 'author.name',
-      media: 'mainImage',
-    },
+    select: {title: 'title', author: 'author.name', media: 'mainImage'},
     prepare(selection) {
       const {author} = selection
       return {...selection, subtitle: author && `by ${author}`}

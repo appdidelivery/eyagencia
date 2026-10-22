@@ -1,44 +1,37 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import {client} from '../sanity/lib/client';
+import {groq} from 'next-sanity';
 
-export default function BlogPreview() {
-  const posts = [
-    {
-      category: "SEO Técnico",
-      title: "Como preparar seu E-commerce para o Update MUVERA (2026)",
-      desc: "Descubra como a densidade factual e o E-E-A-T rigoroso estão redefinindo o ranqueamento de lojas virtuais na nova era das buscas.",
-      date: "12 de Outubro",
-      // Imagem atualizada com URL amigável para o Next.js otimizar
-      image: "/update-muvera.png",
-      // Rota para onde o post vai apontar
-      url: "/blog/como-preparar-seu-e-commerce-para-o-update-muvera-2026" 
-    },
-    {
-      category: "Desenvolvimento",
-      title: "JSON-LD para Lojas Virtuais: O Guia Definitivo",
-      desc: "O impacto direto da marcação de dados estruturados na compreensão do Googlebot e no aumento da Taxa de Clique (CTR) orgânica.",
-      date: "05 de Outubro",
-      // Imagem atualizada com URL amigável para o Next.js otimizar
-      image: "/evolucao-seo.png", 
-      url: "/blog/a-evolucao-das-buscas-do-seo-tradicional-para-aeo-e-geo"
-    },
-    {
-      category: "Estratégia B2B",
-      title: "Como diminuir o CAC em ciclos de vendas longos",
-      desc: "Metodologias práticas para nutrir leads complexos e aumentar o LTV através de fluxos de automação de alto nível.",
-      date: "28 de Setembro",
-      // Imagem genérica provisória (basta trocar o nome depois)
-      image: "/linx-300x300.jpg",
-      url: "/blog/reduzir-cac-b2b"
-    }
-  ];
+export const dynamic = 'force-dynamic';
+
+function formatDate(value?: string) {
+  if (!value) return 'Artigo recente';
+  return new Intl.DateTimeFormat('pt-BR', {day: '2-digit', month: 'long', year: 'numeric'}).format(new Date(value));
+}
+
+export default async function BlogPreview() {
+  const posts = await client.fetch(groq`
+    *[_type == "post" && defined(publishedAt) && defined(slug.current)]
+      | order(publishedAt desc)[0...3]{
+        _id,
+        title,
+        "desc": coalesce(seoDescription, excerpt),
+        "date": publishedAt,
+        "category": categories[0]->title,
+        "slug": slug.current,
+        "imageUrl": mainImage.asset->url,
+        "imageAlt": mainImage.alt
+      }
+  `);
+
+  if (!posts?.length) return null;
 
   return (
     <section className="w-full bg-slate-50 py-24 px-6 lg:px-8 border-t border-slate-200">
       <div className="max-w-7xl mx-auto">
-        
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b54d24] mb-3">Últimas postagens</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
               Radar de <span className="text-[#275c58]">Conteúdo</span>
             </h2>
@@ -49,55 +42,57 @@ export default function BlogPreview() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {posts.map((post, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 group flex flex-col"
-            >
-              {/* O Link agora envolve o card inteiro, melhorando a UX (clicabilidade) */}
-              <Link href={post.url} className="flex flex-col h-full">
-                
-                {/* ÁREA DA IMAGEM */}
-                <div className="w-full h-52 overflow-hidden relative bg-slate-100 border-b border-slate-100">
-                  <Image 
-                    src={post.image} 
-                    alt={post.title} 
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    quality={80}
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" 
-                  />
-                  {/* Badge de Categoria flutuando na imagem */}
-                  <div className="absolute top-4 left-4">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-white bg-[#275c58]/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
-                      {post.category}
-                    </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {posts.map((post: any, index: number) => {
+            const featured = index === 0;
+            return (
+              <article
+                key={post._id}
+                className={`bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 group ${featured ? 'lg:row-span-2' : ''}`}
+              >
+                <Link href={`/blog/${post.slug}`} className="flex flex-col h-full">
+                  <div className={`w-full overflow-hidden relative bg-gradient-to-br from-[#163d3a] via-[#275c58] to-slate-900 border-b border-slate-100 ${featured ? 'h-72 lg:h-[420px]' : 'h-52'}`}>
+                    {post.imageUrl ? (
+                      <img
+                        src={post.imageUrl}
+                        alt={post.imageAlt || post.title}
+                        loading={featured ? 'eager' : 'lazy'}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
+                        <span className="text-white/90 text-2xl font-black">EyAgencia · Radar de Conteúdo</span>
+                      </div>
+                    )}
+                    <div className="absolute top-4 left-4 flex gap-2">
+                      {featured && (
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[#163d3a] bg-white px-3 py-1.5 rounded-full shadow-sm">
+                          Destaque
+                        </span>
+                      )}
+                      <span className="text-[10px] font-black uppercase tracking-wider text-white bg-[#275c58]/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
+                        {post.category || 'Conteúdo'}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* ÁREA DE TEXTO */}
-                <div className="p-8 flex flex-col flex-grow">
-                  <span className="text-xs font-medium text-slate-400 mb-3 block">{post.date}</span>
-                  
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[#275c58] transition-colors leading-snug">
-                    {post.title}
-                  </h3>
-                  
-                  <p className="text-slate-600 text-sm leading-relaxed mb-6 flex-grow">
-                    {post.desc}
-                  </p>
-                  
-                  <div className="text-sm font-bold text-[#b54d24] flex items-center gap-1 group-hover:gap-2 transition-all mt-auto">
-                    Ler artigo completo <span aria-hidden="true">→</span>
+                  <div className={`p-8 flex flex-col flex-grow ${featured ? 'lg:p-10' : ''}`}>
+                    <span className="text-xs font-medium text-slate-400 mb-3 block">{formatDate(post.date)}</span>
+                    <h3 className={`font-bold text-slate-900 mb-3 group-hover:text-[#275c58] transition-colors leading-snug ${featured ? 'text-2xl md:text-3xl' : 'text-xl'}`}>
+                      {post.title}
+                    </h3>
+                    <p className="text-slate-600 text-sm md:text-base leading-relaxed mb-6 flex-grow">
+                      {post.desc}
+                    </p>
+                    <div className="text-sm font-bold text-[#b54d24] flex items-center gap-1 group-hover:gap-2 transition-all mt-auto">
+                      Ler artigo completo <span aria-hidden="true">→</span>
+                    </div>
                   </div>
-                </div>
-                
-              </Link>
-            </div>
-          ))}
+                </Link>
+              </article>
+            );
+          })}
         </div>
-
       </div>
     </section>
   );

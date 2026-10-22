@@ -30,6 +30,13 @@ export const aiContentJobType = defineType({
     defineField({name: 'createdAt', title: 'Criado em', type: 'datetime'}),
     defineField({name: 'publishedAt', title: 'Publicado em', type: 'datetime'}),
     defineField({name: 'publicPostId', title: 'ID do artigo publicado', type: 'string'}),
+    defineField({name: 'imageGenerated', title: 'Imagem gerada', type: 'boolean'}),
+    defineField({name: 'imageStatus', title: 'Status da imagem', type: 'string'}),
+    defineField({name: 'imageModel', title: 'Modelo da imagem', type: 'string'}),
+    defineField({name: 'imageAssetRef', title: 'Asset da imagem', type: 'string'}),
+    defineField({name: 'imageAlt', title: 'Alt da imagem', type: 'string'}),
+    defineField({name: 'imagePrompt', title: 'Prompt da imagem', type: 'text', rows: 6}),
+    defineField({name: 'imageError', title: 'Erro da imagem', type: 'text', rows: 4}),
     defineField({name: 'briefRaw', title: 'Radar / briefing', type: 'text', rows: 12}),
     defineField({name: 'factCheckRaw', title: 'Verificação factual', type: 'text', rows: 12}),
     defineField({name: 'articleRaw', title: 'Artigo estruturado', type: 'text', rows: 18}),
@@ -37,15 +44,15 @@ export const aiContentJobType = defineType({
     defineField({name: 'reviewerNotes', title: 'Notas da revisão humana', type: 'text', rows: 6}),
   ],
   preview: {
-    select: {
-      title: 'topic',
-      status: 'status',
-      score: 'qaScore',
-    },
-    prepare({title, status, score}) {
+    select: {title: 'topic', status: 'status', score: 'qaScore', imageStatus: 'imageStatus'},
+    prepare({title, status, score, imageStatus}) {
       return {
         title,
-        subtitle: [status, typeof score === 'number' ? 'QA ' + score : null].filter(Boolean).join(' · '),
+        subtitle: [
+          status,
+          typeof score === 'number' ? 'QA ' + score : null,
+          imageStatus ? 'Imagem: ' + imageStatus : null,
+        ].filter(Boolean).join(' · '),
       }
     },
   },
