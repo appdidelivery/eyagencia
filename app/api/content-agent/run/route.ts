@@ -597,6 +597,9 @@ export async function GET(request: NextRequest) {
     service: 'eYagencia Content Agent',
     status: 'ready',
     mode: 'draft-only',
+    autonomousDrafts: process.env.CONTENT_AGENT_AUTO_DRAFTS_ENABLED === 'true' && process.env.CONTENT_AGENT_AI_ENABLED === 'true' ? 'scheduled' : 'disabled',
+    scheduleUTC: '30 12 * * *',
+    publishing: 'human-review-only',
     generation: process.env.CONTENT_AGENT_AI_ENABLED === 'true' ? 'enabled' : 'blocked-by-cost-gate',
     flow: ['radar', 'verifier', 'editor', 'qa', 'sanity-draft'],
   })
@@ -919,6 +922,19 @@ export async function POST(request: NextRequest) {
     }
 
     const slug = slugify(String(article.slug || article.title || topic)) || 'conteudo-ia'
+    // Sanity's default published perspective can hide unpublished drafts.
+    // Raw perspective sees both drafts and public documents, preventing two
+    // articles from eventually owning the same canonical blog URL.
+    const slugCollision = await writeClient.withConfig({perspective: 'raw'}).fetch<number>(
+      'count(*[_type == "post" && slug.current == $slug])', {slug},
+    )
+    if (slugCollision > 0) {
+      return NextResponse.json({
+        ok: false, stage: 'duplicate',
+        message: 'Slug já existe em post ou rascunho. Não foi criado um conteúdo duplicado.',
+        slug, aiCalls: 'generation-completed', sanityWrites: 0,
+      }, {status: 409})
+    }
     const timestamp = Date.now()
     const postDraftId = 'drafts.agent-' + slug + '-' + timestamp
     const jobId = 'ai-content-job-' + timestamp
