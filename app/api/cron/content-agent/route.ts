@@ -1,6 +1,7 @@
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
 import {POST as createDraft} from '../../content-agent/run/route'
+import {attemptAutonomousPublish} from '../../content-agent/publication'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
