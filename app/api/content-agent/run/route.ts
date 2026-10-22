@@ -1,6 +1,7 @@
 import {randomUUID} from 'crypto'
 import {checkArticleQuality, testArticleQuality} from '../quality'
 import {createMethodologicalDraft} from '../editorialTemplate'
+import {testAutonomousPublishing} from '../publication'
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
 import {fetchEditorialEvidence, evidenceCoverage, inspectFactEvidence, keepFactsWithVerbatimEvidence, sanitizeArticleSources, testEditorialEvidence} from '../evidence'
@@ -322,7 +323,7 @@ function runZeroCostSelfTests() {
     ).length === 0,
   })
 
-  tests.push(...testEditorialEvidence(), ...testArticleQuality())
+  tests.push(...testEditorialEvidence(), ...testArticleQuality(), ...testAutonomousPublishing())
   tests.push({
     name: 'Guia metodológico possui conteúdo e referências sem números inventados',
     passed: checkArticleQuality(createMethodologicalDraft([
@@ -599,7 +600,7 @@ export async function GET(request: NextRequest) {
     mode: 'draft-only',
     autonomousDrafts: process.env.CONTENT_AGENT_AUTO_DRAFTS_ENABLED === 'true' && process.env.CONTENT_AGENT_AI_ENABLED === 'true' ? 'scheduled' : 'disabled',
     scheduleUTC: '30 12 * * *',
-    publishing: 'human-review-only',
+    publishing: process.env.CONTENT_AGENT_AUTO_PUBLISH_ENABLED === 'true' ? 'gated-autonomous' : 'human-review-only',
     generation: process.env.CONTENT_AGENT_AI_ENABLED === 'true' ? 'enabled' : 'blocked-by-cost-gate',
     flow: ['radar', 'verifier', 'editor', 'qa', 'sanity-draft'],
   })
@@ -966,6 +967,8 @@ export async function POST(request: NextRequest) {
       briefRaw: JSON.stringify(brief, null, 2),
       factCheckRaw: JSON.stringify({
         ...factCheck,
+        // Only document facts that survived independent URL/quote verification.
+        approvedFacts: safeFactCheck.approvedFacts,
         primarySourcesRetrievedAt: evidenceBundle.retrievedAt,
         primarySources: evidenceBundle.sources.map(({id, title, url, publisher, retrievedAt}) =>
           ({id, title, url, publisher, retrievedAt})),

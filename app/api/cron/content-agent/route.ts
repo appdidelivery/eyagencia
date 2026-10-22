@@ -1,6 +1,7 @@
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
 import {POST as createDraft} from '../../content-agent/run/route'
+import {attemptAutonomousPublish} from '../../content-agent/publication'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -106,18 +107,39 @@ export async function GET(request: NextRequest) {
     const response = await createDraft(internalRequest)
     const payload = await response.json().catch(() => ({}))
     const created = response.ok && payload?.ok === true && payload?.mode === 'draft-only'
+    let published = false
+    let publicUrl: string | null = null
+    let publicationReasons: string[] = []
+    if (created && process.env.CONTENT_AGENT_AUTO_PUBLISH_ENABLED === 'true') {
+      try {
+        const outcome = await attemptAutonomousPublish(String(payload.jobId), String(payload.postDraftId))
+        published = outcome.published
+        if (outcome.published) publicUrl = outcome.url
+        else publicationReasons = outcome.reasons
+      } catch (error) {
+        publicationReasons = ['Erro na publicação automática; rascunho preservado.']
+        console.error('[content-agent] Publish error:', error instanceof Error ? error.message : 'unexpected')
+      }
+    }
     await writeClient.patch(lockId).set({
-      status: created ? 'completed' : 'error',
+      status: published ? 'published' : created ? 'completed' : 'error',
       finishedAt: new Date().toISOString(),
       jobId: created ? payload.jobId : null,
       postDraftId: created ? payload.postDraftId : null,
       qaScore: created ? Number(payload.qa?.score || 0) : null,
       qaPassed: created ? payload.qa?.passed === true : false,
       httpStatus: response.status,
+      publicationStatus: published ? 'published' : created ? 'blocked_or_pending' : 'not_generated',
+      publicationReasons,
+      publicUrl,
+      publishedAt: published ? new Date().toISOString() : null,
     }).commit()
     return NextResponse.json({
       ok: created, day,
-      result: created ? 'draft_created' : 'generation_failed',
+      result: published ? 'article_published' : created ? 'draft_created' : 'generation_failed',
+      published,
+      publicUrl,
+      publicationReasons: publicationReasons.slice(0, 4),
       qaScore: created ? payload.qa?.score : null,
       qaPassed: created ? payload.qa?.passed : false,
       // Never reveal an internal auth token or raw model response.
