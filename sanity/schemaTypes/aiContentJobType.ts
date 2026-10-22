@@ -17,6 +17,7 @@ export const aiContentJobType = defineType({
         list: [
           {title: 'Em processamento', value: 'running'},
           {title: 'QA aprovado — revisão humana', value: 'qa_passed'},
+          {title: 'Publicado automaticamente', value: 'auto_published'},
           {title: 'Requer revisão', value: 'needs_review'},
           {title: 'Erro', value: 'error'},
         ],
@@ -27,6 +28,8 @@ export const aiContentJobType = defineType({
     defineField({name: 'model', title: 'Modelo', type: 'string'}),
     defineField({name: 'postDraftId', title: 'ID do draft do post', type: 'string'}),
     defineField({name: 'createdAt', title: 'Criado em', type: 'datetime'}),
+    defineField({name: 'publishedAt', title: 'Publicado em', type: 'datetime'}),
+    defineField({name: 'publicPostId', title: 'ID do artigo publicado', type: 'string'}),
     defineField({name: 'briefRaw', title: 'Radar / briefing', type: 'text', rows: 12}),
     defineField({name: 'factCheckRaw', title: 'Verificação factual', type: 'text', rows: 12}),
     defineField({name: 'articleRaw', title: 'Artigo estruturado', type: 'text', rows: 18}),
