@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server'
-import {writeClient} from '../../../../../sanity/lib/writeClient'
+import {writeClient} from '../../../../sanity/lib/writeClient'
 import {POST as createDraft} from '../../content-agent/run/route'
 
 export const runtime = 'nodejs'
