@@ -41,7 +41,7 @@ export function checkArticleQuality(article: Article, approvedFacts: Fact[]): st
     issues.push('Artigo superficial: mínimo de três seções e 420 palavras de conteúdo substantivo.')
   }
   const seoTitle = String(article.seoTitle || '')
-  const description = String(article.seoDescription || '')
+  const description = String(article.seoDescription || '').trim()
   if (seoTitle.length < 40 || seoTitle.length > 70) {
     issues.push('Título SEO fora da faixa de 40 a 70 caracteres.')
   }
