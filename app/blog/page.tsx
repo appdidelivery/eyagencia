@@ -3,7 +3,6 @@ import Footer from "../../components/Footer";
 import {client} from "../../sanity/lib/client";
 import {groq} from "next-sanity";
 import Link from "next/link";
-import Image from "next/image";
 
 export const dynamic = 'force-dynamic';
 
@@ -71,13 +70,11 @@ export default async function BlogPage() {
                 <article className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col group h-full">
                   <div className="w-full h-52 overflow-hidden relative bg-gradient-to-br from-[#163d3a] via-[#275c58] to-slate-900">
                     {post.imageUrl ? (
-                      <Image
+                      <img
                         src={post.imageUrl}
                         alt={post.imageAlt || post.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 40vw"
-                        quality={82}
-                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-white font-extrabold">
