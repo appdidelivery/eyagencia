@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import {client} from '../sanity/lib/client';
 import {groq} from 'next-sanity';
 
@@ -54,13 +53,11 @@ export default async function BlogPreview() {
                 <Link href={`/blog/${post.slug}`} className="flex flex-col h-full">
                   <div className={`w-full overflow-hidden relative bg-gradient-to-br from-[#163d3a] via-[#275c58] to-slate-900 border-b border-slate-100 ${featured ? 'h-72 lg:h-[420px]' : 'h-52'}`}>
                     {post.imageUrl ? (
-                      <Image
+                      <img
                         src={post.imageUrl}
                         alt={post.imageAlt || post.title}
-                        fill
-                        sizes={featured ? '(max-width: 1024px) 100vw, 50vw' : '(max-width: 1024px) 100vw, 50vw'}
-                        quality={82}
-                        className="object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
+                        loading={featured ? 'eager' : 'lazy'}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
