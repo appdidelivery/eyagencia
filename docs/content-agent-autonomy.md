@@ -33,3 +33,14 @@
 - A verificação automática de fragmento literal de texto não prova que a síntese do artigo está completamente correta; mantenha a revisão humana pré-publicação.
 - Não há publicação social, alteração de anúncios ou contato com clientes neste agendamento.
 - A configuração de `CRON_SECRET`, `CONTENT_AGENT_SECRET` e chaves de API deve permanecer exclusivamente na Vercel (variáveis encrypted).
+
+## Publicação autônoma com validação mais rigorosa
+
+- A autorização expressa para publicação independente é aplicada somente à rotina diária autenticada; POSTs manuais continuam criando rascunhos.
+- `CONTENT_AGENT_AUTO_PUBLISH_ENABLED=true` liga a publicação com travas. Não equivale a publicar rascunhos antigos.
+- Para publicação pública: QA aprovado, nota >= 90, risco baixo, **zero apontamentos editoriais** e estrutura/SEO completos.
+- São exigidos pelo menos dois fatos com fontes oficiais verificadas. Antes de publicar, o agente reconfere URLs e trechos literais nas páginas da ANPD e do MDIC.
+- Um slug existente bloqueia a nova publicação. Sanity executa criação do artigo publicado, atualização do job e exclusão de seu draft em transação atômica.
+- O conteúdo publicado inclui identificação transparente de assistência por IA, sem atribuir revisão humana que não ocorreu.
+- Se qualquer controle falhar, mantém o artigo como rascunho e registra `publicationReasons`. Não força publicação nem faz nova tentativa automática no mesmo dia.
+- Diagnóstico: `https://www.eyagencia.com.br/api/content-agent/status`, sem exposição de credenciais nem texto de rascunhos.
