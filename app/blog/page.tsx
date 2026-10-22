@@ -4,6 +4,8 @@ import { client } from "../../sanity/lib/client";
 import { groq } from "next-sanity";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic'
+
 // SEO Técnico Nativo para a página do Blog
 export const metadata = {
   title: "Blog de E-commerce, SEO e Tráfego Pago | EyAgencia",
