@@ -2,7 +2,7 @@ import {writeClient} from '../../../sanity/lib/writeClient'
 
 type RecordObject = Record<string, any>
 
-export const DEFAULT_IMAGE_MODEL = 'recraft/recraft-v4.1-flash'
+export const DEFAULT_IMAGE_MODEL = 'bfl/flux-3-image-klein'
 const MAX_IMAGE_UNIT_COST_USD = 0.01
 
 function buildFeaturedImagePrompt(article: RecordObject) {
