@@ -279,6 +279,36 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
   }
 }
 
+async function ensureInitialBrand() {
+  // Idempotent initial Velo pilot. Never publishes until verified Meta permissions exist.
+  const exists = await writeClient.fetch<string | null>(
+    '*[_type == "socialBrand" && slug.current == "velo-delivery"][0]._id'
+  )
+  if (exists) return
+  await writeClient.createIfNotExists({
+    _id: 'social-brand-velo-delivery',
+    _type: 'socialBrand',
+    name: 'Velo Delivery',
+    slug: {_type: 'slug', current: 'velo-delivery'},
+    enabled: true,
+    brandGuide: 'Plataforma brasileira de delivery para lojistas. Tom prático, simples, comercial e educativo. Visual limpo, mobile-first, profissional. Não inventar logos nem fotografias de produtos.',
+    audience: 'gestores de restaurantes, conveniências, mercados e operações de delivery',
+    verifiedFacts: ['Velo Delivery é uma plataforma de delivery para estabelecimentos comerciais.'],
+    topics: [
+      'Como deixar um cardápio de delivery mais fácil de navegar',
+      'A importância de apresentar categorias claras no cardápio digital',
+      'Organização de produtos e informações no delivery',
+      'Como reduzir dúvidas comuns de clientes antes do pedido',
+      'Boas práticas de comunicação de uma loja de delivery',
+      'Como facilitar a operação de quem administra pedidos',
+    ],
+    days: ['1', '3', '5'],
+    instagramEnabled: true,
+    facebookEnabled: true,
+    createdAt: new Date().toISOString(),
+  })
+}
+
 export async function runSocialPublishing() {
   if (process.env.VERCEL_ENV !== 'production' ||
       process.env.SOCIAL_AGENT_ENABLED !== 'true' ||
@@ -289,6 +319,7 @@ export async function runSocialPublishing() {
     return {enabled: true, results: [{brand: 'system', status: 'sanity-token-missing'}]}
   }
   const {day, weekday} = brazilDay()
+  await ensureInitialBrand()
   const brands = await writeClient.fetch<Brand[]>(
     '*[_type == "socialBrand" && enabled == true]{_id,name,"slug":slug.current,brandGuide,audience,verifiedFacts,topics,days,website,instagramEnabled,facebookEnabled,approvedImages[]{asset->{url}}}'
   )
