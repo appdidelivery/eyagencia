@@ -11,6 +11,7 @@ export const socialBrandType = defineType({
     defineField({name: 'brandGuide', title: 'Identidade verbal e visual', type: 'text', rows: 5, validation: (Rule) => Rule.required()}),
     defineField({name: 'audience', title: 'Público-alvo', type: 'string'}),
     defineField({name: 'verifiedFacts', title: 'Produtos, serviços e fatos confirmados (não inventar)', type: 'array', of: [{type: 'string'}]}),
+    defineField({name: 'approvedImages', title: 'Fotos oficiais autorizadas (sem custo de geração)', type: 'array', of: [{type: 'image'}]}),
     defineField({name: 'topics', title: 'Pautas autorizadas', type: 'array', of: [{type: 'string'}], validation: (Rule) => Rule.required().min(3)}),
     defineField({name: 'days', title: 'Dias de postagem (horário Brasília, 10h)', type: 'array', of: [{type: 'string', options: {list: [
       {title: 'Domingo', value: '0'}, {title: 'Segunda', value: '1'},
