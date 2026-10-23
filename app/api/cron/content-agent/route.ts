@@ -3,6 +3,7 @@ import {writeClient} from '../../../../sanity/lib/writeClient'
 import {POST as createDraft} from '../../content-agent/run/route'
 import {attemptAutonomousPublish} from '../../content-agent/publication'
 import {repairLegacyBlogCovers} from '../../content-agent/repairLegacyCovers'
+import {syncBlogSocialPackages} from '../../social-agent/blogPackage'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -60,6 +61,12 @@ export async function GET(request: NextRequest) {
     catch (error) {
       console.error('[blog-cover-repair] batch failed', error instanceof Error ? error.message : 'unknown')
     }
+  }
+  if (process.env.VERCEL_ENV === 'production' &&
+      process.env.CONTENT_AGENT_SOCIAL_PACKAGES_ENABLED === 'true' &&
+      process.env.SANITY_API_WRITE_TOKEN) {
+    try { await syncBlogSocialPackages(3) }
+    catch (error) { console.error('[blog-to-social]',error instanceof Error ? error.message : 'unknown') }
   }
   if (process.env.VERCEL_ENV !== 'production' ||
       process.env.CONTENT_AGENT_AUTO_DRAFTS_ENABLED !== 'true' ||
