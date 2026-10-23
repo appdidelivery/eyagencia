@@ -62,9 +62,9 @@ export function buildBlogSocialPackage(post: Post) {
     title:post.title,
     formatVersion:'blog-to-social-v1',
     state:'planned',
-    carousel:carousel.map((item,index)=>({...item,_key:'slide-'+index})),
-    stories:stories.map((item,index)=>({...item,_key:'story-'+index})),
-    videoScenes:videoScenes.map((item,index)=>({...item,_key:'scene-'+index})),
+    carousel:carousel.map((item,index)=>({...item,_type:'socialFrame',_key:'slide-'+index})),
+    stories:stories.map((item,index)=>({...item,_type:'socialFrame',_key:'story-'+index})),
+    videoScenes:videoScenes.map((item,index)=>({...item,_type:'socialFrame',_key:'scene-'+index})),
     caption,
     createdAt:new Date().toISOString(),
   }
