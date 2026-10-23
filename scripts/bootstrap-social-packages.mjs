@@ -1,3 +1,4 @@
+import {renderPendingSocialMedia} from './social-media-render.mjs'
 const enabled=process.env.VERCEL_ENV==='production' && process.env.CONTENT_AGENT_SOCIAL_PACKAGES_ENABLED==='true'
 if(!enabled){console.info('[social-bootstrap] inactive');process.exit(0)}
 const projectId=process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
@@ -90,6 +91,12 @@ try{
     const valid=(verified||[]).filter(x=>x.slides===8&&x.storiesCount===4)
     console.info('[social-bootstrap] articles='+posts.length+' prepared='+plans.length+' before='+before+' after='+after+' valid='+valid.length)
     if(after<plans.length||valid.length===0)process.exitCode=1
+    if(process.env.CONTENT_AGENT_MEDIA_RENDER_ENABLED==='true'){
+      const result=await renderPendingSocialMedia({maxPackages:4})
+      const complete=result.results.filter(item=>item.status==='rendered')
+      console.info('[social-media] processed='+result.processed+' rendered='+complete.length+' items='+JSON.stringify(result.results))
+      if(result.results.some(item=>item.status==='failed')) process.exitCode=1
+    }
   }
 }catch(error){
   console.error('[social-bootstrap] failure:',error instanceof Error?error.message:'unexpected error')
