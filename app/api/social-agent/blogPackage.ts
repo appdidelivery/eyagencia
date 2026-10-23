@@ -71,11 +71,10 @@ export function buildBlogSocialPackage(post: Post) {
 }
 export async function syncBlogSocialPackages(limit=3) {
   const posts=await writeClient.fetch<Post[]>(
-    '*[_type == "post" && !(_id in path("drafts.**")) && defined(publishedAt) && defined(slug.current)] | order(publishedAt desc)[0...$limit]{_id,title,"slug":slug.current,excerpt,body,publishedAt}',
-    {limit:Math.min(5,Math.max(1,limit))},
+    '*[_type == "post" && !(_id in path("drafts.**")) && defined(publishedAt) && defined(slug.current)] | order(publishedAt desc)[0...5]{_id,title,"slug":slug.current,excerpt,body,publishedAt}',
   )
   const results: Array<{slug:string;result:string}>=[]
-  for (const post of posts||[]) {
+  for (const post of (posts||[]).slice(0,Math.min(5,Math.max(1,limit)))) {
     const generated=buildBlogSocialPackage(post)
     if (!generated) {results.push({slug:post.slug||'',result:'source-insufficient'}); continue}
     try {
