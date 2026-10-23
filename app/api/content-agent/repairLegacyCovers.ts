@@ -15,11 +15,10 @@ export async function repairLegacyBlogCovers(limit = 3) {
   const count = Math.min(Math.max(limit, 1), 5)
   // Only auto-generated V1 covers. Never modify human-curated images.
   const old = await writeClient.fetch<LegacyArticle[]>(
-    '*[_type == "post" && !(_id in path("drafts.**")) && mainImage.generationSource == "eyagencia/free-svg-v1"] | order(publishedAt desc)[0...$limit]{_id,_rev,title,excerpt,seoDescription,slug,mainImage}',
-    {limit: count},
+    '*[_type == "post" && !(_id in path("drafts.**")) && mainImage.generationSource == "eyagencia/free-svg-v1"] | order(publishedAt desc)[0...5]{_id,_rev,title,excerpt,seoDescription,slug,mainImage}',
   )
   const results: Array<{postId: string; result: string}> = []
-  for (const article of old || []) {
+  for (const article of (old || []).slice(0,count)) {
     try {
       const svg = buildEditorialSvgCover({
         title: article.title, excerpt: article.excerpt, slug: article.slug?.current,
