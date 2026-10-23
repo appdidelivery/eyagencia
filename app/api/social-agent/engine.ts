@@ -293,9 +293,8 @@ export async function runSocialPublishing() {
     '*[_type == "socialBrand" && enabled == true]{_id,name,"slug":slug.current,brandGuide,audience,verifiedFacts,topics,days,website,instagramEnabled,facebookEnabled,approvedImages[]{asset->{url}}}'
   )
   const results: Result[] = []
-  // Sequential, bounded work so one cron cannot overrun a serverless function.
-  for (const brand of (brands || []).filter((b) => Boolean(b.slug)).slice(0, 4)) {
-    results.push(await processBrand(brand, day, weekday))
-  }
+  // Bounded parallelism keeps the daily job within the function duration.
+  const scheduled = (brands || []).filter((b) => Boolean(b.slug)).slice(0, 4)
+  results.push(...await Promise.all(scheduled.map((brand) => processBrand(brand, day, weekday))))
   return {enabled: true, day, results}
 }
