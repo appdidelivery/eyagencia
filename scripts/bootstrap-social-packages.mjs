@@ -39,19 +39,19 @@ function make(post){
     {kind:'application',title:'Na prática',text:tidy(insights[3]?.description||insights[2].description,170)},
     {kind:'summary',title:'O que levar deste artigo',text:intro},
     {kind:'cta',title:'Leia o artigo completo',text:'Aprofunde esse tema no blog da EyAgencia.',link:url}
-  ].map((x,i)=>({...x,_key:'slide-'+i}))
+  ].map((x,i)=>({...x,_type:'socialFrame',_key:'slide-'+i}))
   const stories=[
     {kind:'hook',title:tidy(post.title,95)},
     {kind:'insight',title:three[0].heading,text:tidy(three[0].description,130)},
     {kind:'practical',title:'Aplique o aprendizado',text:tidy(three[2].description,130)},
     {kind:'cta',title:'Veja o conteúdo completo',text:'Leia no blog da EyAgencia. Link no perfil.',link:url}
-  ].map((x,i)=>({...x,_key:'story-'+i}))
+  ].map((x,i)=>({...x,_type:'socialFrame',_key:'story-'+i}))
   const videoScenes=[
     {kind:'hook',title:tidy(post.title,85),durationSeconds:3},
     {kind:'context',title:intro,durationSeconds:6},
     ...three.map(x=>({kind:'insight',title:tidy(x.heading,80),durationSeconds:6})),
     {kind:'cta',title:'Leia no blog da EyAgencia',link:url,durationSeconds:5}
-  ].map((x,i)=>({...x,_key:'scene-'+i}))
+  ].map((x,i)=>({...x,_type:'socialFrame',_key:'scene-'+i}))
   return {
     _id:'social-package-'+post._id.replace(/[^a-zA-Z0-9-]/g,'-'),_type:'socialPackage',
     title:post.title,sourcePostId:post._id,sourceSlug:post.slug,
