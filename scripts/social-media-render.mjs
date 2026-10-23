@@ -96,7 +96,7 @@ export function makeSocialSvg(pkg,frame,format,index,count){
   </svg>`
 }
 async function getPackages(cfg){
-  const groq='*[_type=="socialPackage" && state != "published" && !(mediaStatus == "rendered" && count(carouselMedia) == 8 && count(storyMedia) == 4)] | order(createdAt asc)[0...20]{_id,_rev,title,sourceSlug,sourcePostId,carousel,stories,mediaStatus,carouselMedia,storyMedia}'
+  const groq='*[_type=="socialPackage" && state != "published" && (coalesce(mediaStatus,"") != "rendered" || count(carouselMedia) != 8 || count(storyMedia) != 4)] | order(createdAt asc)[0...20]{_id,_rev,title,sourceSlug,sourcePostId,carousel,stories,mediaStatus,carouselMedia,storyMedia}'
   const url=new URL(cfg.root+'/data/query/'+encodeURIComponent(cfg.dataset))
   url.searchParams.set('query',groq)
   const response=await fetch(url,{headers:{Authorization:'Bearer '+cfg.token},cache:'no-store',signal:AbortSignal.timeout(30000)})
