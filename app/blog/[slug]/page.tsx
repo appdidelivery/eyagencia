@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { PortableText } from "@portabletext/react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
+import {blogCoverUrl} from "../../../sanity/lib/blogCover";
 
 // Definindo que o params agora é uma Promise (Regra do Next.js 15+)
 type Props = {
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: Props) {
       title, 
       "desc": seoDescription,
       "imageUrl": mainImage.asset->url,
+      "imageSource": mainImage.generationSource,
       "date": publishedAt,
       "authorName": author->name
     }`,
@@ -28,6 +30,8 @@ export async function generateMetadata({ params }: Props) {
   if (!post) return { title: "Página não encontrada | EyAgencia" };
   
   const postUrl = `https://eyagencia.com.br/blog/${resolvedParams.slug}`;
+  const cover = blogCoverUrl({...post, slug: resolvedParams.slug});
+  const ogCover = cover?.startsWith('/') ? 'https://www.eyagencia.com.br' + cover : cover;
 
   return {
     title: `${post.title} | EyAgencia`,
@@ -42,7 +46,7 @@ export async function generateMetadata({ params }: Props) {
       siteName: 'EyAgencia',
       images: [
         {
-          url: post.imageUrl || 'https://eyagencia.com.br/eyagencia-logo-verde.png',
+          url: ogCover || 'https://eyagencia.com.br/eyagencia-logo-verde.png',
           width: 1200,
           height: 630,
           alt: post.title,
@@ -57,7 +61,7 @@ export async function generateMetadata({ params }: Props) {
       card: 'summary_large_image',
       title: post.title,
       description: post.desc,
-      images: [post.imageUrl || 'https://eyagencia.com.br/eyagencia-logo-verde.png'],
+      images: [ogCover || 'https://eyagencia.com.br/eyagencia-logo-verde.png'],
     },
   };
 }
@@ -85,6 +89,7 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) {
     notFound();
   }
+  const displayImage = blogCoverUrl({...post, slug: resolvedParams.slug});
 
   // Preparação de Dados para o JSON-LD (Schema.org - Update MUVERA)
   const postUrl = `https://eyagencia.com.br/blog/${resolvedParams.slug}`;
@@ -93,7 +98,7 @@ export default async function BlogPostPage({ params }: Props) {
     "@type": "BlogPosting",
     "headline": post.title,
     "description": post.excerpt || post.title,
-    "image": post.imageUrl ? [post.imageUrl] : [],
+    "image": displayImage ? [displayImage.startsWith("/") ? "https://www.eyagencia.com.br" + displayImage : displayImage] : [],
     "datePublished": post.date,
     "dateModified": post.date,
     "author": [{
@@ -149,10 +154,10 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="lg:w-2/3 bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-slate-200">
           
           {/* Renderização da Imagem Principal */}
-          {post.imageUrl && (
+          {displayImage && (
             <div className="mb-10 w-full overflow-hidden rounded-xl border border-slate-100">
               <img 
-                src={post.imageUrl} 
+                src={displayImage} 
                 alt={post.imageAlt || post.title} 
                 className="w-full h-auto object-cover max-h-[500px]"
               />

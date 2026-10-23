@@ -3,6 +3,7 @@ import Footer from "../../components/Footer";
 import {client} from "../../sanity/lib/client";
 import {groq} from "next-sanity";
 import Link from "next/link";
+import {blogCoverUrl} from "../../sanity/lib/blogCover";
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ export default async function BlogPage() {
         "readTime": "5 min de leitura",
         "slug": slug.current,
         "imageUrl": mainImage.asset->url,
+        "imageSource": mainImage.generationSource,
         "imageAlt": mainImage.alt
       }
   `);
@@ -69,9 +71,9 @@ export default async function BlogPage() {
               <Link key={post._id} href={`/blog/${post.slug}`} className="block h-full">
                 <article className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col group h-full">
                   <div className="w-full h-52 overflow-hidden relative bg-gradient-to-br from-[#163d3a] via-[#275c58] to-slate-900">
-                    {post.imageUrl ? (
+                    {blogCoverUrl(post) ? (
                       <img
-                        src={post.imageUrl}
+                        src={blogCoverUrl(post)}
                         alt={post.imageAlt || post.title}
                         loading="lazy"
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
