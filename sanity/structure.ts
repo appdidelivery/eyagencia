@@ -1,16 +1,20 @@
 import type {StructureResolver} from 'sanity/structure'
 
-// https://www.sanity.io/docs/structure-builder-cheat-sheet
 export const structure: StructureResolver = (S) =>
   S.list()
-    .title('Blog')
+    .title('Central de Conteúdo')
     .items([
-      S.documentTypeListItem('post').title('Posts'),
+      S.documentTypeListItem('socialBrand').title('Redes sociais · Clientes'),
+      S.documentTypeListItem('socialPublication').title('Redes sociais · Publicações'),
+      S.divider(),
+      S.documentTypeListItem('post').title('Posts do Blog'),
       S.documentTypeListItem('aiContentJob').title('Agente de Conteúdo'),
       S.documentTypeListItem('category').title('Categories'),
       S.documentTypeListItem('author').title('Authors'),
       S.divider(),
       ...S.documentTypeListItems().filter(
-        (item) => item.getId() && !['post', 'aiContentJob', 'category', 'author'].includes(item.getId()!),
+        (item) => item.getId() && ![
+          'socialBrand', 'socialPublication', 'post', 'aiContentJob', 'category', 'author',
+        ].includes(item.getId()!),
       ),
     ])
