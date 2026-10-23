@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server'
-import {runSocialPublishing} from '../../../social-agent/engine'
+import {runSocialPublishing} from '../../social-agent/engine'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
