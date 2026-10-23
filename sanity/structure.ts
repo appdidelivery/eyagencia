@@ -6,6 +6,7 @@ export const structure: StructureResolver = (S) =>
     .items([
       S.documentTypeListItem('socialBrand').title('Redes sociais · Clientes'),
       S.documentTypeListItem('socialPublication').title('Redes sociais · Publicações'),
+      S.documentTypeListItem('socialPackage').title('Agente Social · Pacotes do Blog'),
       S.divider(),
       S.documentTypeListItem('post').title('Posts do Blog'),
       S.documentTypeListItem('aiContentJob').title('Agente de Conteúdo'),
@@ -14,7 +15,7 @@ export const structure: StructureResolver = (S) =>
       S.divider(),
       ...S.documentTypeListItems().filter(
         (item) => item.getId() && ![
-          'socialBrand', 'socialPublication', 'post', 'aiContentJob', 'category', 'author',
+          'socialBrand', 'socialPublication', 'socialPackage', 'post', 'aiContentJob', 'category', 'author',
         ].includes(item.getId()!),
       ),
     ])
