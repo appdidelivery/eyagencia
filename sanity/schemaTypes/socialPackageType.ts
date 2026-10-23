@@ -12,6 +12,26 @@ const frame = defineArrayMember({
   ],
   preview:{select:{title:'title',subtitle:'kind'}},
 })
+const mediaAsset = defineArrayMember({
+  name:'socialMediaAsset',
+  type:'object',
+  fields:[
+    defineField({name:'kind',title:'Formato',type:'string'}),
+    defineField({name:'index',title:'Ordem',type:'number'}),
+    defineField({name:'image',title:'Arte PNG',type:'image',fields:[
+      defineField({name:'alt',title:'Texto alternativo',type:'string'}),
+    ]}),
+    defineField({name:'imageUrl',title:'URL pública',type:'url'}),
+  ],
+  preview:{
+    select:{media:'image',kind:'kind',index:'index'},
+    prepare:({media,kind,index})=>({
+      title:(kind==='story'?'Story ':'Slide ')+String(index||''),
+      media,
+    }),
+  },
+})
+
 export const socialPackageType=defineType({
   name:'socialPackage',
   title:'Agente Social · Pacotes do Blog',
@@ -32,6 +52,11 @@ export const socialPackageType=defineType({
     defineField({name:'carousel',title:'Carrossel · 1080×1350 (8 telas)',type:'array',of:[frame]}),
     defineField({name:'stories',title:'Stories · 1080×1920 (4 telas)',type:'array',of:[frame]}),
     defineField({name:'videoScenes',title:'Roteiro Reels · 1080×1920',type:'array',of:[frame]}),
+    defineField({name:'mediaStatus',title:'Status das artes',type:'string',readOnly:true}),
+    defineField({name:'mediaVersion',title:'Versão do renderizador',type:'string',readOnly:true}),
+    defineField({name:'mediaRenderedAt',title:'Artes geradas em',type:'datetime',readOnly:true}),
+    defineField({name:'carouselMedia',title:'Carrossel pronto · 8 PNG (1080×1350)',type:'array',of:[mediaAsset]}),
+    defineField({name:'storyMedia',title:'Stories prontos · 4 PNG (1080×1920)',type:'array',of:[mediaAsset]}),
     defineField({name:'caption',title:'Legenda social',type:'text',rows:6}),
     defineField({name:'createdAt',title:'Criado em',type:'datetime'}),
   ],
