@@ -4,7 +4,7 @@ import {createMethodologicalDraft} from '../editorialTemplate'
 import {testAutonomousPublishing} from '../publication'
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
-import {fetchEditorialEvidence, evidenceCoverage, inspectFactEvidence, keepFactsWithVerbatimEvidence, sanitizeArticleSources, testEditorialEvidence} from '../evidence'
+import {buildSourceAnchoredFacts, fetchEditorialEvidence, evidenceCoverage, inspectFactEvidence, keepFactsWithVerbatimEvidence, sanitizeArticleSources, testEditorialEvidence} from '../evidence'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -786,9 +786,32 @@ export async function POST(request: NextRequest) {
     const sourceByArea = (area: string) => supportedFacts.some((fact) =>
       evidenceBundle.sources.some((source) => source.url === fact.sourceUrl && source.area === area),
     )
-    const evidenceReady = supportedFacts.length >= 2 &&
+    const hasCrossDomainEvidence = () => supportedFacts.length >= 2 &&
       sourceByArea('comercio') &&
       (sourceByArea('ia-e-dados') || sourceByArea('regulacao'))
+    // A small free model can paraphrase exact quotes even after one correction.
+    // Fall back only to literal, server-extracted quotations about what the
+    // consulted government pages actually say. No invented interpretation,
+    // fabricated citation, weakened score, or bypass of independent QA.
+    if (!hasCrossDomainEvidence()) {
+      const anchors = buildSourceAnchoredFacts(evidenceBundle)
+      for (const anchor of anchors) {
+        if (!supportedFacts.some((fact) => fact.sourceUrl === anchor.sourceUrl)) {
+          supportedFacts.push(anchor)
+        }
+      }
+      if (anchors.length) {
+        factEvidenceIssues = [
+          ...inspectFactEvidence({approvedFacts: supportedFacts}, evidenceBundle),
+          ...coverageIssues(supportedFacts),
+        ]
+        console.info('[content-agent] Source-anchored factual recovery', JSON.stringify({
+          anchors: anchors.length, verifiedFacts: supportedFacts.length,
+          coverageComplete: hasCrossDomainEvidence(),
+        }))
+      }
+    }
+    const evidenceReady = hasCrossDomainEvidence()
     // The rejected candidate claims are tracked, but they are not used in
     // generation. The final text is evaluated on retained evidence only.
     const evidenceGuardIssues = evidenceReady
