@@ -80,11 +80,19 @@ export async function GET(request: NextRequest) {
   const now = new Date()
   const day = now.toISOString().slice(0, 10)
   const lockId = 'content-agent-daily-' + day
-  const existing = await writeClient.fetch<string | null>(
-    '*[_id == $id][0]._id',
+  const existing = await writeClient.fetch<{status?: string; createdAt?: string} | null>(
+    '*[_id == $id][0]{status,createdAt}',
     {id: lockId},
   )
-  if (existing) return NextResponse.json({ok: true, skipped: 'Dia já processado.', day})
+  const olderThanTwoHours = existing?.createdAt &&
+    Date.parse(existing.createdAt) < now.getTime() - 2 * 60 * 60 * 1000
+  const retryWindow = now.getUTCHours() >= 18
+  // One additional attempt per day, only for a failed or stale timed-out job.
+  // The separate recovery lock prevents repeated generation or duplicate posts.
+  const recovery = Boolean(retryWindow && existing &&
+    (existing.status === 'error' || (existing.status === 'running' && olderThanTwoHours)))
+  if (existing && !recovery) return NextResponse.json({ok: true, skipped: 'Dia já processado.', day})
+  const activeLockId = recovery ? lockId + '-recovery' : lockId
 
   const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
   const start = Math.floor(now.getTime() / 86400000) % TOPICS.length
@@ -101,7 +109,7 @@ export async function GET(request: NextRequest) {
 
   try {
     await writeClient.create({
-      _id: lockId, _type: 'contentAgentDailyLock', day,
+      _id: activeLockId, _type: 'contentAgentDailyLock', day,
       status: 'running', createdAt: now.toISOString(), topic: selected[0],
     })
   } catch {
@@ -148,7 +156,7 @@ export async function GET(request: NextRequest) {
         console.error('[content-agent] Publish error:', error instanceof Error ? error.message : 'unexpected')
       }
     }
-    await writeClient.patch(lockId).set({
+    await writeClient.patch(activeLockId).set({
       status: published ? 'published' : created ? 'completed' : 'error',
       finishedAt: new Date().toISOString(),
       jobId: created ? payload.jobId : null,
@@ -177,7 +185,7 @@ export async function GET(request: NextRequest) {
       // Never reveal an internal auth token or raw model response.
     }, {status: created ? 200 : 502})
   } catch {
-    await writeClient.patch(lockId).set({status: 'error', finishedAt: new Date().toISOString()}).commit().catch(() => {})
+    await writeClient.patch(activeLockId).set({status: 'error', finishedAt: new Date().toISOString()}).commit().catch(() => {})
     return NextResponse.json({ok: false, error: 'A execução foi interrompida; sem nova tentativa automática hoje.'}, {status: 500})
   }
 }
