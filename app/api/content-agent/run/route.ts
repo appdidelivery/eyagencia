@@ -599,7 +599,7 @@ export async function GET(request: NextRequest) {
     status: 'ready',
     mode: 'draft-only',
     autonomousDrafts: process.env.CONTENT_AGENT_AUTO_DRAFTS_ENABLED === 'true' && process.env.CONTENT_AGENT_AI_ENABLED === 'true' ? 'scheduled' : 'disabled',
-    scheduleUTC: '30 12 * * *',
+    scheduleUTC: '30 12,22 * * *',
     publishing: process.env.CONTENT_AGENT_AUTO_PUBLISH_ENABLED === 'true' ? 'gated-autonomous' : 'human-review-only',
     generation: process.env.CONTENT_AGENT_AI_ENABLED === 'true' ? 'enabled' : 'blocked-by-cost-gate',
     flow: ['radar', 'verifier', 'editor', 'qa', 'sanity-draft'],
