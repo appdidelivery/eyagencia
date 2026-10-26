@@ -235,6 +235,46 @@ export function sanitizeArticleSources(
     .map((item: any) => ({title: bundle.sources.find((src) => src.url === item.url)!.title, url: item.url}))
 }
 
+// Recovery is deliberately source-first: the model never invents a quote or a
+// claim. Each claim says only what the official document literally contains.
+// These anchors can rescue an otherwise empty free-model fact-check, but they
+// still pass the normal strict evidence and publication QA gates.
+export function buildSourceAnchoredFacts(bundle: EvidenceBundle): Array<Record<string, any>> {
+  if (!evidenceCoverage(bundle).ready) return []
+  const groups = [
+    {kind: 'comercio', matches: (area: string) => area === 'comercio',
+      signal: /com[eé]rcio eletr[oô]nico|notas? fiscais?|dashboard|servi[cç]os digitais|vendas? online|dados do com[eé]rcio/i},
+    {kind: 'ia', matches: (area: string) => area === 'ia-e-dados' || area === 'regulacao',
+      signal: /intelig[eê]ncia artificial|prote[cç][aã]o de dados|dados pessoais|sandbox regulat[oó]rio|aprendizado de m[aá]quina/i},
+  ]
+  const result: Array<Record<string, any>> = []
+  for (const group of groups) {
+    for (const source of bundle.sources.filter((item) => group.matches(item.area))) {
+      const sentences = source.excerpt.replace(/\s+/g, ' ').match(/[^.!?]+(?:[.!?]|$)/g) || []
+      const excerpt = sentences.map((sentence) => sentence.trim()).find((sentence) =>
+        sentence.length >= 85 && sentence.length <= 1200 &&
+        group.signal.test(sentence) &&
+        !/^(?:menu|in[ií]cio|buscar|compartilhar|acessar|ouvir|conte[uú]do)/i.test(sentence),
+      )
+      if (!excerpt) continue
+      const fragment = excerpt.slice(0, 180)
+      const lastSpace = fragment.lastIndexOf(' ')
+      const quote = (fragment.length < excerpt.length && lastSpace > 85
+        ? fragment.slice(0, lastSpace) : fragment).trim()
+      if (normalizeEvidence(quote).length < 65 ||
+          !normalizeEvidence(source.excerpt).includes(normalizeEvidence(quote))) continue
+      result.push({
+        claim: 'A página oficial do ' + source.publisher + ' registra literalmente: “' + quote + '”.',
+        confidence: 95,
+        sourceUrl: source.url,
+        evidenceQuote: quote,
+      })
+      break
+    }
+  }
+  return inspectFactEvidence({approvedFacts: result}, bundle).length === 0 ? result : []
+}
+
 export function testEditorialEvidence(): Array<{name: string; passed: boolean}> {
   const testBundle: EvidenceBundle = {
     topic: 'IA',
@@ -254,6 +294,17 @@ export function testEditorialEvidence(): Array<{name: string; passed: boolean}> 
     {name: 'Não inclui links não consultados nas referências', passed: sanitizeArticleSources({sources: [{url: CATALOG[0].url}, {url: 'https://fake.example'}]}, testBundle).length === 1},
     {name: 'Exige cobertura de IA e de comércio eletrônico', passed: evidenceCoverage(testBundle).ready},
     {name: 'Bloqueia dossiê só de IA, sem mercado', passed: !evidenceCoverage({...testBundle, sources: [testBundle.sources[0]]}).ready},
+    {name: 'Recuperação usa somente citações oficiais literais', passed: (() => {
+      const facts = buildSourceAnchoredFacts(testBundle)
+      return facts.length === 2 && inspectFactEvidence({approvedFacts: facts}, testBundle).length === 0 &&
+        facts.every((fact) => fact.claim.includes(fact.evidenceQuote))
+    })()},
+    {name: 'Recuperação não inventa fatos quando falta domínio temático', passed:
+      buildSourceAnchoredFacts({...testBundle, sources: [testBundle.sources[0]]}).length === 0},
+    {name: 'Recuperação bloqueia texto de navegação irrelevante', passed:
+      buildSourceAnchoredFacts({...testBundle, sources: testBundle.sources.map((item) => ({
+        ...item, excerpt: 'Menu Inicial Contato e outras informações úteis da página oficial. '.repeat(5),
+      }))}).length === 0},
     {name: 'Conserva apenas fatos comprovados por citação literal', passed: keepFactsWithVerbatimEvidence({approvedFacts: [
       {confidence: 96, sourceUrl: CATALOG[0].url, evidenceQuote: 'A proteção de dados pessoais exige finalidades claras, proporcionais'},
       {confidence: 96, sourceUrl: CATALOG[0].url, evidenceQuote: 'frase inventada que não está na fonte consultada'},
