@@ -15,7 +15,7 @@ export async function repairLegacyBlogCovers(limit = 3) {
   const count = Math.min(Math.max(limit, 1), 5)
   // Only auto-generated V1 covers. Never modify human-curated images.
   const old = await writeClient.fetch<LegacyArticle[]>(
-    '*[_type == "post" && !(_id in path("drafts.**")) && mainImage.generationSource == "eyagencia/free-svg-v1"] | order(publishedAt desc)[0...5]{_id,_rev,title,excerpt,seoDescription,slug,mainImage}',
+    '*[_type == "post" && !(_id in path("drafts.**")) && mainImage.generationSource in ["eyagencia/free-svg-v1","eyagencia/free-svg-v2"]] | order(publishedAt desc)[0...5]{_id,_rev,title,excerpt,seoDescription,slug,mainImage}',
   )
   const results: Array<{postId: string; result: string}> = []
   for (const article of (old || []).slice(0,count)) {
@@ -24,7 +24,7 @@ export async function repairLegacyBlogCovers(limit = 3) {
         title: article.title, excerpt: article.excerpt, slug: article.slug?.current,
       })
       const asset = await writeClient.assets.upload('image', svg, {
-        filename: 'eyagencia-v2-' + String(article.slug?.current || article._id)
+        filename: 'eyagencia-v3-' + String(article.slug?.current || article._id)
           .replace(/[^a-z0-9-]/g, '').slice(0, 75) + '.svg',
         contentType: 'image/svg+xml',
       })

@@ -78,6 +78,7 @@ export default async function BlogPostPage({ params }: Props) {
       body,
       "authorName": author->name,
       "imageUrl": mainImage.asset->url,
+      "imageSource": mainImage.generationSource,
       "imageAlt": mainImage.alt,
       excerpt,
       audioUrl

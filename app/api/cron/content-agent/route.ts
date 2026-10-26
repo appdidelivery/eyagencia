@@ -124,6 +124,16 @@ export async function GET(request: NextRequest) {
     const response = await createDraft(internalRequest)
     const payload = await response.json().catch(() => ({}))
     const created = response.ok && payload?.ok === true && payload?.mode === 'draft-only'
+    const failureStage = !created && typeof payload?.stage === 'string' && /^[a-z0-9_-]{1,45}$/i.test(payload.stage)
+      ? payload.stage : !created ? 'generation' : null
+    const failureText = !created ? String(payload?.error || payload?.message || '') : ''
+    const failureCategory = created ? null
+      : /(?:gateway|upstream).*?(?:401|403)|autentica[cç][aã]o/i.test(failureText) ? 'authentication'
+      : /\b429\b|rate.limit/i.test(failureText) ? 'rate_limit'
+      : /custo|pre[cç]o|cat[aá]logo|modelo n[aã]o listado/i.test(failureText) ? 'model_or_budget'
+      : /json|resposta vazia|response.*empty/i.test(failureText) ? 'model_output'
+      : 'generation_error'
+    if (!created) console.error('[content-agent-cron] generation_failed', JSON.stringify({day, httpStatus: response.status, failureStage, failureCategory}))
     let published = false
     let publicUrl: string | null = null
     let publicationReasons: string[] = []
@@ -146,6 +156,8 @@ export async function GET(request: NextRequest) {
       qaScore: created ? Number(payload.qa?.score || 0) : null,
       qaPassed: created ? payload.qa?.passed === true : false,
       httpStatus: response.status,
+      failureStage,
+      failureCategory,
       publicationStatus: published ? 'published' : created ? 'blocked_or_pending' : 'not_generated',
       publicationReasons,
       publicUrl,
@@ -159,6 +171,9 @@ export async function GET(request: NextRequest) {
       publicationReasons: publicationReasons.slice(0, 4),
       qaScore: created ? payload.qa?.score : null,
       qaPassed: created ? payload.qa?.passed : false,
+      failureStage,
+      failureCategory,
+      httpStatus: response.status,
       // Never reveal an internal auth token or raw model response.
     }, {status: created ? 200 : 502})
   } catch {

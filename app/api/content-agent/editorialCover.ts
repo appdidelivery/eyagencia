@@ -1,4 +1,4 @@
-export const COVER_GENERATOR_VERSION = 'eyagencia/free-svg-v2'
+export const COVER_GENERATOR_VERSION = 'eyagencia/free-svg-v3'
 type Article = {title?: string; excerpt?: string; seoDescription?: string; slug?: string}
 function xml(s: string) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')
@@ -19,16 +19,25 @@ function wrap(s: string, width = 26) {
   return out.slice(0,6)
 }
 export function editorialTheme(article: Article) {
-  const txt = [article.title, article.excerpt].join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  if (/lgpd|privacidade|protecao de dados|conformidade/.test(txt)) return 'privacidade'
+  const txt = [article.title, article.excerpt, article.seoDescription].join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  // Choose the specific editorial subject before a broad IA/e-commerce category.
+  if (/lgpd|privacidade|protecao de dados|dados pessoais|conformidade/.test(txt)) return 'privacidade'
+  if (/casos de uso|riscos|matriz de risco|ameaca|limites da ia/.test(txt)) return 'riscos'
+  if (/experimento|teste controlado|teste a\/b|hipotese|piloto/.test(txt)) return 'experimentos'
+  if (/como avaliar|avaliacao|auditoria|qualidade|validacao/.test(txt)) return 'avaliacao'
+  if (/custo|orcamento|precificacao|despesa/.test(txt)) return 'custos'
   if (/atendimento|chatbot|crm|experiencia do cliente/.test(txt)) return 'atendimento'
-  if (/metric|indicador|avaliar|experimento|risco|teste|auditoria/.test(txt)) return 'analytics'
+  if (/metric|indicador|medicao|conversao|performance/.test(txt)) return 'analytics'
   if (/seo|geo|busca organica|google/.test(txt)) return 'busca'
-  if (/trafego|ads|roas|midia paga|campanha|performance/.test(txt)) return 'performance'
+  if (/trafego|ads|roas|midia paga|campanha/.test(txt)) return 'performance'
   if (/catalog|produto|estoque|classificac|cadastro/.test(txt)) return 'catalogo'
   return 'automacao'
 }
 const THEMES = {
+  riscos: {label:'RISCOS E CASOS DE USO',bg:'#122d3b',bg2:'#315e65',accent:'#ffba87',motif:'risk'},
+  experimentos: {label:'EXPERIMENTOS E TESTES',bg:'#12334a',bg2:'#306478',accent:'#b7e2e6',motif:'experiment'},
+  avaliacao: {label:'AUDITORIA E QUALIDADE',bg:'#113b3a',bg2:'#376967',accent:'#bfeac8',motif:'checklist'},
+  custos: {label:'CUSTOS E VIABILIDADE',bg:'#27323d',bg2:'#4d5266',accent:'#f3cb8e',motif:'budget'},
   privacidade: {label:'PRIVACIDADE E GOVERNANÇA',bg:'#102331',bg2:'#16434b',accent:'#93e2cf',motif:'shield'},
   atendimento: {label:'EXPERIÊNCIA E IA',bg:'#143847',bg2:'#11635d',accent:'#ffd29d',motif:'chat'},
   analytics: {label:'ANÁLISE E MÉTRICAS',bg:'#132735',bg2:'#224d66',accent:'#f6b47f',motif:'chart'},
@@ -39,6 +48,10 @@ const THEMES = {
 } as const
 function art(type: string, accent: string) {
   const line = `fill="none" stroke="${accent}" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"`
+  if (type==='risk') return '<rect x="45" y="73" width="445" height="455" rx="32" '+line+'/>'+'<path d="M45 225 H490 M45 378 H490 M192 73 V528 M340 73 V528" '+line+'/>'+'<path d="M99 173 L147 115 M99 115 L147 173" '+line+'/>'+'<path d="M240 299 L277 338 L320 270" '+line+'/>'+'<circle cx="418" cy="453" r="39" '+line+'/>'+'<path d="M418 431 V454 M418 477 V480" '+line+'/> '
+  if (type==='experiment') return '<rect x="44" y="86" width="448" height="450" rx="35" '+line+'/>'+'<path d="M44 200 H492 M269 201 V536 M104 130 H207 M325 130 H427" '+line+'/>'+'<rect x="111" y="386" width="70" height="100" rx="13" fill="'+accent+'" opacity=".4"/>'+'<rect x="332" y="305" width="70" height="181" rx="13" fill="'+accent+'" opacity=".8"/>'+'<path d="M102 280 L179 257 L226 315 M313 284 L382 234 L448 257" '+line+'/>'
+  if (type==='checklist') return '<rect x="78" y="59" width="400" height="490" rx="32" '+line+'/>'+'<path d="M174 67 V36 H375 V67 M210 154 H418 M210 270 H418 M210 390 H418" '+line+'/>'+'<path d="M115 153 L139 177 L177 130 M115 272 L139 296 L177 249 M115 387 L139 411 L177 365" '+line+'/>'
+  if (type==='budget') return '<circle cx="259" cy="280" r="180" '+line+'/>'+'<path d="M259 100 V280 L422 353 M259 280 L153 427" '+line+'/>'+'<rect x="68" y="525" width="385" height="36" rx="16" '+line+'/>'
   if (type==='shield') return `<path d="M265 40 L460 112 V310 C460 440 380 525 265 585 C150 525 70 440 70 310 V112Z" ${line}/><path d="M170 290 L235 365 L375 218" ${line}/><circle cx="265" cy="298" r="205" ${line} opacity=".18"/>`
   if (type==='chat') return `<rect x="45" y="60" width="430" height="300" rx="44" ${line}/><path d="M130 360 L108 454 L250 363" ${line}/><path d="M110 166 H400 M110 231 H330 M110 290 H260" ${line}/><circle cx="420" cy="455" r="78" ${line}/><path d="M420 415 V495 M380 455 H460" ${line}/>`
   if (type==='chart') return `<path d="M45 55 V515 H488" ${line}/><rect x="105" y="300" width="64" height="204" rx="13" fill="${accent}" opacity=".4"/><rect x="205" y="223" width="64" height="281" rx="13" fill="${accent}" opacity=".62"/><rect x="305" y="135" width="64" height="369" rx="13" fill="${accent}" opacity=".83"/><path d="M100 254 L210 165 L294 204 L450 75" ${line}/><path d="M385 72 L450 75 L449 139" ${line}/>`

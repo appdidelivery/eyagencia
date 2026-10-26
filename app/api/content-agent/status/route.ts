@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const last = await writeClient.fetch(
-    '*[_type == "contentAgentDailyLock"] | order(createdAt desc)[0]{day,status,qaScore,publicationStatus,publicUrl,finishedAt}'
+    '*[_type == "contentAgentDailyLock"] | order(createdAt desc)[0]{day,status,qaScore,publicationStatus,publicUrl,finishedAt,httpStatus,failureStage,failureCategory}'
   )
   return NextResponse.json({
     operational: true,
