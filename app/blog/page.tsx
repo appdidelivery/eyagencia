@@ -10,6 +10,22 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: "Blog de E-commerce, SEO e Tráfego Pago | EyAgencia",
   description: "Aprenda estratégias avançadas de Inbound Marketing, automação B2B e engenharia de marketing para lojas virtuais.",
+  alternates: {canonical: "https://www.eyagencia.com.br/blog"},
+  openGraph: {
+    title: "Blog de E-commerce, SEO e Tráfego Pago | EyAgencia",
+    description: "Conteúdo prático de SEO técnico, e-commerce B2B, tráfego pago e IA aplicada ao marketing.",
+    url: "https://www.eyagencia.com.br/blog",
+    siteName: "EyAgencia",
+    type: "website" as const,
+    locale: "pt_BR",
+    images: [{url:"https://www.eyagencia.com.br/eyagencia-logo-verde.png",width:1200,height:630,alt:"EyAgencia"}]
+  },
+  twitter: {
+    card:"summary_large_image" as const,
+    title:"Blog EyAgencia | SEO, E-commerce e IA",
+    description:"Guias e análises sobre SEO técnico e crescimento de e-commerce.",
+    images:["https://www.eyagencia.com.br/eyagencia-logo-verde.png"]
+  }
 };
 
 function formatDate(value?: string) {
