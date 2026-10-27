@@ -48,12 +48,12 @@ function lines(value, maxWidth=20, maxLines=5) {
 }
 function subject(topic) {
   const txt=clean(topic,250).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  if(/lgpd|privacidade|seguranca|protecao/.test(txt))return {tag:'DADOS & PRIVACIDADE',motif:'shield'}
   if(/cardapio|categoria|produt|catalogo|naveg/.test(txt))return {tag:'CARDÁPIO DIGITAL',motif:'menu'}
   if(/estoque|ruptura|reposic|inventario/.test(txt))return {tag:'ESTOQUE & OPERAÇÃO',motif:'box'}
   if(/whatsapp|mensag|atendimento|duvida|comunic/.test(txt))return {tag:'RELACIONAMENTO',motif:'chat'}
   if(/recompra|fideliz|cliente|recorr/.test(txt))return {tag:'EXPERIÊNCIA',motif:'loop'}
   if(/entreg|pedido|delivery|logistica/.test(txt))return {tag:'DELIVERY',motif:'bag'}
-  if(/lgpd|privacidade|seguranca|protecao/.test(txt))return {tag:'DADOS & PRIVACIDADE',motif:'shield'}
   if(/seo|busca|google|pesquisa/.test(txt))return {tag:'BUSCA & SEO',motif:'search'}
   if(/analise|analit|indicador|dados|metrica|resultado|performance/.test(txt))return {tag:'DADOS & MÉTRICAS',motif:'chart'}
   if(/marketing|midia|campanha|anuncio|trafego/.test(txt))return {tag:'MARKETING DIGITAL',motif:'chart'}
