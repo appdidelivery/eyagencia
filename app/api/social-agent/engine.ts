@@ -1,4 +1,5 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
+import {makeBrandSocialSvg, supportedBrandSlug} from '../../../scripts/brand-social-visual.mjs'
 
 type Brand = {
   _id: string
@@ -123,7 +124,7 @@ async function createCaption(brand: Brand, topic: string, day: string) {
   return {caption, concept}
 }
 
-async function createImage(brand: Brand, concept: string, day: string) {
+async function createImage(brand: Brand, concept: string, day: string, topic: string) {
   const pictures = (brand.approvedImages || [])
     .map((img) => img.asset?.url)
     .filter((url): url is string => Boolean(url && url.startsWith('https://cdn.sanity.io/images/')))
@@ -132,7 +133,19 @@ async function createImage(brand: Brand, concept: string, day: string) {
     return {url: pictures[index], assetId: null as string | null}
   }
   if (process.env.SOCIAL_AGENT_IMAGES_ENABLED !== 'true') {
-    throw new Error('Sem imagens oficiais e geração de arte desativada.')
+    // Brand-matched, topic-specific artwork: no third-party image and zero
+    // inference cost. The sample graphics are direction, not image assets.
+    if (!supportedBrandSlug(brand.slug)) {
+      throw new Error('Sem imagem oficial: marca ainda sem identidade visual automática.')
+    }
+    const sharp = (await import('sharp')).default
+    const svg = makeBrandSocialSvg({slug: brand.slug, topic, concept, date: day})
+    const buffer = await sharp(Buffer.from(svg)).png({compressionLevel: 8}).toBuffer()
+    const asset = await writeClient.assets.upload('image', buffer, {
+      filename: 'social-editorial-' + brand.slug + '-' + day + '.png',
+      contentType: 'image/png',
+    })
+    return {url: asset.url, assetId: asset._id}
   }
   const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN
   if (!apiKey) throw new Error('Credencial para geração de imagem ausente.')
@@ -241,7 +254,7 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
   try {
     await writeClient.patch(publicationId).set({status: 'generating'}).commit()
     const generated = await createCaption(brand, topic, day)
-    const photo = await createImage(brand, generated.concept, day)
+    const photo = await createImage(brand, generated.concept, day, topic)
     const jpeg = publicJpeg(photo.url)
     await writeClient.patch(publicationId).set({
       caption: generated.caption, imageUrl: jpeg, imageAssetId: photo.assetId,
