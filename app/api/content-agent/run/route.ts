@@ -105,6 +105,17 @@ function parseJson(text: string, stage: string): JsonObject {
   }
 }
 
+// The free provider currently enforces five requests/minute per region.
+// Spread a single editorial run across the window instead of exhausting the
+// quota during fact-check and losing the final review. No paid model fallback.
+let nextEditorialCallAt = 0
+async function throttleEditorialCall() {
+  const now = Date.now()
+  const delay = Math.max(0, nextEditorialCallAt - now)
+  nextEditorialCallAt = Math.max(now, nextEditorialCallAt) + 13500
+  if (delay) await new Promise<void>((resolve) => setTimeout(resolve, delay))
+}
+
 async function callAgent(args: {
   instructions: string
   input: string
@@ -160,19 +171,30 @@ async function callAgent(args: {
       ? 'https://ai-gateway.vercel.sh/v1/responses'
       : 'https://api.openai.com/v1/responses'
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + apiKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-    cache: 'no-store',
-  })
-
-  if (!response.ok) {
-    const detail = await response.text()
-    throw new Error('AI Gateway ' + response.status + ': ' + detail.slice(0, 700))
+  let response: Response | undefined
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (freePilotMode) await throttleEditorialCall()
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    })
+    if (response.status !== 429 || !freePilotMode || attempt === 2) break
+    // The provider's Retry-After takes precedence; keep a bounded delay.
+    const header = Number(response.headers.get('retry-after') || '0')
+    const detail = await response.text().catch(() => '')
+    const hintedSeconds = Number(detail.match(/retry after (\\d+)s/i)?.[1] || '0')
+    const seconds = Math.min(40, Math.max(14, header || hintedSeconds || 14))
+    console.warn('[content-agent] provider rate limit; retry scheduled', {attempt: attempt + 1, seconds})
+    await new Promise<void>((resolve) => setTimeout(resolve, seconds * 1000))
+  }
+  if (!response || !response.ok) {
+    const detail = response ? await response.text().catch(() => '') : ''
+    throw new Error('AI Gateway ' + (response?.status || 503) + ': ' + detail.slice(0, 700))
   }
 
   const data = await response.json()
