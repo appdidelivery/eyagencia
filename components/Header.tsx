@@ -20,7 +20,7 @@ export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }
 
   // Regras de cor inteligentes
   const textColor = theme === 'light' ? 'text-slate-800' : 'text-zinc-300';
-  const logoSrc = theme === 'light' ? '/eyagencia-logo-verde.png' : '/eyagencia-logo-branca.png';
+  const logoSrc = theme === 'light' ? '/eyagencia-logo-verde.png' : '/logo-branca.png';
   const headerStyle = theme === 'light'
     ? 'bg-white/95 backdrop-blur-md shadow-sm py-3 border-b border-slate-100'
     : 'bg-zinc-950/90 backdrop-blur-md py-3 border-b border-zinc-800';
@@ -42,7 +42,7 @@ export default function Header({ theme = 'light' }: { theme?: 'light' | 'dark' }
             className="object-contain"
             onError={(e) => {
               // Fallback se você não tiver a logo branca/verde nomeada corretamente
-              e.currentTarget.src = '/eyagencia logo.png';
+              e.currentTarget.src = '/eyagencia-logo-verde.png';
             }}
           />
         </a>
