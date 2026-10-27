@@ -187,7 +187,7 @@ async function callAgent(args: {
     // The provider's Retry-After takes precedence; keep a bounded delay.
     const header = Number(response.headers.get('retry-after') || '0')
     const detail = await response.text().catch(() => '')
-    const hintedSeconds = Number(detail.match(/retry after (\\d+)s/i)?.[1] || '0')
+    const hintedSeconds = Number(detail.match(/retry after (\d+)s/i)?.[1] || '0')
     const seconds = Math.min(40, Math.max(14, header || hintedSeconds || 14))
     console.warn('[content-agent] provider rate limit; retry scheduled', {attempt: attempt + 1, seconds})
     await new Promise<void>((resolve) => setTimeout(resolve, seconds * 1000))
