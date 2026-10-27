@@ -54,8 +54,8 @@ export default function RootLayout({
     "@id": "https://eyagencia.com.br/#business",
     "name": "EyAgencia de E-commerce, Marketing Social e Digital",
     "url": "https://eyagencia.com.br",
-    "logo": "https://eyagencia.com.br/icon.png",
-    "image": "https://eyagencia.com.br/icon.png",
+    "logo": "https://www.eyagencia.com.br/eyagencia-logo-verde.png",
+    "image": "https://www.eyagencia.com.br/eyagencia-logo-verde.png",
     "description": "Agência especializada em E-commerce, Marketing Social e Digital, focada em SEO Técnico e Tráfego Pago.",
     "telephone": "+554832200260",
     "address": {
@@ -65,11 +65,6 @@ export default function RootLayout({
       "addressRegion": "SC",
       "postalCode": "88106-500",
       "addressCountry": "BR"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "24"
     },
     "sameAs": [
       "https://www.instagram.com/eyagencia",
