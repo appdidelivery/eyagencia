@@ -5,9 +5,9 @@ type Comment={name:string;message:string;createdAt:string}
 type Feedback={likes:number;ratingCount:number;ratingAverage:number|null;commentCount:number;comments:Comment[]}
 const initial:Feedback={likes:0,ratingCount:0,ratingAverage:null,commentCount:0,comments:[]}
 
-export default function BlogEngagement({slug,title}:{slug:string;title:string}){
-  const [data,setData]=useState<Feedback>(initial)
-  const [loaded,setLoaded]=useState(false)
+export default function BlogEngagement({slug,title,initialData=initial}:{slug:string;title:string;initialData?:Feedback}){
+  const [data,setData]=useState<Feedback>(initialData)
+  const [loaded,setLoaded]=useState(true)
   const [busy,setBusy]=useState(false)
   const [notice,setNotice]=useState('')
   const [rating,setRating]=useState(0)
