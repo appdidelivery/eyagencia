@@ -45,9 +45,8 @@ export default function Footer() {
           
           {/* Coluna 1: Marca e Redes */}
           <div>
-            <a href="#" className="text-2xl font-black text-white tracking-tight flex items-center gap-2 mb-4">
-              <svg className="w-6 h-6 text-[#275c58]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
-              EyAgencia
+            <a href="/" className="flex items-center mb-4" aria-label="EYAGENCIA — página inicial">
+              <img src="/logo-branca.png" alt="EYAGENCIA" width="174" height="54" className="w-[174px] h-auto object-contain"/>
             </a>
             <p className="text-zinc-400 text-sm leading-relaxed max-w-xs mb-6">
               Alta Performance B2B. Acelerando ecossistemas de e-commerce com engenharia de dados, SEO e Inbound Marketing.
@@ -73,10 +72,10 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4 tracking-wide">Links Rápidos</h3>
             <ul className="space-y-3">
-              <li><a href="#servicos" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Nossos Serviços</a></li>
-              <li><a href="#nossos-processos" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Processo de Trabalho</a></li>
-              <li><a href="#clientes" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Clientes e Cases</a></li>
-              <li><a href="#diagnostico" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Agendar Diagnóstico</a></li>
+              <li><a href="/#servicos" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Nossos Serviços</a></li>
+              <li><a href="/#nossos-processos" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Processo de Trabalho</a></li>
+              <li><a href="/clientes" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Clientes e Cases</a></li>
+              <li><a href="/#diagnostico" className="text-zinc-400 hover:text-[#f0815b] transition-colors text-sm font-medium">Agendar Diagnóstico</a></li>
             </ul>
           </div>
 
