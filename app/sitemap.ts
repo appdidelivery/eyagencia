@@ -1,9 +1,25 @@
 import { MetadataRoute } from 'next';
+import {client} from '../sanity/lib/client';
+import {groq} from 'next-sanity';
 import { categories, tools } from './ia-ecommerce/data';
 import { guides } from './ia-ecommerce/guias/data';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://eyagencia.com.br';
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = 'https://www.eyagencia.com.br';
+  let blogUrls: MetadataRoute.Sitemap = [];
+  try {
+    const articles = await client.fetch(groq`*[_type == "post" && !(_id in path("drafts.**")) && defined(slug.current) && defined(publishedAt)]{
+      "slug":slug.current,"modified":coalesce(_updatedAt,publishedAt)
+    }`);
+    blogUrls = (articles || []).filter((item:{slug?:string}) => /^[a-z0-9][a-z0-9-]*$/.test(item.slug || '')).map((item:{slug:string,modified?:string}) => ({
+      url: `${baseUrl}/blog/${encodeURIComponent(item.slug)}`,
+      lastModified: item.modified ? new Date(item.modified) : undefined,
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+    }));
+  } catch(error) {
+    console.error('[sitemap] Falha ao carregar URLs do blog',error);
+  }
 
   const iaCategoryUrls: MetadataRoute.Sitemap = categories.map((category) => ({
     url: `${baseUrl}/ia-ecommerce/${category.slug}`,
@@ -73,6 +89,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 0.9,
     },
+    ...blogUrls,
     {
       url: `${baseUrl}/clientes/sidao-hub`,
       images: [
