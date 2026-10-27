@@ -93,6 +93,26 @@ export default async function BlogPostPage({ params }: Props) {
     notFound();
   }
   const displayImage = blogCoverUrl({...post, slug: resolvedParams.slug});
+  const feedbackRaw = await client.fetch(groq`{
+    "likes": count(*[_type == "blogFeedback" && postSlug == $slug && kind == "like"]),
+    "ratings": *[_type == "blogFeedback" && postSlug == $slug && kind == "rating"].rating,
+    "comments": *[_type == "blogFeedback" && postSlug == $slug && kind == "comment" && status == "approved"] | order(createdAt desc)[0...20]{name,message,createdAt},
+    "commentCount": count(*[_type == "blogFeedback" && postSlug == $slug && kind == "comment" && status == "approved"])
+  }`, {slug: resolvedParams.slug});
+  const ratingValues: number[] = (feedbackRaw.ratings || []).filter((value: unknown) => Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 5);
+  const feedback = {
+    likes: feedbackRaw.likes || 0,
+    ratingCount: ratingValues.length,
+    ratingAverage: ratingValues.length ? Math.round(10 * ratingValues.reduce((sum:number, value:number) => sum + value, 0) / ratingValues.length) / 10 : null,
+    commentCount: feedbackRaw.commentCount || 0,
+    comments: feedbackRaw.comments || []
+  };
+  const byline = post.authorName || "Equipe EyAgencia";
+  const isEditorialTeam = /^equipe|^reda[cç][aã]o/i.test(byline);
+  const structuredAuthor = isEditorialTeam
+    ? {"@type":"Organization","name":"EyAgencia","url":"https://www.eyagencia.com.br"}
+    : {"@type":"Person","name":byline};
+
 
   // Preparação de Dados para o JSON-LD (Schema.org - Update MUVERA)
   const postUrl = `https://www.eyagencia.com.br/blog/${resolvedParams.slug}`;
@@ -106,11 +126,7 @@ export default async function BlogPostPage({ params }: Props) {
     "dateModified": post._updatedAt || post.date,
     "inLanguage": "pt-BR",
     "url": postUrl,
-    "author": [{
-        "@type": "Person",
-        "name": post.authorName || "Equipe EyAgencia",
-        "url": "https://eyagencia.com.br"
-    }],
+    "author": structuredAuthor,
     "publisher": {
         "@type": "Organization",
         "name": "EyAgencia",
@@ -122,9 +138,30 @@ export default async function BlogPostPage({ params }: Props) {
     "mainEntityOfPage": {
         "@type": "WebPage",
         "@id": postUrl
-    }
+    },
+    "interactionStatistic": [
+      ...(feedback.likes ? [{"@type":"InteractionCounter","interactionType":{"@type":"LikeAction"},"userInteractionCount":feedback.likes}] : []),
+      ...(feedback.commentCount ? [{"@type":"InteractionCounter","interactionType":{"@type":"CommentAction"},"userInteractionCount":feedback.commentCount}] : [])
+    ],
+    ...(feedback.ratingCount ? {"aggregateRating":{"@type":"AggregateRating","ratingValue":feedback.ratingAverage,"ratingCount":feedback.ratingCount,"bestRating":5,"worstRating":1}} : {}),
+    ...(feedback.comments.length ? {"comment":feedback.comments.map((item:{name?:string,message:string,createdAt?:string},index:number)=>({
+      "@type":"Comment",
+      "@id":postUrl+"#comment-"+(index+1),
+      "text":item.message,
+      "author":{"@type":"Person","name":item.name||"Leitor"},
+      "dateCreated":item.createdAt
+    }))} : {})
   };
 
+  const breadcrumbJsonLd = {
+    "@context":"https://schema.org",
+    "@type":"BreadcrumbList",
+    "itemListElement":[
+      {"@type":"ListItem","position":1,"name":"Início","item":"https://www.eyagencia.com.br/"},
+      {"@type":"ListItem","position":2,"name":"Blog","item":"https://www.eyagencia.com.br/blog"},
+      {"@type":"ListItem","position":3,"name":post.title,"item":postUrl}
+    ]
+  };
   // Dados da Sidebar
   const categories = ["SEO Técnico", "Tráfego Pago", "E-commerce B2B", "Inbound Marketing", "Web Analytics"];
   const popularTags = ["Vtex", "ROAS", "Core Web Vitals", "LTV", "Automação", "JSON-LD"];
@@ -136,11 +173,16 @@ export default async function BlogPostPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c")}} />
       <Header />
       
       {/* Header minimalista do artigo */}
       <section className="pt-40 pb-12 px-6 lg:px-8 text-center bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto">
+          <nav aria-label="Caminho de navegação" className="text-sm text-slate-500 mb-5">
+            <a href="/" className="hover:text-[#275c58]">Início</a><span className="mx-2">›</span>
+            <a href="/blog" className="hover:text-[#275c58]">Blog</a>
+          </nav>
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight">
             {post.title}
           </h1>
@@ -228,7 +270,7 @@ export default async function BlogPostPage({ params }: Props) {
           </article>
 
           {/* Interações acessíveis com persistência e moderação */}
-          <BlogEngagement slug={resolvedParams.slug} title={post.title} />
+          <BlogEngagement slug={resolvedParams.slug} title={post.title} initialData={feedback} />
         </div>
 
         {/* Coluna Direita: Sidebar B2B */}
