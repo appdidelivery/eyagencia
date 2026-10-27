@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/verify-social-render.mjs && node scripts/bootstrap-social-packages.mjs && EDITORIAL_AUDIT_SITE=ey node scripts/editorial-backlog-audit.mjs",
+    "build": "next build && node scripts/verify-social-render.mjs && node scripts/bootstrap-social-packages.mjs && node scripts/editorial-publish-once.mjs",
     "start": "next start",
     "lint": "eslint"
   },
