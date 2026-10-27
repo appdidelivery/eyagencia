@@ -17,7 +17,11 @@ function formatDate(value?: string) {
   return new Intl.DateTimeFormat('pt-BR', {day: '2-digit', month: 'long', year: 'numeric'}).format(new Date(value));
 }
 
-export default async function BlogPage() {
+export default async function BlogPage({searchParams}:{searchParams:Promise<{q?:string;category?:string}>}) {
+  const filters=await searchParams
+  const q=String(filters?.q||'').trim().slice(0,90)
+  const category=String(filters?.category||'').trim().slice(0,90)
+
   const posts = await client.fetch(groq`
     *[_type == "post" && defined(publishedAt) && defined(slug.current)]
       | order(publishedAt desc){
@@ -34,11 +38,13 @@ export default async function BlogPage() {
       }
   `);
 
+  const filteredPosts=posts.filter((post:any)=>(!q||(post.title+' '+post.desc).toLocaleLowerCase('pt-BR').includes(q.toLocaleLowerCase('pt-BR'))) && (!category||post.category===category))
+  const categories=[...new Set(posts.map((post:any)=>post.category).filter(Boolean))] as string[]
   const blogSchema = {
     "@context": "https://schema.org",
     "@type": "Blog",
     "name": "Blog EyAgencia",
-    "url": "https://eyagencia.com.br/blog",
+    "url": "https://www.eyagencia.com.br/blog",
     "description": "Conteúdo especializado em engenharia de marketing e e-commerce.",
     "publisher": {
       "@type": "Organization",
@@ -47,7 +53,6 @@ export default async function BlogPage() {
     }
   };
 
-  const categories = ["SEO Técnico", "Tráfego Pago", "E-commerce B2B", "Inbound Marketing", "Web Analytics"];
   const popularTags = ["Vtex", "ROAS", "Core Web Vitals", "LTV", "Automação", "JSON-LD"];
 
   return (
@@ -67,7 +72,7 @@ export default async function BlogPage() {
       <section className="py-20 px-6 lg:px-8 max-w-7xl mx-auto w-full flex-grow flex flex-col lg:flex-row gap-12">
         <div className="lg:w-2/3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {posts.map((post: any) => (
+            {filteredPosts.map((post: any) => (
               <Link key={post._id} href={`/blog/${post.slug}`} className="block h-full">
                 <article className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col group h-full">
                   <div className="w-full h-52 overflow-hidden relative bg-gradient-to-br from-[#163d3a] via-[#275c58] to-slate-900">
@@ -104,22 +109,24 @@ export default async function BlogPage() {
               </Link>
             ))}
           </div>
+          {!filteredPosts.length && <p className="mt-8 text-slate-600">Nenhum artigo encontrado. <Link href="/blog" className="underline text-[#275c58]">Ver todos os artigos</Link></p>}
         </div>
 
         <aside className="lg:w-1/3 space-y-10">
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 className="text-lg font-bold text-slate-900 mb-4">Buscar Artigo</h3>
-            <div className="relative">
-              <input type="text" placeholder="Ex: SEO Técnico..." className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-4 pr-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#275c58] transition-all" />
-              <span className="absolute right-3 top-3 text-slate-400">⌕</span>
-            </div>
+            <form method="get" action="/blog" className="flex gap-2">
+              <label htmlFor="blog-search" className="sr-only">Pesquisar artigos</label>
+              <input id="blog-search" type="search" name="q" defaultValue={q} placeholder="Ex.: SEO Técnico" className="min-w-0 flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#275c58]"/>
+              <button type="submit" className="bg-[#275c58] text-white font-bold rounded-lg px-3" aria-label="Pesquisar artigos">Buscar</button>
+            </form>
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 className="text-lg font-bold text-slate-900 mb-4">Categorias</h3>
             <ul className="space-y-3">
               {categories.map((cat) => (
-                <li key={cat}><span className="text-slate-600 font-medium text-sm">{cat}</span></li>
+                <li key={cat}><Link href={`/blog?category=${encodeURIComponent(cat)}`} className="text-slate-600 hover:text-[#275c58] font-medium text-sm">{cat}</Link></li>
               ))}
             </ul>
           </div>
