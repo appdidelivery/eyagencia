@@ -45,6 +45,30 @@ export async function GET(request:NextRequest) {
   result.me=me
   result.page=page
   result.tokenIdentifiesExpectedPage=me.status===200&&me.idMatch===true
+  // Validate that the current credential can securely obtain a Page token.
+  // Both credentials remain in memory; the result contains only booleans.
+  try {
+    const pageResponse=await fetch('https://graph.facebook.com/v26.0/'+encodeURIComponent(pageId)+'?fields=access_token',{
+      method:'GET',headers:{Authorization:'Bearer '+token},
+      cache:'no-store',signal:AbortSignal.timeout(10000),
+    })
+    const pageResult=await pageResponse.json().catch(()=>({})) as {access_token?:string,error?:{code?:number}}
+    const derived=typeof pageResult.access_token==='string'?pageResult.access_token:''
+    result.derivedPageTokenAvailable=Boolean(pageResponse.ok&&derived.length>30)
+    result.pageTokenLookupStatus=pageResponse.status
+    result.pageTokenLookupErrorCode=pageResult.error?.code||null
+    if(derived.length>30) {
+      const derivedResponse=await fetch('https://graph.facebook.com/v26.0/me?fields=id,name',{
+        method:'GET',headers:{Authorization:'Bearer '+derived},
+        cache:'no-store',signal:AbortSignal.timeout(10000),
+      })
+      const derivedIdentity=await derivedResponse.json().catch(()=>({})) as {id?:string}
+      result.derivedTokenIsVeloPage=derivedResponse.ok&&derivedIdentity.id===pageId
+      result.derivedDiffersFromConfigured=derived!==token
+    }
+  }catch{
+    result.pageTokenLookupStatus=0
+  }
   console.info('[meta-token-health]',JSON.stringify(result))
   return NextResponse.json({ok:true,summary:result},{headers:{'Cache-Control':'no-store'}})
 }
