@@ -347,3 +347,77 @@ export async function runSocialPublishing() {
   results.push(...await Promise.all(scheduled.map((brand) => processBrand(brand, day, weekday))))
   return {enabled: true, day, results}
 }
+
+
+// One-off production test, authenticated by Vercel Cron and locked in Sanity.
+// Only the designated brand and date are eligible. A second trigger never
+// publishes again, even if the first invocation partially succeeds.
+export async function runOneTimeSocialPilot() {
+  const {day} = brazilDay()
+  if (process.env.VERCEL_ENV !== 'production' || day !== '2026-10-28') {
+    return {ok: true, skipped: 'Fora da janela do teste único.'}
+  }
+  const pageId = process.env.SOCIAL_META_PAGE_ID_VELO_DELIVERY
+  const instagramId = process.env.SOCIAL_META_INSTAGRAM_ID_VELO_DELIVERY
+  const token = process.env.SOCIAL_META_PAGE_TOKEN_VELO_DELIVERY
+  if (pageId !== '1100534609816460' ||
+      instagramId !== '17841480632856495' || !token ||
+      !process.env.SANITY_API_WRITE_TOKEN) {
+    return {ok: false, skipped: 'Credenciais ou ativos do piloto não correspondem à Velo.'}
+  }
+  const id = 'social-pilot-velo-delivery-2026-10-28'
+  const topic = 'Como organizar melhor seu cardápio digital'
+  const caption = 'Um cardápio digital bem organizado começa por categorias claras e descrições objetivas. Vale revisar os nomes dos itens, as informações de cada produto e a disponibilidade conforme a rotina da loja. Antes de divulgar seu cardápio, confira se alguém que está comprando pela primeira vez consegue encontrar o que procura. Qual parte do seu cardápio você revisaria hoje? #VeloDelivery #CardapioDigital #GestaoDeRestaurantes'
+  try {
+    await writeClient.create({
+      _id: id, _type: 'socialPublication', brandId: 'social-brand-velo-delivery',
+      brandName: 'Velo Delivery', day, topic, status: 'reserved',
+      createdAt: new Date().toISOString(),
+    })
+  } catch {
+    return {ok: true, skipped: 'Teste único já reservado ou concluído.'}
+  }
+  try {
+    await writeClient.patch(id).set({status:'generating',caption}).commit()
+    const svg = makeBrandSocialSvg({
+      slug:'velo-delivery', topic, date:day, concept:'cardápio digital organizado',
+    })
+    const imageBuffer = await renderBrandArt(svg)
+    const asset = await writeClient.assets.upload('image',imageBuffer,{
+      filename:'velo-piloto-social-2026-10-28.png',contentType:'image/png',
+    })
+    const imageUrl = publicJpeg(asset.url)
+    await writeClient.patch(id).set({imageUrl,imageAssetId:asset._id}).commit()
+    const errors: string[]=[]
+    let facebookPostId: string | null=null
+    let instagramPostId: string | null=null
+    try {
+      facebookPostId = await metaPost(pageId + '/photos',token,{
+        url:imageUrl,message:caption,
+      })
+      await writeClient.patch(id).set({facebookPostId}).commit()
+    } catch (error) {
+      errors.push('Facebook: '+(error instanceof Error?error.message:'erro'))
+    }
+    try {
+      instagramPostId = await publishInstagram(instagramId,token,imageUrl,caption)
+      await writeClient.patch(id).set({instagramPostId}).commit()
+    } catch (error) {
+      errors.push('Instagram: '+(error instanceof Error?error.message:'erro'))
+    }
+    const success=Boolean(facebookPostId || instagramPostId)
+    const status=errors.length?(success?'partial':'failed'):'published'
+    await writeClient.patch(id).set({
+      status,errors,finishedAt:new Date().toISOString(),
+    }).commit()
+    console.info('[social-pilot] finished',JSON.stringify({status,facebookPostId,instagramPostId,errors}))
+    return {ok:success,status,facebookPostId,instagramPostId,errors}
+  } catch(error) {
+    const message = error instanceof Error ? error.message.slice(0,160) : 'erro'
+    await writeClient.patch(id).set({
+      status:'blocked',errors:[message],finishedAt:new Date().toISOString(),
+    }).commit().catch(()=>{})
+    console.error('[social-pilot] blocked',message)
+    return {ok:false,status:'blocked',error:message}
+  }
+}
