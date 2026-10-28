@@ -6,8 +6,8 @@ const require = createRequire(import.meta.url)
 // A checked-in font filename in an npm dependency is resolved as a runtime asset.
 // No fontconfig/system font lookup is used, including on Vercel Functions.
 const fontFiles = [
-  require.resolve('@expo-google-fonts/noto-sans/NotoSans_400Regular.ttf'),
-  require.resolve('@expo-google-fonts/noto-sans/NotoSans_700Bold.ttf'),
+  require.resolve('@expo-google-fonts/noto-sans/400Regular/NotoSans_400Regular.ttf'),
+  require.resolve('@expo-google-fonts/noto-sans/700Bold/NotoSans_700Bold.ttf'),
 ]
 
 export async function renderBrandArt(svg) {
