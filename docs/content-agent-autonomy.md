@@ -2,7 +2,7 @@
 
 ## Produção operacional
 
-- **Agendamento:** Vercel Cron `30 12 * * *` (12h30 UTC, 9h30 em Brasília/São Paulo), todos os dias. Se a conta estiver no plano Hobby, a execução poderá variar dentro da hora.
+- **Agendamento:** Vercel Cron `30 12,22 * * *`: execução principal às 9h30 e recuperação às 19h30 em Brasília/São Paulo. Se a conta estiver no plano Hobby, a execução poderá variar dentro da hora.
 - **Escopo:** até 1 pauta por dia, com rotação de 32 pautas de IA aplicada ao e-commerce.
 - **Pesquisa:** ANPD e MDIC via fontes oficiais permitidas; faltando evidência, interromper o texto em vez de inventar fontes.
 - **Produção de conteúdo:** Radar → verificador factual → editor → QA → rascunho Sanity.
@@ -18,7 +18,7 @@
 - O preço do modelo `-free` é validado dinamicamente no catálogo da Vercel antes de cada execução. Custo não confirmado → sem inferência.
 - O Sanity registra uma trava por dia em `contentAgentDailyLock` com ID `content-agent-daily-YYYY-MM-DD`; outra execução no dia é ignorada, inclusive em concorrência.
 - Antes de selecionar a pauta, descarta tópicos tratados nos últimos 30 dias. O endpoint de criação também bloqueia colisões de slug em posts publicados **e** rascunhos.
-- Não há tentativas automáticas extras após uma falha; a próxima oportunidade será o dia seguinte.
+- A execução das 19h30 recupera apenas jobs do dia com `status=error` ou `running` há mais de duas horas; usa lock de recuperação independente, limitando a uma tentativa extra por dia. Se a falha anterior for `duplicate`, a recuperação seleciona outra pauta elegível, sem desabilitar o bloqueio de slug duplicado.
 
 ## Controle
 
