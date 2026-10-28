@@ -848,6 +848,16 @@ export async function POST(request: NextRequest) {
       }, {status: 422})
     }
 
+    // Provide the editor with existing articles (including drafts) so it can
+    // choose a topic-specific title/slug instead of repeating generic ones.
+    // The later raw-perspective slug collision check remains mandatory.
+    const recentArticles = await writeClient.withConfig({perspective: 'raw'}).fetch<
+      Array<{title?: string; slug?: string}>
+    >('*[_type == "post" && defined(slug.current)] | order(_updatedAt desc)[0...35]{title,"slug":slug.current}')
+    const avoidDuplicates = (recentArticles || [])
+      .filter((item) => Boolean(item.slug))
+      .map((item) => ({title: String(item.title || '').slice(0, 115), slug: String(item.slug || '').slice(0, 130)}))
+
     const editor = await callAgent({
       maxOutputTokens: 8000,
       instructions:
@@ -868,6 +878,9 @@ export async function POST(request: NextRequest) {
         '\n\nREGRA OBRIGATÓRIA: não use afirmações rejeitadas; use apenas as aprovadas. Redija um guia metodológico perene, não uma previsão de 2026. Evite números monetários e percentuais caso não constem das afirmações aprovadas. Produza 5 seções, pelo menos 550 palavras, FAQ concisa e resumo executivo. Não invente ganhos de IA.\n' +
         '\n\nFONTES EXTERNAS PERMITIDAS:\n' +
         JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))) +
+        '\n\nTÍTULOS E SLUGS JÁ UTILIZADOS (PUBLICADOS OU RASCUNHOS), PROIBIDO REPETIR:\n' +
+        JSON.stringify(avoidDuplicates) +
+        '\nO slug deve especificar claramente o enfoque da pauta atual e ser distinto dos anteriores. Não troque apenas o slug de um artigo semanticamente igual; escolha um ângulo editorial genuinamente novo.\n' +
         '\n\nGere JSON com: title, slug, seoTitle (50-60 caracteres), seoDescription (150-160 caracteres), excerpt, searchIntent, sections (cada item com heading, paragraphs e bullets opcionais), faq (question/answer), internalLinks (anchor/url usando SOMENTE esta allowlist: /ia-ecommerce, /ia-ecommerce/ferramentas, /ia-ecommerce/guias, /ia-ecommerce/metodologia, /blog, /clientes, /parceiros) e sources (title/url apenas das fontes verificadas). O artigo deve ser aprofundado, útil e acionável.',
     })
     let article = parseJson(editor.text, 'editor')
