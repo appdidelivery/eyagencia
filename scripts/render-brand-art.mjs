@@ -1,14 +1,18 @@
-import {createRequire} from 'node:module'
+import {existsSync} from 'node:fs'
+import {join} from 'node:path'
 import {Resvg} from '@resvg/resvg-js'
 import sharp from 'sharp'
 
-const require = createRequire(import.meta.url)
-// A checked-in font filename in an npm dependency is resolved as a runtime asset.
-// No fontconfig/system font lookup is used, including on Vercel Functions.
+// Load the font package through the filesystem rather than importing .ttf
+// files into the Next bundler. Output tracing includes these files on Vercel.
+const packageRoot = join(process.cwd(),'node_modules','@expo-google-fonts','noto-sans')
 const fontFiles = [
-  require.resolve('@expo-google-fonts/noto-sans/400Regular/NotoSans_400Regular.ttf'),
-  require.resolve('@expo-google-fonts/noto-sans/700Bold/NotoSans_700Bold.ttf'),
+  join(packageRoot,'400Regular','NotoSans_400Regular.ttf'),
+  join(packageRoot,'700Bold','NotoSans_700Bold.ttf'),
 ]
+if(!fontFiles.every((file) => existsSync(file))) {
+  throw new Error('Fonte Noto Sans não incluída no deployment social.')
+}
 
 export async function renderBrandArt(svg) {
   const painter = new Resvg(svg, {
