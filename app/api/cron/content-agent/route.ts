@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
   const now = new Date()
   const day = now.toISOString().slice(0, 10)
   const lockId = 'content-agent-daily-' + day
-  const existing = await writeClient.fetch<{status?: string; createdAt?: string} | null>(
-    '*[_id == $id][0]{status,createdAt}',
+  const existing = await writeClient.fetch<{status?: string; createdAt?: string; topic?: string; failureStage?: string} | null>(
+    '*[_id == $id][0]{status,createdAt,topic,failureStage}',
     {id: lockId},
   )
   const olderThanTwoHours = existing?.createdAt &&
@@ -99,6 +99,9 @@ export async function GET(request: NextRequest) {
   let selected: (typeof TOPICS)[number] | undefined
   for (let i = 0; i < TOPICS.length; i++) {
     const topic = TOPICS[(start + i) % TOPICS.length]
+    // A duplicate-slug failure must not regenerate the same editorial topic
+    // during the evening recovery attempt. Keep all duplicate-content gates.
+    if (recovery && existing?.failureStage === 'duplicate' && topic[0] === existing.topic) continue
     const previous = await writeClient.fetch<number>(
       'count(*[_type == "aiContentJob" && topic == $topic && createdAt > $cutoff])',
       {topic: topic[0], cutoff},
