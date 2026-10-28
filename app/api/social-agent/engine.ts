@@ -200,6 +200,32 @@ function publicJpeg(url: string) {
   return parsed.toString()
 }
 
+// Convert the configured system-user credential into the authorized Page
+// access token only for Facebook Page posting. The configured token remains
+// unchanged for Instagram; neither token is logged, persisted or returned.
+async function facebookPageToken(pageId: string, systemToken: string) {
+  const response = await fetch(GRAPH_URL + '/' + encodeURIComponent(pageId) + '?fields=id,access_token', {
+    method: 'GET',
+    headers: {Authorization: 'Bearer ' + systemToken},
+    cache: 'no-store', signal: AbortSignal.timeout(15000),
+  })
+  const data = await response.json().catch(() => ({})) as {id?: string; access_token?: string; error?: {code?: number}}
+  if (!response.ok || data.id !== pageId || !data.access_token) {
+    throw new Error('Meta: credencial não autorizada a obter token da Página; código ' +
+      (data.error?.code || response.status))
+  }
+  const token = data.access_token
+  const identity = await fetch(GRAPH_URL + '/me?fields=id', {
+    method: 'GET', headers: {Authorization: 'Bearer ' + token},
+    cache: 'no-store', signal: AbortSignal.timeout(15000),
+  })
+  const page = await identity.json().catch(() => ({})) as {id?: string}
+  if (!identity.ok || page.id !== pageId) {
+    throw new Error('Meta: token derivado não identifica a Página Velo.')
+  }
+  return token
+}
+
 async function metaPost(path: string, token: string, params: Record<string, string>) {
   const res = await fetch(GRAPH_URL + '/' + path, {
     method: 'POST',
@@ -270,7 +296,7 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
     // Each platform has its own result: success on one platform never causes duplicate posting there.
     if (brand.facebookEnabled && keys.pageId) {
       try {
-        facebookPostId = await metaPost(keys.pageId + '/photos', keys.pageToken, {
+        facebookPostId = await metaPost(keys.pageId + '/photos', await facebookPageToken(keys.pageId, keys.pageToken), {
           url: jpeg, message: generated.caption,
         })
         await writeClient.patch(publicationId).set({facebookPostId}).commit()
@@ -392,7 +418,7 @@ export async function runOneTimeSocialPilot() {
     let facebookPostId: string | null=null
     let instagramPostId: string | null=null
     try {
-      facebookPostId = await metaPost(pageId + '/photos',token,{
+      facebookPostId = await metaPost(pageId + '/photos',await facebookPageToken(pageId,token),{
         url:imageUrl,message:caption,
       })
       await writeClient.patch(id).set({facebookPostId}).commit()
