@@ -12,10 +12,6 @@
     {
       "path": "/api/cron/social-assets",
       "schedule": "15 13 * * *"
-    },
-    {
-      "path": "/api/cron/social-pilot",
-      "schedule": "* * * * *"
     }
   ]
 }
