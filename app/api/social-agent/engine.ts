@@ -1,5 +1,6 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
 import {makeBrandSocialSvg, supportedBrandSlug} from '../../../scripts/brand-social-visual.mjs'
+import {renderBrandArt} from '../../../scripts/render-brand-art.mjs'
 
 type Brand = {
   _id: string
@@ -88,6 +89,8 @@ async function createCaption(brand: Brand, topic: string, day: string) {
     'NÃO invente preço, promoção, estoque, oferta, dados, porcentagem, depoimento, legislação, resultado ou característica de produto.',
     'Somente fatos fornecidos como verificados podem ser afirmados especificamente.',
     'Não invente URLs. Não repita frases genéricas e não use termos como garantia de sucesso.',
+    'Não diga que aumenta vendas, ticket médio, faturamento, lucro ou conversão sem evidências verificadas; não afirme que o cliente já possui filtros, fotos, integração ou funcionalidades sem fatos verificados.',
+    'Evite frases sensacionalistas como máquina de vendas, resultados garantidos, venda mais, descubra o segredo, comprovadamente, imperdível.',
     'O texto deve ser publicável diretamente, sem revisão humana, ou você deve retornar JSON {"caption":"","visualConcept":""}.',
   ].join('\n')
   const input = JSON.stringify({
@@ -116,6 +119,9 @@ async function createCaption(brand: Brand, topic: string, day: string) {
   if (/(?:R\$\s*\d|\b\d+(?:[.,]\d+)?\s*%|\b(?:garantid[oa]|gr[aá]tis|imperd[ií]vel)\b)/i.test(caption)) {
     throw new Error('Alegação de preço, resultado ou promoção não autorizada.')
   }
+  if (/(?:m[aá]quina de vendas|dispar(?:a|am|e|ou) (?:as )?vendas|(?:aument|elev|multiplic|melhor)\w*.{0,55}(?:ticket m[eé]dio|faturamento|vendas|convers[aã]o|lucro)|(?:garant|comprovad)\w* resultado)/i.test(caption)) {
+    throw new Error('Legenda reprovada por promessa comercial sem evidência.')
+  }
   const links = caption.match(/https?:\/\/[^\s)]+/g) || []
   if (links.some((link) => {
     try { return !brand.website || new URL(link).hostname !== new URL(brand.website).hostname }
@@ -138,9 +144,8 @@ async function createImage(brand: Brand, concept: string, day: string, topic: st
     if (!supportedBrandSlug(brand.slug)) {
       throw new Error('Sem imagem oficial: marca ainda sem identidade visual automática.')
     }
-    const sharp = (await import('sharp')).default
     const svg = makeBrandSocialSvg({slug: brand.slug, topic, concept, date: day})
-    const buffer = await sharp(Buffer.from(svg)).png({compressionLevel: 8}).toBuffer()
+    const buffer = await renderBrandArt(svg)
     const asset = await writeClient.assets.upload('image', buffer, {
       filename: 'social-editorial-' + brand.slug + '-' + day + '.png',
       contentType: 'image/png',

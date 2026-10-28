@@ -87,14 +87,15 @@ export function makeBrandSocialSvg({slug,topic,concept='',date=''}) {
   const size=titleLines.length>=5?62:72
   const ink=titleLines.map((l,i)=>{
     const color=brand.kind==='velo' && i===titleLines.length-1 ? brand.accent : '#f8fbff'
-    return '<text x="83" y="'+(y0+i*lineHeight)+'" fill="'+color+'" font-family="Arial,DejaVu Sans,sans-serif" font-size="'+size+'" font-weight="800" letter-spacing="-1">'+escapeXml(l)+'</text>'
+    const scaled = Math.min(size,Math.floor(630 / Math.max(1,l.length*0.68)))
+    return '<text x="83" y="'+(y0+i*lineHeight)+'" fill="'+color+'" font-family="Noto Sans" font-size="'+scaled+'" font-weight="700" letter-spacing="-.5">'+escapeXml(l)+'</text>'
   }).join('')
   const rect=brand.kind==='velo'
     ? '<path d="M0 900 Q540 1030 1080 785 L1080 1080 H0 Z" fill="#6327b4" opacity=".56"/><path d="M0 945 Q540 1050 1080 850" fill="none" stroke="#ff812b" stroke-width="13" opacity=".9"/>'
     : '<path d="M0 920 Q570 840 1080 1020 L1080 1080 H0 Z" fill="#0b5151" opacity=".7"/><rect x="0" y="0" width="16" height="1080" fill="#ff997c" opacity=".8"/>'
   const opening=brand.kind==='velo'
-    ? '<text x="86" y="109" fill="#f9fdff" font-size="50" font-weight="850" font-family="Arial,DejaVu Sans,sans-serif">VELO</text><text x="240" y="109" fill="#a66dff" font-size="50" font-weight="800" font-family="Arial,DejaVu Sans,sans-serif">DELIVERY</text>'
-    : '<text x="86" y="110" fill="#b2f1df" font-size="48" font-weight="800" font-family="Arial,DejaVu Sans,sans-serif">EyAgencia</text>'
+    ? '<text x="86" y="109" fill="#f9fdff" font-size="50" font-weight="700" font-family="Noto Sans">VELO</text><text x="240" y="109" fill="#a66dff" font-size="50" font-weight="700" font-family="Noto Sans">DELIVERY</text>'
+    : '<text x="86" y="110" fill="#b2f1df" font-size="48" font-weight="700" font-family="Noto Sans">EyAgencia</text>'
   const glow=brand.kind==='velo' ? '#f26d1b' : '#4cae99'
   return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">'+
     '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="'+brand.bg+'"/><stop offset="1" stop-color="'+brand.bg2+'"/></linearGradient>'+
@@ -105,18 +106,18 @@ export function makeBrandSocialSvg({slug,topic,concept='',date=''}) {
     '<path d="M580 1080 L1080 580 M673 1080 L1080 674" stroke="'+brand.accent+'" stroke-width="3" opacity=".24"/>'+
     opening+
     '<rect x="80" y="172" width="'+Math.min(660,semantic.tag.length*21+65)+'" height="58" rx="16" fill="'+brand.accent+'"/>'+
-    '<text x="105" y="209" fill="'+brand.bg+'" font-size="25" font-weight="800" font-family="Arial,DejaVu Sans,sans-serif">'+escapeXml(semantic.tag)+'</text>'+
+    '<text x="105" y="209" fill="'+brand.bg+'" font-size="25" font-weight="700" font-family="Noto Sans">'+escapeXml(semantic.tag)+'</text>'+
     '<g transform="translate(722 518) rotate('+tilt+' 175 200)">'+
     '<rect x="0" y="0" width="398" height="440" rx="58" fill="'+brand.highlight+'" opacity=".08"/>'+
     '<g transform="translate(16 29)" color="'+brand.accent+'" opacity=".9">'+art(semantic.motif)+'</g>'+
     '</g>'+
     '<rect x="58" y="255" width="702" height="530" rx="35" fill="'+brand.bg+'" opacity=".28"/>'+
     ink+
-    '<text x="86" y="809" fill="#f0f8ff" font-size="34" font-family="Arial,DejaVu Sans,sans-serif" opacity=".86">'+
+    '<text x="86" y="809" fill="#f0f8ff" font-size="34" font-family="Noto Sans" opacity=".86">'+
     (brand.kind==='velo'?'INSIGHTS PARA GESTORES DE DELIVERY':'CONTEÚDO PARA E-COMMERCE')+'</text>'+
     rect+
     '<path d="M85 991 H995" stroke="'+brand.accent+'" stroke-width="4" opacity=".8"/>'+
-    '<text x="86" y="1040" fill="#f5ffff" font-size="27" font-family="Arial,DejaVu Sans,sans-serif" font-weight="650">'+escapeXml(brand.website)+'</text>'+
-    '<text x="995" y="1040" text-anchor="end" fill="'+brand.soft+'" font-size="23" font-family="Arial,DejaVu Sans,sans-serif">'+escapeXml(brand.label)+'</text>'+
+    '<text x="86" y="1040" fill="#f5ffff" font-size="27" font-family="Noto Sans" font-weight="700">'+escapeXml(brand.website)+'</text>'+
+    '<text x="995" y="1040" text-anchor="end" fill="'+brand.soft+'" font-size="23" font-family="Noto Sans">'+escapeXml(brand.label)+'</text>'+
     '</svg>'
 }
