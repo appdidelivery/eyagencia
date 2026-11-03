@@ -112,6 +112,6 @@ const keywords = {
 export function rankHeadline(title,brand) {
   const text=String(title||'').trim()
   if(text.length<22||text.length>180||
-    /elei[cç][aã]o|boicote|crime|viol[eê]ncia|opini[aã]o|editorial|publieditorial/i.test(text))return -1
+    /elei[cç][aã]o|eleitor(?:al|ais)|boicote|crime|viol[eê]ncia|opini[aã]o|editorial|publieditorial/i.test(text))return -1
   return (keywords[brand]||[]).reduce((acc,regex)=>acc+(regex.test(text)?2:0),0)
 }
