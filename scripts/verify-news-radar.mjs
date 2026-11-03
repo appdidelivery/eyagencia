@@ -7,7 +7,7 @@ const source=NEWS_SOURCES.eyagencia
 assert.equal(decodeHtml('gest&atilde;o &amp; loja'),'gest&atilde;o & loja')
 assert.equal(safeArticleUrl('https://evil.example/noticias/seo-em-lojas',source),null)
 assert.equal(safeArticleUrl('http://www.ecommercebrasil.com.br/noticias/seo-em-lojas',source),null)
-assert.equal(safeArticleUrl('https://www.ecommercebrasil.com.br/noticias/seo?page=1',source),
+assert.equal(safeArticleUrl('https://www.ecommercebrasil.com.br/noticias/seo-em-lojas?page=1',source),
   'https://www.ecommercebrasil.com.br/noticias/seo-em-lojas')
 assert.equal(safeArticleUrl('/noticias/seo-de-lojas-virtuais',source),
   'https://www.ecommercebrasil.com.br/noticias/seo-de-lojas-virtuais')
