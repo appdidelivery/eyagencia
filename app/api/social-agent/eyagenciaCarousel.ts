@@ -133,16 +133,16 @@ export async function publishNextEyagenciaCarousel(): Promise<Outcome> {
   let postSubmitted = false
 
   try {
-    const urls = validate(pkg)
-    if (!(await publishedSource(pkg))) throw new Error('source_article_not_published')
-
-    // Revision precondition permits only one worker to claim a given package.
+    // Claim the item before validation so a malformed package cannot block the
+    // queue forever. Attempts are bounded even if media or source is invalid.
     await writeClient.patch(pkg._id).ifRevisionId(pkg._rev).set({
       publishStatus: 'publishing',
       lastAttemptAt: new Date().toISOString(),
       publishAttempts: Number(pkg.publishAttempts || 0) + 1,
       publishErrors: [],
     }).commit()
+    const urls = validate(pkg)
+    if (!(await publishedSource(pkg))) throw new Error('source_article_not_published')
 
     // The eight children must be created before the parent carousel container.
     const children = await Promise.all(urls.map(async imageUrl => {
