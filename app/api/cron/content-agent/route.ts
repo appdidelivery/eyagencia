@@ -80,8 +80,11 @@ export async function GET(request: NextRequest) {
   const now = new Date()
   const day = now.toISOString().slice(0, 10)
   const lockId = 'content-agent-daily-' + day
-  const existing = await writeClient.fetch<{status?: string; createdAt?: string} | null>(
-    '*[_id == $id][0]{status,createdAt}',
+  const existing = await writeClient.fetch<{
+    status?: string; createdAt?: string; topic?: string
+    publicationStatus?: string; qaPassed?: boolean; qaScore?: number
+  } | null>(
+    '*[_id == $id][0]{status,createdAt,topic,publicationStatus,qaPassed,qaScore}',
     {id: lockId},
   )
   const olderThanTwoHours = existing?.createdAt &&
@@ -90,8 +93,19 @@ export async function GET(request: NextRequest) {
   // One additional attempt per day, only for a failed or stale timed-out job.
   // The separate recovery lock prevents repeated generation or duplicate posts.
   const recovery = Boolean(retryWindow && existing &&
-    (existing.status === 'error' || (existing.status === 'running' && olderThanTwoHours)))
-  if (existing && !recovery) return NextResponse.json({ok: true, skipped: 'Dia já processado.', day})
+    (existing.status === 'error' ||
+      (existing.status === 'running' && olderThanTwoHours) ||
+      // Editorially rejected drafts are preserved; the evening run may try
+      // a different topic, never bypassing QA or republishing that draft.
+      (existing.status === 'completed' && existing.publicationStatus === 'blocked_or_pending' &&
+        (existing.qaPassed !== true || Number(existing.qaScore || 0) < 90))))
+  if (existing && !recovery) {
+    console.info('[content-agent-cron] skipped', JSON.stringify({
+      day, reason: 'day_already_processed', status: existing.status,
+      publicationStatus: existing.publicationStatus || null,
+    }))
+    return NextResponse.json({ok: true, skipped: 'Dia já processado.', day})
+  }
   const activeLockId = recovery ? lockId + '-recovery' : lockId
 
   const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -99,6 +113,8 @@ export async function GET(request: NextRequest) {
   let selected: (typeof TOPICS)[number] | undefined
   for (let i = 0; i < TOPICS.length; i++) {
     const topic = TOPICS[(start + i) % TOPICS.length]
+    // A recovery must not generate the same failed morning topic again.
+    if (recovery && topic[0] === existing?.topic) continue
     const previous = await writeClient.fetch<number>(
       'count(*[_type == "aiContentJob" && topic == $topic && createdAt > $cutoff])',
       {topic: topic[0], cutoff},
@@ -141,7 +157,12 @@ export async function GET(request: NextRequest) {
       : /custo|pre[cç]o|cat[aá]logo|modelo n[aã]o listado/i.test(failureText) ? 'model_or_budget'
       : /json|resposta vazia|response.*empty/i.test(failureText) ? 'model_output'
       : 'generation_error'
-    if (!created) console.error('[content-agent-cron] generation_failed', JSON.stringify({day, httpStatus: response.status, failureStage, failureCategory}))
+    const reportedSlug = typeof payload?.slug === 'string' &&
+      /^[a-z0-9-]{1,100}$/.test(payload.slug) ? payload.slug : null
+    if (!created) console.error('[content-agent-cron] generation_failed', JSON.stringify({
+      day, topic: selected[0], recovery, slug: reportedSlug,
+      httpStatus: response.status, failureStage, failureCategory,
+    }))
     let published = false
     let publicUrl: string | null = null
     let publicationReasons: string[] = []
@@ -171,6 +192,14 @@ export async function GET(request: NextRequest) {
       publicUrl,
       publishedAt: published ? new Date().toISOString() : null,
     }).commit()
+    console.info('[content-agent-cron] execution_result', JSON.stringify({
+      day, topic: selected[0], recovery,
+      result: published ? 'article_published' : created ? 'draft_created' : 'generation_failed',
+      published, slug: reportedSlug,
+      qaPassed: created ? payload.qa?.passed === true : false,
+      qaScore: created ? Number(payload.qa?.score || 0) : null,
+      publicationReasons: publicationReasons.slice(0, 4),
+    }))
     return NextResponse.json({
       ok: created, day,
       result: published ? 'article_published' : created ? 'draft_created' : 'generation_failed',
