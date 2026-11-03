@@ -884,6 +884,37 @@ export async function POST(request: NextRequest) {
         '\n\nGere JSON com: title, slug, seoTitle (50-60 caracteres), seoDescription (150-160 caracteres), excerpt, searchIntent, sections (cada item com heading, paragraphs e bullets opcionais), faq (question/answer), internalLinks (anchor/url usando SOMENTE esta allowlist: /ia-ecommerce, /ia-ecommerce/ferramentas, /ia-ecommerce/guias, /ia-ecommerce/metodologia, /blog, /clientes, /parceiros) e sources (title/url apenas das fontes verificadas). O artigo deve ser aprofundado, útil e acionável.',
     })
     let article = parseJson(editor.text, 'editor')
+    // Retry the editorial content (not merely the URL) once if the model
+    // reuses a known slug. The alternative must pass the full independent QA.
+    const knownSlugs = new Set(avoidDuplicates.map((item) => slugify(item.slug)))
+    const initialSlug = slugify(String(article.slug || article.title || topic))
+    if (knownSlugs.has(initialSlug)) {
+      console.warn('[content-agent] editor_duplicate_detected', JSON.stringify({topic, slug: initialSlug}))
+      try {
+        const alternate = await callAgent({
+          maxOutputTokens: 8000,
+          instructions:
+            'Você é o Editor SEO/GEO/E-E-A-T da eYagencia. Reescreva TODO o artigo em JSON válido, não somente o título ou URL. Escolha um recorte editorial realmente novo e específico da pauta. Preserve exclusivamente os fatos documentados e as fontes oficiais fornecidas, sem inventar dados, leis, ROI ou URLs. Não repita nenhum dos títulos e slugs bloqueados. Se não houver abordagem realmente nova e fundamentada, retorne {}. Retorne os mesmos campos completos: title, slug, seoTitle, seoDescription, excerpt, searchIntent, sections, faq, internalLinks e sources.',
+          input:
+            'PAUTA: ' + topic +
+            '\\nPALAVRA-CHAVE: ' + targetKeyword +
+            '\\nARTIGO QUE REPETIU CONTEÚDO (REFORMULAR INTEGRALMENTE):\\n' + JSON.stringify(article) +
+            '\\nFATOS APROVADOS:\\n' + JSON.stringify(safeFactCheck) +
+            '\\nFONTES CONSULTADAS:\\n' + JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))) +
+            '\\nTÍTULOS E SLUGS PROIBIDOS:\\n' + JSON.stringify(avoidDuplicates),
+        })
+        const candidate = parseJson(alternate.text, 'recuperação de duplicidade')
+        const candidateSlug = slugify(String(candidate?.slug || candidate?.title || ''))
+        if (candidateSlug && !knownSlugs.has(candidateSlug) &&
+            typeof candidate?.title === 'string' && Array.isArray(candidate?.sections)) {
+          article = candidate
+          console.info('[content-agent] editor_duplicate_recovered', JSON.stringify({topic, slug: candidateSlug}))
+        }
+      } catch (error) {
+        console.warn('[content-agent] editor_duplicate_retry_failed',
+          error instanceof Error ? error.message : 'unexpected')
+      }
+    }
     let structuralIssues = checkArticleQuality(article, supportedFacts)
 
     const qa = await callAgent({
@@ -959,8 +990,19 @@ export async function POST(request: NextRequest) {
       const guide = createMethodologicalDraft(
         evidenceBundle.sources.map(({title, url}) => ({title, url})),
       )
+      // This fallback is a single fixed article. Once used, do not republish
+      // the same text with a different slug or keep failing with HTTP 409.
+      const fallbackSlug = slugify(guide.slug)
+      const fallbackAlreadyExists = await writeClient.withConfig({perspective: 'raw'}).fetch<number>(
+        'count(*[_type == "post" && slug.current == $slug])',
+        {slug: fallbackSlug},
+      )
+      if (fallbackAlreadyExists > 0) {
+        console.info('[content-agent] fallback_skipped_existing_article',
+          JSON.stringify({topic, slug: fallbackSlug}))
+      }
       const guideIssues = checkArticleQuality(guide, supportedFacts)
-      if (guideIssues.length === 0) {
+      if (fallbackAlreadyExists === 0 && guideIssues.length === 0) {
         try {
           const audit = await callAgent({
             maxOutputTokens: 3000,
