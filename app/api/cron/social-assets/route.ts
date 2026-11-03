@@ -1,5 +1,6 @@
 import {NextRequest, NextResponse} from 'next/server'
 import {renderPendingSocialMedia} from '../../../../scripts/social-media-render.mjs'
+import {syncBlogSocialPackages} from '../../social-agent/blogPackage'
 
 export const runtime='nodejs'
 export const dynamic='force-dynamic'
@@ -15,8 +16,13 @@ export async function GET(request:NextRequest){
     return NextResponse.json({ok:true,skipped:'Renderização social desativada.'})
   }
   try{
+    // The evening blog cron may publish after the morning social-package run.
+    // Sync fresh EYAGENCIA articles before rendering; no Velo feed changes.
+    const packages = process.env.CONTENT_AGENT_SOCIAL_PACKAGES_ENABLED === 'true'
+      ? await syncBlogSocialPackages(5)
+      : []
     const result=await renderPendingSocialMedia({maxPackages:2})
-    console.info('[social-assets-cron]',JSON.stringify(result))
+    console.info('[social-assets-cron]',JSON.stringify({...result,packages:packages.map(x=>x.result)}))
     return NextResponse.json({ok:true,...result},{headers:{'Cache-Control':'no-store'}})
   }catch(error){
     console.error('[social-assets-cron]',error instanceof Error?error.message:'unknown')

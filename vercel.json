@@ -11,7 +11,11 @@
     },
     {
       "path": "/api/cron/social-assets",
-      "schedule": "15 13 * * *"
+      "schedule": "15 13,23 * * *"
+    },
+    {
+      "path": "/api/cron/eyagencia-carousel",
+      "schedule": "45 13,23 * * *"
     }
   ]
 }
