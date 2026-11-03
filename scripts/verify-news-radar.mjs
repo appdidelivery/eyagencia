@@ -5,10 +5,10 @@ import {
 } from './news-source-parser.mjs'
 const source=NEWS_SOURCES.eyagencia
 assert.equal(decodeHtml('gest&atilde;o &amp; loja'),'gest&atilde;o & loja')
-assert.equal(safeArticleUrl('https://evil.example/noticias/seo',source),null)
-assert.equal(safeArticleUrl('http://www.ecommercebrasil.com.br/noticias/seo',source),null)
+assert.equal(safeArticleUrl('https://evil.example/noticias/seo-em-lojas',source),null)
+assert.equal(safeArticleUrl('http://www.ecommercebrasil.com.br/noticias/seo-em-lojas',source),null)
 assert.equal(safeArticleUrl('https://www.ecommercebrasil.com.br/noticias/seo?page=1',source),
-  'https://www.ecommercebrasil.com.br/noticias/seo')
+  'https://www.ecommercebrasil.com.br/noticias/seo-em-lojas')
 assert.equal(safeArticleUrl('/noticias/seo-de-lojas-virtuais',source),
   'https://www.ecommercebrasil.com.br/noticias/seo-de-lojas-virtuais')
 const html='<nav><a href="https://evil.example/noticias/malicioso">Notícia maliciosa no portal</a></nav>'+
