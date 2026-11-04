@@ -7,11 +7,11 @@ const siteUrl = "https://www.eyagencia.com.br/diego";
 export const metadata: Metadata = {
   title: "Diego Lemes | E-commerce, Tecnologia e IA na Prática",
   description:
-    "Conheça Diego Lemes: formação em gestão de e-commerce pela ComSchool, mais de 11 anos de experiência e mais de 200 projetos assistidos. Projetos, IA, livros e conhecimento aplicado.",
+    "Conheça Diego Lemes: formação em gestão de e-commerce pela ComSchool, mais de 11 anos de experiência e mais de 200 projetos implementados. Projetos, IA, livros e conhecimento aplicado.",
   alternates: { canonical: siteUrl },
   openGraph: {
     title: "Diego Lemes | Projetos, Tecnologia e Conhecimento",
-    description: "Mais de 11 anos de experiência em e-commerce, mais de 200 projetos assistidos e tecnologia aplicada a negócios.",
+    description: "Mais de 11 anos de experiência em e-commerce, mais de 200 projetos implementados e tecnologia aplicada a negócios.",
     url: siteUrl,
     siteName: "Diego Lemes · EyAgencia",
     locale: "pt_BR",
@@ -80,8 +80,8 @@ const publishedLinks: LiveLink[] = [
 
 const upcoming = [
   {
-    title: "Eu Primeiro — meu livro",
-    subtitle: "Um projeto de escrita e reflexão em desenvolvimento",
+    title: "A Defesa Mais Importante — livro do Sidão",
+    subtitle: "Biografia do goleiro Sidão · obra em desenvolvimento editorial",
     icon: "◫",
     phase: "Em construção"
   },
@@ -141,7 +141,7 @@ export default function DiegoBioPage() {
       alumniOf: { "@type": "EducationalOrganization", name: "ComSchool" },
       knowsAbout: ["Gestão de e-commerce", "Marketing digital", "Inteligência artificial aplicada", "Automação", "Gestão de projetos"],
       worksFor: { "@type": "Organization", name: "EyAgencia", url: "https://www.eyagencia.com.br/" },
-      description: "Profissional de e-commerce com mais de 11 anos de experiência e mais de 200 projetos assistidos."
+      description: "Profissional de e-commerce com mais de 11 anos de experiência, mais de 200 projetos implementados e atuação na EyAgencia e Velo Delivery."
     }
   };
 
@@ -160,7 +160,7 @@ export default function DiegoBioPage() {
         <main className={styles.layout}>
           <section className={styles.identity} aria-labelledby="name">
             <div className={styles.portrait}>
-              <div className={styles.monogram} aria-label="Monograma Diego Lemes">D<span>L</span></div>
+              <Image src="/diego-avatar.svg" width={96} height={96} alt="Foto usada no perfil do Instagram de Diego Lemes" className={styles.avatarPhoto} unoptimized priority />
               <span className={styles.portraitDot} />
             </div>
             <p className={styles.eyebrow}>PROJETOS REAIS · CONHECIMENTO APLICADO</p>
@@ -176,7 +176,7 @@ export default function DiegoBioPage() {
 
             <div className={styles.numbers} aria-label="Experiência profissional">
               <div><b>11+</b><small>anos de<br />experiência</small></div>
-              <div><b>200+</b><small>projetos<br />assistidos</small></div>
+              <div><b>200+</b><small>projetos<br />implementados</small></div>
               <div><b>2014</b><small>formação<br />ComSchool</small></div>
             </div>
 
@@ -189,14 +189,23 @@ export default function DiegoBioPage() {
               <div className={styles.storyTag}>UM POUCO SOBRE MIM</div>
               <h2>Experiência que virou método.</h2>
               <p>
-                Sou formado em Gerência de E-commerce pela <strong>ComSchool, desde 2014</strong>.
-                Minha passagem pela <strong>Soluções Net</strong>, antiga plataforma de e-commerce de
-                São José (SC), foi uma etapa importante da minha formação prática.
+                Sou formado em <strong>Gerência de E-commerce pela ComSchool (2014)</strong>.
+                Atuei por dois anos, entre <strong>2013 e 2014, na Soluções Net</strong>,
+                antiga plataforma de e-commerce de São José (SC). Foi ali que ampliei minha
+                experiência técnica na implantação e evolução de lojas virtuais.
               </p>
               <p>
-                Ao longo de mais de 11 anos, participei da evolução de operações de diferentes
-                tamanhos e acompanhei <strong>mais de 200 projetos</strong>. Hoje, aplico essa
-                experiência a tecnologia, negócios digitais, automação e inteligência artificial.
+                Depois segui com minha própria agência, a <strong>EyAgencia</strong>, assumindo
+                a implementação e o desenvolvimento de projetos para negócios de diferentes portes.
+                Já <strong>implementei mais de 200 projetos</strong> e ajudei a
+                <strong> escalar muitas lojas virtuais</strong>, combinando estratégia, tecnologia,
+                marketing, dados e automação.
+              </p>
+              <p>
+                Hoje também construo produtos digitais, como a <strong>Velo Delivery</strong>,
+                e exploro aplicações práticas de inteligência artificial. Participo ainda do
+                desenvolvimento editorial de <strong>A Defesa Mais Importante</strong>,
+                livro biográfico sobre o goleiro Sidão.
               </p>
             </section>
           </section>
@@ -210,7 +219,7 @@ export default function DiegoBioPage() {
 
             <section className={styles.linkSection} aria-labelledby="active-title">
               <div className={styles.sectionHead}>
-                <h2 id="active-title">Acesse agora</h2>
+                <h2 id="active-title">Meus negócios e projetos</h2>
                 <span className={styles.ready}><span /> DISPONÍVEL</span>
               </div>
               <div className={styles.cardList}>{publishedLinks.map(item => <LiveCard key={item.title} item={item} />)}</div>
