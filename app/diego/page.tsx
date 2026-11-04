@@ -80,10 +80,10 @@ const publishedLinks: LiveLink[] = [
 
 const upcoming = [
   {
-    title: "A Defesa Mais Importante — livro do Sidão",
-    subtitle: "Biografia do goleiro Sidão · obra em desenvolvimento editorial",
+    title: "A Defesa Mais Importante",
+    subtitle: "",
     icon: "◫",
-    phase: "Em construção"
+    phase: "Em breve"
   },
   {
     title: "Minha biblioteca",
@@ -203,9 +203,7 @@ export default function DiegoBioPage() {
               </p>
               <p>
                 Hoje também construo produtos digitais, como a <strong>Velo Delivery</strong>,
-                e exploro aplicações práticas de inteligência artificial. Participo ainda do
-                desenvolvimento editorial de <strong>A Defesa Mais Importante</strong>,
-                livro biográfico sobre o goleiro Sidão.
+                e exploro aplicações práticas de inteligência artificial.
               </p>
             </section>
           </section>
@@ -236,7 +234,7 @@ export default function DiegoBioPage() {
                     <span className={styles.mutedIcon} aria-hidden="true">{item.icon}</span>
                     <span className={styles.cardText}>
                       <strong>{item.title}</strong>
-                      <small>{item.subtitle}</small>
+                      {item.subtitle ? <small>{item.subtitle}</small> : null}
                     </span>
                     <span className={styles.soonBadge}>{item.phase}</span>
                   </div>
