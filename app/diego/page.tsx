@@ -160,7 +160,7 @@ export default function DiegoBioPage() {
         <main className={styles.layout}>
           <section className={styles.identity} aria-labelledby="name">
             <div className={styles.portrait}>
-              <Image src="/diego-avatar.svg" width={96} height={96} alt="Foto usada no perfil do Instagram de Diego Lemes" className={styles.avatarPhoto} unoptimized priority />
+              <Image src="/diego-avatar.jpg" width={96} height={96} alt="Retrato de Diego Lemes" className={styles.avatarPhoto} unoptimized priority />
               <span className={styles.portraitDot} />
             </div>
             <p className={styles.eyebrow}>PROJETOS REAIS · CONHECIMENTO APLICADO</p>
