@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/social-news",
       "schedule": "30 18 * * *"
+    },
+    {
+      "path": "/api/cron/eyagencia-crosspost",
+      "schedule": "10 0,12 * * *"
     }
   ]
 }
