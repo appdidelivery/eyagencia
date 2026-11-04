@@ -32,12 +32,25 @@ type LiveLink = {
 
 const publishedLinks: LiveLink[] = [
   {
+    title: "EyAgencia · minha agência",
+    subtitle: "Estratégia digital, e-commerce, SEO e performance",
+    href: "https://www.eyagencia.com.br/",
+    icon: "✳",
+    label: "MEUS NEGÓCIOS",
+    featured: true
+  },
+  {
+    title: "Velo Delivery · minha plataforma",
+    subtitle: "Tecnologia própria para delivery, gestão e vendas online",
+    href: "https://www.velodelivery.com.br/",
+    icon: "◈",
+    label: "PRODUTO DIGITAL"
+  },
+  {
     title: "Projetos e cases de e-commerce",
     subtitle: "Negócios, experiências e soluções em operação",
     href: "/clientes",
-    icon: "▦",
-    label: "EXPLORE",
-    featured: true
+    icon: "▦"
   },
   {
     title: "Minha trajetória profissional",
@@ -56,12 +69,6 @@ const publishedLinks: LiveLink[] = [
     subtitle: "E-commerce, SEO, dados, automação e IA",
     href: "/blog",
     icon: "▤"
-  },
-  {
-    title: "EyAgencia",
-    subtitle: "Soluções, projetos e consultoria em negócios digitais",
-    href: "/",
-    icon: "↗"
   },
   {
     title: "Contato profissional",
