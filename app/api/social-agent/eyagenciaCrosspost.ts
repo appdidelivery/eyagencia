@@ -239,9 +239,15 @@ export async function publishMissingEyagenciaChannels():Promise<Outcome>{
     const completed=Boolean(facebookId)&&storyCount===STORY_COUNT
     const uncertain=facebookUncertain||storiesUncertain
     const status=uncertain?'verification_required':completed?'completed':'partial'
+    const platforms=[
+      'instagram',
+      ...(facebookId?['facebook']:[]),
+      ...(storyCount===STORY_COUNT?['instagram-stories']:[]),
+    ]
     await writeClient.patch(pkg._id).set({
       crosspostStatus:status,crosspostErrors:errs,
       crosspostFinishedAt:new Date().toISOString(),
+      publishedPlatforms:platforms,
     }).commit()
     console.info('[eyagencia-crosspost]',JSON.stringify({
       packageId:pkg._id,status,facebook:!!facebookId,stories:storyCount,
