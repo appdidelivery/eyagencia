@@ -3,20 +3,29 @@ import {useMemo,useState} from 'react'
 import styles from './books.module.css'
 import AuthorLibrary from './AuthorLibrary'
 
-export type BookEntry={id:string;slug?:string|null;title:string;author:string;category?:string|null;about:string;review:string;lessons?:string|null;recommendFor?:string|null;rating?:number|null;readYear?:number|null;affiliateUrl?:string|null;imageUrl?:string|null;imageAlt?:string|null;reviewDraft?:boolean;seedOrder?:number}
+export type BookEntry={id:string;slug?:string|null;title:string;author:string;category?:string|null;about:string;review:string;lessons?:string|null;recommendFor?:string|null;rating?:number|null;readYear?:number|null;affiliateUrl?:string|null;amazonAffiliateUrl?:string|null;shopeeAffiliateUrl?:string|null;imageUrl?:string|null;imageAlt?:string|null;reviewDraft?:boolean;seedOrder?:number}
 const highlight='https://www.instagram.com/stories/highlights/17898572725107429/'
-const validBuy=(raw?:string|null)=>{
+const validBuy=(raw?:string|null,provider:'mercado_livre'|'amazon'|'shopee'='mercado_livre')=>{
  if(!raw)return null
- try{const u=new URL(raw),h=u.hostname.toLowerCase()
-  return u.protocol==='https:'&&['mercadolivre.com.br','mercadolivre.com','mercado.li','meli.la'].some(d=>h===d||h.endsWith('.'+d))?u.href:null
+ try{
+  const u=new URL(raw),h=u.hostname.toLowerCase()
+  const hosts:Record<string,string[]>={
+   mercado_livre:['mercadolivre.com.br','mercadolivre.com','mercado.li','meli.la'],
+   amazon:['amazon.com.br','amzn.to','a.co'],
+   shopee:['shopee.com.br','shope.ee']
+  }
+  return u.protocol==='https:'&&hosts[provider].some(d=>h===d||h.endsWith('.'+d))?u.href:null
  }catch{return null}
 }
+
 function Book({book}:{book:BookEntry}){
  const [expanded,setExpanded]=useState(false)
  const [imageFailed,setImageFailed]=useState(false)
  const buy=validBuy(book.affiliateUrl)
+ const amazon=validBuy(book.amazonAffiliateUrl,'amazon')
+ const shopee=validBuy(book.shopeeAffiliateUrl,'shopee')
  const rating=book.rating&&Number.isInteger(book.rating)&&book.rating>0&&book.rating<=5?book.rating:0
- const track=()=>{const w=window as Window&{dataLayer?:Array<Record<string,string>>};w.dataLayer ||= [];w.dataLayer.push({event:'diego_book_affiliate_click',book_id:book.slug||book.id,partner:'mercado_livre'})}
+ const track=(partner:string)=>{const w=window as Window&{dataLayer?:Array<Record<string,string>>};w.dataLayer ||= [];w.dataLayer.push({event:'diego_book_affiliate_click',book_id:book.slug||book.id,partner})}
  return <article className={styles.book} id={book.slug||book.id}>
   <div className={styles.bookTop}>
    <div className={styles.cover}>{book.imageUrl&&!imageFailed?<img src={book.imageUrl} alt={book.imageAlt||'Capa de '+book.title} loading="lazy" decoding="async" onError={()=>setImageFailed(true)}/>:<div className={styles.typographicCover}><small>{book.author}</small><strong>{book.title}</strong><span aria-hidden="true">▤</span></div>}</div>
@@ -30,7 +39,10 @@ function Book({book}:{book:BookEntry}){
   </div>
   <div className={styles.actions}>
    <button type="button" aria-expanded={expanded} aria-controls={'review-'+book.id} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fechar resenha −':'Ler minha resenha +'}</button>
-   {buy?<a href={buy} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={track}>Comprar no Mercado Livre ↗</a>:<span className={styles.pending}>Compra em breve</span>}
+   {buy&&<a href={buy} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre')}>Mercado Livre ↗</a>}
+   {amazon&&<a href={amazon} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('amazon')}>Amazon ↗</a>}
+   {shopee&&<a href={shopee} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('shopee')}>Shopee ↗</a>}
+   {!buy&&!amazon&&!shopee&&<span className={styles.pending}>Compra em breve</span>}
   </div>
   {expanded&&<div className={styles.review} id={'review-'+book.id}>
     <div><h4>Sobre o que é</h4><p>{book.about}</p></div>
