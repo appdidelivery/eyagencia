@@ -335,8 +335,7 @@ async function buildVeloCarousel(brand: Brand, day: string, topic: string,
 
 async function processBrand(brand: Brand, day: string, weekday: number): Promise<Result> {
   const slug = brand.slug
-  if (slug !== 'velo-delivery' && !brand.days?.includes(String(weekday)))
-    return {brand: brand.name, status: 'not-scheduled'}
+  if (!brand.days?.includes(String(weekday))) return {brand: brand.name, status: 'not-scheduled'}
   const keys = credentials(brand)
   if (!keys) return {brand: brand.name, status: 'credentials-missing'}
   if (!brand.topics?.length || !brand.brandGuide?.trim()) {
