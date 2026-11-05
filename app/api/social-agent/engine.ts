@@ -272,6 +272,67 @@ async function publishInstagram(igId: string, token: string, url: string, captio
   return metaPost(igId + '/media_publish', token, {creation_id: container})
 }
 
+
+async function publishFacebookCarousel(pageId: string, token: string, images: string[], caption: string) {
+  if (images.length !== 8) throw new Error('Facebook: slide_count_invalid')
+  const pageToken = await facebookPageToken(pageId, token)
+  const photoIds: string[] = []
+  for (const url of images) photoIds.push(await metaPost(pageId + '/photos', pageToken, {url, published: 'false'}))
+  const params: Record<string,string> = {message: caption}
+  photoIds.forEach((id, i) => {params['attached_media[' + i + ']'] = JSON.stringify({media_fbid: id})})
+  return metaPost(pageId + '/feed', pageToken, params)
+}
+async function publishInstagramCarousel(igId: string, token: string, images: string[], caption: string) {
+  if (images.length !== 8) throw new Error('Instagram: slide_count_invalid')
+  const children: string[] = []
+  for (const url of images) {
+    const child = await metaPost(igId + '/media', token, {image_url: url, is_carousel_item: 'true'})
+    let ready = false
+    for (let i = 0; i < 8; i++) {
+      const state = await metaGet(child, token)
+      if (state.status_code === 'FINISHED') {ready = true; break}
+      if (state.status_code === 'ERROR' || state.status_code === 'EXPIRED') break
+      if (i < 7) await new Promise(resolve => setTimeout(resolve, 3000))
+    }
+    if (!ready) throw new Error('Instagram: child_not_ready')
+    children.push(child)
+  }
+  const parent = await metaPost(igId + '/media', token, {
+    media_type: 'CAROUSEL', children: children.join(','), caption,
+  })
+  let ready = false
+  for (let i = 0; i < 8; i++) {
+    const state = await metaGet(parent, token)
+    if (state.status_code === 'FINISHED') {ready = true; break}
+    if (state.status_code === 'ERROR' || state.status_code === 'EXPIRED') break
+    if (i < 7) await new Promise(resolve => setTimeout(resolve, 3000))
+  }
+  if (!ready) throw new Error('Instagram: parent_not_ready')
+  return metaPost(igId + '/media_publish', token, {creation_id: parent})
+}
+async function buildVeloCarousel(brand: Brand, day: string, topic: string,
+  concept: string, coverUrl: string, slides: string[]) {
+  if (brand.slug !== 'velo-delivery' || slides.length !== 6)
+    throw new Error('Velo: carousel_script_invalid')
+  const titles = [...slides, 'Salve este guia e revise uma melhoria por vez']
+  const images = [coverUrl]
+  const assetIds: string[] = []
+  for (const [index, title] of titles.entries()) {
+    const svg = makeBrandSocialSvg({
+      slug: brand.slug, topic: title, concept: topic + ' ' + concept,
+      date: day + '-slide-' + (index + 2),
+    })
+    const buffer = await renderBrandArt(svg)
+    const asset = await writeClient.assets.upload('image', buffer, {
+      filename: 'velo-carousel-' + day + '-' + (index + 2) + '.png', contentType: 'image/png',
+    })
+    assetIds.push(asset._id)
+    images.push(publicJpeg(asset.url))
+  }
+  if (images.length !== 8) throw new Error('Velo: carousel_render_incomplete')
+  return {images, assetIds}
+}
+
 async function processBrand(brand: Brand, day: string, weekday: number): Promise<Result> {
   const slug = brand.slug
   if (slug !== 'velo-delivery' && !brand.days?.includes(String(weekday)))
@@ -297,8 +358,13 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
     const generated = await createCaption(brand, topic, day)
     const photo = await createImage(brand, generated.concept, day, topic)
     const jpeg = publicJpeg(photo.url)
+    const carousel = slug === 'velo-delivery'
+      ? await buildVeloCarousel(brand, day, topic, generated.concept, jpeg, generated.slides)
+      : null
     await writeClient.patch(publicationId).set({
       caption: generated.caption, imageUrl: jpeg, imageAssetId: photo.assetId,
+      ...(carousel ? {format: 'carousel', slideCount: carousel.images.length,
+        carouselImages: carousel.images, carouselAssetIds: carousel.assetIds} : {}),
     }).commit()
     const errors: string[] = []
     let facebookPostId: string | null = null
@@ -306,15 +372,19 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
     // Each platform has its own result: success on one platform never causes duplicate posting there.
     if (brand.facebookEnabled && keys.pageId) {
       try {
-        facebookPostId = await metaPost(keys.pageId + '/photos', await facebookPageToken(keys.pageId, keys.pageToken), {
-          url: jpeg, message: generated.caption,
-        })
+        facebookPostId = carousel
+          ? await publishFacebookCarousel(keys.pageId, keys.pageToken, carousel.images, generated.caption)
+          : await metaPost(keys.pageId + '/photos', await facebookPageToken(keys.pageId, keys.pageToken), {
+              url: jpeg, message: generated.caption,
+            })
         await writeClient.patch(publicationId).set({facebookPostId}).commit()
       } catch (error) {errors.push('Facebook: ' + (error instanceof Error ? error.message : 'falha'))}
     }
     if (brand.instagramEnabled && keys.instagramId) {
       try {
-        instagramPostId = await publishInstagram(keys.instagramId, keys.pageToken, jpeg, generated.caption)
+        instagramPostId = carousel
+          ? await publishInstagramCarousel(keys.instagramId, keys.pageToken, carousel.images, generated.caption)
+          : await publishInstagram(keys.instagramId, keys.pageToken, jpeg, generated.caption)
         await writeClient.patch(publicationId).set({instagramPostId}).commit()
       } catch (error) {errors.push('Instagram: ' + (error instanceof Error ? error.message : 'falha'))}
     }
