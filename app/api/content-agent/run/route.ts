@@ -183,13 +183,19 @@ async function callAgent(args: {
       body: JSON.stringify(payload),
       cache: 'no-store',
     })
-    if (response.status !== 429 || !freePilotMode || attempt === 2) break
-    // The provider's Retry-After takes precedence; keep a bounded delay.
+    // No paid-model fallback. One bounded retry for temporary gateway outages
+    // or provider throttling; factual and publication QA remain unchanged.
+    const transient = freePilotMode && [429, 502, 503, 504].includes(response.status)
+    if (!transient || attempt === 2) break
     const header = Number(response.headers.get('retry-after') || '0')
     const detail = await response.text().catch(() => '')
     const hintedSeconds = Number(detail.match(/retry after (\d+)s/i)?.[1] || '0')
-    const seconds = Math.min(40, Math.max(14, header || hintedSeconds || 14))
-    console.warn('[content-agent] provider rate limit; retry scheduled', {attempt: attempt + 1, seconds})
+    const seconds = response.status === 429
+      ? Math.min(35, Math.max(14, header || hintedSeconds || 14))
+      : Math.min(20, Math.max(5, header || (attempt + 1) * 7))
+    console.warn('[content-agent] provider transient failure; retry scheduled', {
+      status:response.status, attempt:attempt + 1, seconds,
+    })
     await new Promise<void>((resolve) => setTimeout(resolve, seconds * 1000))
   }
   if (!response || !response.ok) {
