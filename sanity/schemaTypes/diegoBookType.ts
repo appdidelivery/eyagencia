@@ -12,7 +12,7 @@ export const diegoBookType=defineType({
   defineField({name:'slug',title:'Identificador',type:'slug',options:{source:'title'},validation:R=>R.required()}),
   defineField({name:'author',title:'Autor(a)',type:'string',validation:R=>R.required()}),
   defineField({name:'cover',title:'Capa',type:'image',options:{hotspot:true},fields:[defineField({name:'alt',title:'Texto alternativo',type:'string'})]}),
-  defineField({name:'category',title:'Assunto',type:'string',options:{list:['Negócios','E-commerce e marketing','IA e tecnologia','Finanças','Liderança','Desenvolvimento pessoal','Biografias','Outros']}}),
+  defineField({name:'category',title:'Assunto',type:'string',options:{list:['Negócios','E-commerce e marketing','IA e tecnologia','Finanças','Liderança','Desenvolvimento pessoal','Biografias','Literatura','Espiritualidade','Ciência','Mercado imobiliário','Formação técnica','Outros']}}),
   defineField({name:'readYear',title:'Ano da leitura',type:'number',validation:R=>R.integer().min(1950).max(2100)}),
   defineField({name:'about',title:'Sobre o que é',type:'text',rows:4}),
   defineField({name:'review',title:'Minha resenha (aprovada pelo Diego)',type:'text',rows:7}),
