@@ -4,13 +4,30 @@ import styles from './books.module.css'
 
 export type BookEntry={id:string;slug?:string|null;title:string;author:string;category?:string|null;about:string;review:string;lessons?:string|null;recommendFor?:string|null;rating?:number|null;readYear?:number|null;affiliateUrl?:string|null;amazonAffiliateUrl?:string|null;shopeeAffiliateUrl?:string|null;imageUrl?:string|null;imageAlt?:string|null;reviewDraft?:boolean;seedOrder?:number}
 const highlight='https://www.instagram.com/stories/highlights/17898572725107429/'
+// Ofertas recebidas do programa de afiliados do Diego em 05/11/2026.
+// Links de livros ainda não publicados ficam preparados, sem marcá-los como lidos.
+// A associação por slug evita trocar títulos/edições; edições do CMS têm prioridade.
+const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string}>={
+ 'o-homem-mais-inteligente-da-historia':{mercadoLivre:'https://meli.la/13ijdKV'},
+ 'voce-e-insubstituivel':{mercadoLivre:'https://meli.la/2U64pQS'},
+ 'o-mestre-dos-mestres':{mercadoLivre:'https://meli.la/2pTiHWx'},
+ 'pais-brilhantes-professores-fascinantes':{mercadoLivre:'https://meli.la/1UFVFxR'},
+ 'o-mestre-inesquecivel':{mercadoLivre:'https://meli.la/292CgsS'},
+ 'o-mestre-da-sensibilidade':{mercadoLivre:'https://meli.la/2XUqVTY'},
+ 'ansiedade-digital':{mercadoLivre:'https://meli.la/13KRfSZ'},
+ 'pais-inteligentes-formam-sucessores-nao-herdeiros':{mercadoLivre:'https://meli.la/12eBQ3C'},
+ 'as-regras-de-ouro-dos-casais-saudaveis':{mercadoLivre:'https://meli.la/2V7eh2c'},
+ 'felicidade-roubada':{mercadoLivre:'https://meli.la/29mfL5m'}
+}
+const christSeriesBox={mercadoLivre:'https://meli.la/1BW8wRa',amazon:'https://link.amazon/B0fA2qibf'}
+
 const validBuy=(raw?:string|null,provider:'mercado_livre'|'amazon'|'shopee'='mercado_livre')=>{
  if(!raw)return null
  try{
   const u=new URL(raw),h=u.hostname.toLowerCase()
   const hosts:Record<string,string[]>={
    mercado_livre:['mercadolivre.com.br','mercadolivre.com','mercado.li','meli.la'],
-   amazon:['amazon.com.br','amzn.to','a.co'],
+   amazon:['amazon.com.br','amzn.to','a.co','link.amazon'],
    shopee:['shopee.com.br','shope.ee']
   }
   return u.protocol==='https:'&&hosts[provider].some(d=>h===d||h.endsWith('.'+d))?u.href:null
@@ -20,8 +37,9 @@ const validBuy=(raw?:string|null,provider:'mercado_livre'|'amazon'|'shopee'='mer
 function Book({book}:{book:BookEntry}){
  const [expanded,setExpanded]=useState(false)
  const [imageFailed,setImageFailed]=useState(false)
- const buy=validBuy(book.affiliateUrl)
- const amazon=validBuy(book.amazonAffiliateUrl,'amazon')
+ const selectedOffer=book.slug?offerLinks[book.slug]:undefined
+ const buy=validBuy(book.affiliateUrl||selectedOffer?.mercadoLivre)
+ const amazon=validBuy(book.amazonAffiliateUrl||selectedOffer?.amazon,'amazon')
  const shopee=validBuy(book.shopeeAffiliateUrl,'shopee')
  const rating=book.rating&&Number.isInteger(book.rating)&&book.rating>0&&book.rating<=5?book.rating:0
  const track=(partner:string)=>{const w=window as Window&{dataLayer?:Array<Record<string,string>>};w.dataLayer ||= [];w.dataLayer.push({event:'diego_book_affiliate_click',book_id:book.slug||book.id,partner})}
@@ -43,6 +61,13 @@ function Book({book}:{book:BookEntry}){
    {shopee&&<a href={shopee} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('shopee')}>Shopee ↗</a>}
    {!buy&&!amazon&&!shopee&&<span className={styles.pending}>Compra em breve</span>}
   </div>
+  {book.slug==='o-mestre-dos-mestres'&&<aside aria-label="Coleção completa Análise da Inteligência de Cristo" style={{borderTop:'1px solid #39634c',paddingTop:13,marginTop:14}}>
+   <p style={{fontSize:11,color:'#badbc4',lineHeight:1.55}}>Também disponível: edição que reúne os <strong>cinco volumes de Análise da Inteligência de Cristo</strong>.</p>
+   <div className={styles.actions}>
+    <a href={christSeriesBox.mercadoLivre} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre_box_5_volumes')}>Box 5 volumes · Mercado Livre ↗</a>
+    <a href={christSeriesBox.amazon} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('amazon_box_5_volumes')}>Box 5 volumes · Amazon ↗</a>
+   </div>
+  </aside>}
   {expanded&&<div className={styles.review} id={'review-'+book.id}>
     <div><h4>Sobre o que é</h4><p>{book.about}</p></div>
     <div className={styles.opinion}><h4>O que eu achei da leitura</h4><p>{book.review}</p></div>
