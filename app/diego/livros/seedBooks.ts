@@ -203,7 +203,7 @@ export const photographedBooks:BookEntry[]=[
     "lessons": "Observar hábitos mentais e buscar equilíbrio emocional.",
     "recommendFor": "Quem busca exercícios de autoconhecimento e desenvolvimento.",
     "rating": null,
-    "affiliateUrl": null,
+    "affiliateUrl": "https://meli.la/13rgh6v",
     "reviewDraft": false,
     "seedOrder": 12,
     "imageUrl": "https://d3ugyf2ht6aenh.cloudfront.net/stores/001/622/660/products/12-semanas-para-mudar-uma-vida-livro-augusto-cury-editora-academia-capa-lateral-mockup-min1-be8a2e49ea9f705a3a16282505964255-1024-1024.jpg",
