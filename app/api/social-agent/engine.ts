@@ -84,7 +84,9 @@ async function createCaption(brand: Brand, topic: string, day: string) {
   const facts = (brand.verifiedFacts || []).slice(0, 25)
   const instructions = [
     'Você é o editor automático de uma agência brasileira. Retorne apenas JSON válido:',
-    '{"caption":"legenda completa, sem markdown","visualConcept":"descrição visual em uma frase"}.',
+    '{"caption":"legenda completa, sem markdown","visualConcept":"descrição visual em uma frase","slides":["dica 1","dica 2","dica 3","dica 4","dica 5","dica 6"]}.',
+    'Para Velo Delivery, slides deve conter 6 orientações reais, cada uma de 25 a 95 caracteres, específicas do tema, distintas, sem promessas.',
+    'Cada dica será um slide do carrossel, então nunca invente recursos, dados, resultados ou depoimentos.',
     'É obrigatório escrever em português brasileiro, com linguagem natural e CTA discreto.',
     'NÃO invente preço, promoção, estoque, oferta, dados, porcentagem, depoimento, legislação, resultado ou característica de produto.',
     'Somente fatos fornecidos como verificados podem ser afirmados especificamente.',
@@ -102,24 +104,31 @@ async function createCaption(brand: Brand, topic: string, day: string) {
     headers: {Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json'},
     body: JSON.stringify({
       model, messages: [{role: 'system', content: instructions}, {role: 'user', content: input}],
-      response_format: {type: 'json_object'}, reasoning: {effort: 'none'}, max_completion_tokens: 900,
+      response_format: {type: 'json_object'}, reasoning: {effort: 'none'}, max_completion_tokens: 1600,
     }),
     cache: 'no-store', signal: AbortSignal.timeout(90000),
   })
   if (!res.ok) throw new Error('Falha na geração da legenda (HTTP ' + res.status + ').')
   const data = await res.json()
   const raw = String(data?.choices?.[0]?.message?.content || '').trim()
-  let parsed: {caption?: string; visualConcept?: string}
+  let parsed: {caption?: string; visualConcept?: string; slides?: string[]}
   try { parsed = JSON.parse(raw) } catch {throw new Error('Legenda fora do formato esperado.')}
   const caption = (parsed.caption || '').trim()
   const concept = (parsed.visualConcept || '').trim()
+  const slides = Array.isArray(parsed.slides) ? parsed.slides.map(x => String(x).replace(/\s+/g,' ').trim()) : []
+  if (brand.slug === 'velo-delivery' &&
+      (slides.length !== 6 || slides.some(x => x.length < 25 || x.length > 95) ||
+       new Set(slides.map(x => x.toLocaleLowerCase('pt-BR'))).size !== 6)) {
+    throw new Error('Carrossel Velo incompleto ou com slides duplicados.')
+  }
+  const editorialText = [caption, ...slides].join('\n')
   if (caption.length < 90 || caption.length > 2100 || concept.length < 15 || concept.length > 650) {
     throw new Error('Conteúdo incompleto ou acima dos limites editoriais.')
   }
-  if (/(?:R\$\s*\d|\b\d+(?:[.,]\d+)?\s*%|\b(?:garantid[oa]|gr[aá]tis|imperd[ií]vel)\b)/i.test(caption)) {
+  if (/(?:R\$\s*\d|\b\d+(?:[.,]\d+)?\s*%|\b(?:garantid[oa]|gr[aá]tis|imperd[ií]vel)\b)/i.test(editorialText)) {
     throw new Error('Alegação de preço, resultado ou promoção não autorizada.')
   }
-  if (/(?:m[aá]quina de vendas|dispar(?:a|am|e|ou) (?:as )?vendas|(?:aument|elev|multiplic|melhor)\w*.{0,55}(?:ticket m[eé]dio|faturamento|vendas|convers[aã]o|lucro)|(?:garant|comprovad)\w* resultado)/i.test(caption)) {
+  if (/(?:m[aá]quina de vendas|dispar(?:a|am|e|ou) (?:as )?vendas|(?:aument|elev|multiplic|melhor)\w*.{0,55}(?:ticket m[eé]dio|faturamento|vendas|convers[aã]o|lucro)|(?:garant|comprovad)\w* resultado)/i.test(editorialText)) {
     throw new Error('Legenda reprovada por promessa comercial sem evidência.')
   }
   const links = caption.match(/https?:\/\/[^\s)]+/g) || []
@@ -127,7 +136,7 @@ async function createCaption(brand: Brand, topic: string, day: string) {
     try { return !brand.website || new URL(link).hostname !== new URL(brand.website).hostname }
     catch { return true }
   })) throw new Error('URL externa não autorizada na legenda.')
-  return {caption, concept}
+  return {caption, concept, slides}
 }
 
 async function createImage(brand: Brand, concept: string, day: string, topic: string) {
@@ -265,7 +274,8 @@ async function publishInstagram(igId: string, token: string, url: string, captio
 
 async function processBrand(brand: Brand, day: string, weekday: number): Promise<Result> {
   const slug = brand.slug
-  if (!brand.days?.includes(String(weekday))) return {brand: brand.name, status: 'not-scheduled'}
+  if (slug !== 'velo-delivery' && !brand.days?.includes(String(weekday)))
+    return {brand: brand.name, status: 'not-scheduled'}
   const keys = credentials(brand)
   if (!keys) return {brand: brand.name, status: 'credentials-missing'}
   if (!brand.topics?.length || !brand.brandGuide?.trim()) {
@@ -369,7 +379,8 @@ export async function runSocialPublishing() {
   )
   const results: Result[] = []
   // Bounded parallelism keeps the daily job within the function duration.
-  const scheduled = (brands || []).filter((b) => Boolean(b.slug)).slice(0, 4)
+  // EyAgencia is handled by the blog carousel publisher, not this image feed.
+  const scheduled = (brands || []).filter((b) => b.slug === 'velo-delivery').slice(0, 1)
   results.push(...await Promise.all(scheduled.map((brand) => processBrand(brand, day, weekday))))
   return {enabled: true, day, results}
 }
