@@ -147,6 +147,24 @@ export async function runIndustryNewsRadar() {
   const today=brazilDate()
   const results:Result[]=[]
   for(const brand of ['eyagencia','velo-delivery'] as BrandKey[]) {
+    // Velo's feed is carousel-only. Do not let the independent news task
+    // publish a second, single-image post on that account.
+    if (brand === 'velo-delivery') {
+      results.push({brand, status:'carousel_feed_priority'})
+      continue
+    }
+    const since = new Date(today + 'T03:00:00.000Z').toISOString()
+    const until = new Date(Date.parse(since) + 86400000).toISOString()
+    const alreadyInFeed = await writeClient.fetch<number>(
+      'count(*[(_type == "socialPackage" && defined(instagramCarouselPostId) && ' +
+      'publishedAt >= $since && publishedAt < $until) || ' +
+      '(_type == "socialPublication" && brandName == "EyAgencia" && day == $day && defined(instagramPostId))])',
+      {since, until, day: today},
+    )
+    if (alreadyInFeed) {
+      results.push({brand, status:'daily_limit_reached'})
+      continue
+    }
     const source=NEWS_SOURCES[brand] as Source
     const keys=credentials(brand)
     if(!keys){results.push({brand,status:'credentials_missing'});continue}
