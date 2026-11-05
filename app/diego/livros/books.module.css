@@ -34,3 +34,12 @@
 .authorSelect a{color:#94ebb4;font-size:12px;margin-left:13px}
 @media(max-width:780px){.authorGrid{grid-template-columns:1fr}}
 @media(max-width:430px){.authorItem{align-items:flex-start;flex-direction:column}.authorCheck{width:100%}.authorCheck button{flex:1}.authorSelect a{display:block;margin:12px 0 0}}
+
+/* Oferta do box mantida separada da lista de leituras confirmadas */
+.authorCollectionOffer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:18px;border:1px solid #4a8a60;background:#173a27;border-radius:15px;margin:18px 0 24px}
+.authorCollectionOffer strong{display:block;font-size:13px;color:#f3fff4}
+.authorCollectionOffer small{display:block;font-size:11px;color:#b5d5bd;margin-top:5px}
+.authorCollectionOffer a{display:inline-flex;align-items:center;justify-content:center;text-align:center;min-height:44px;padding:10px 17px;border:1px solid #bdffd6;border-bottom:4px solid #328653;background:#8bf1b2;color:#103b24;font-size:12px;font-weight:800;border-radius:12px;text-decoration:none;transition:transform .12s ease}
+.authorCollectionOffer a:active{transform:translateY(3px);border-bottom-width:1px}
+.authorCollectionOffer a:focus-visible{outline:3px solid #edffa9;outline-offset:3px}
+@media(max-width:480px){.authorCollectionOffer a{width:100%}}
