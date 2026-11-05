@@ -71,6 +71,13 @@ const publishedLinks: LiveLink[] = [
     icon: "▤"
   },
   {
+    title: "Livros que eu li · minha biblioteca",
+    subtitle: "Minha opinião, aprendizados e indicações",
+    href: "/diego/livros",
+    icon: "▥",
+    label: "CATÁLOGO INTERATIVO"
+  },
+  {
     title: "Contato profissional",
     subtitle: "Converse com a EyAgencia sobre seu projeto",
     href: "https://wa.me/554832200260?text=Ol%C3%A1%2C%20vim%20pelo%20perfil%20do%20Diego%20Lemes%20e%20gostaria%20de%20conversar%20sobre%20um%20projeto.",
@@ -83,12 +90,6 @@ const upcoming = [
     title: "A Defesa Mais Importante",
     subtitle: "",
     icon: "◫",
-    phase: "Em breve"
-  },
-  {
-    title: "Minha biblioteca",
-    subtitle: "Livros que li, aprendizados e indicações pessoais",
-    icon: "▥",
     phase: "Em breve"
   },
   {
