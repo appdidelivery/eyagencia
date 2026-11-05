@@ -18,7 +18,27 @@ export default async function Page(){
  catch(error){console.error('[diego-books] erro ao consultar catalogo',error)}
  const approvedSlugs=new Set(approvedBooks.map(book=>book.slug).filter(Boolean))
  const books:BookEntry[]=[...approvedBooks,...photographedBooks.filter(book=>!approvedSlugs.has(book.slug))]
- const schema={'@context':'https://schema.org','@type':'CollectionPage',name:'Livros que eu li — Diego Lemes',url,mainEntity:{'@type':'ItemList',numberOfItems:books.length,itemListElement:books.map((b,i)=>({'@type':'ListItem',position:i+1,name:b.title,url:url+'#'+encodeURIComponent(b.slug||b.id)}))}}
+
+ const personUrl='https://www.eyagencia.com.br/diego#person'
+ const person={'@type':'Person',name:'Diego Lemes','@id':personUrl,url:'https://www.eyagencia.com.br/diego'}
+ const bookItems=books.map((b,index)=>{
+  const book={'@type':'Book','@id':url+'#'+encodeURIComponent(b.slug||b.id),name:b.title,author:{'@type':'Person',name:b.author},
+   inLanguage:'pt-BR',description:b.about,url:url+'#'+encodeURIComponent(b.slug||b.id),
+   ...(b.imageUrl?{image:b.imageUrl}:{}),
+   review:{'@type':'Review',author:{'@id':personUrl},reviewBody:b.review,
+    ...(b.rating&&b.rating>=1&&b.rating<=5?{reviewRating:{'@type':'Rating',ratingValue:b.rating,bestRating:5,worstRating:1}}:{})}
+  }
+  return {'@type':'ListItem',position:index+1,item:book}
+ })
+ const schema={'@context':'https://schema.org','@graph':[
+  {'@type':'CollectionPage','@id':url+'#webpage',name:'Biblioteca pessoal de Diego Lemes — Livros que li',
+   url,description:'Resenhas de livros lidos por Diego Lemes e reflexões aplicadas a tecnologia, negócios, gestão, fé e desenvolvimento pessoal.',
+   isPartOf:{'@type':'WebSite','@id':'https://www.eyagencia.com.br/#website',url:'https://www.eyagencia.com.br/',name:'EyAgencia'},
+   about:{'@id':personUrl},creator:{'@id':personUrl},inLanguage:'pt-BR',
+   mainEntity:{'@type':'ItemList','@id':url+'#livros',name:'Livros que li',numberOfItems:bookItems.length,itemListElement:bookItems}},
+   person
+ ]}
+
  return <>
   <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(schema).replace(/</g,'\\u003c')}}/>
   <BookCatalog books={books}/>

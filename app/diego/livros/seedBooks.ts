@@ -565,21 +565,6 @@ export const photographedBooks:BookEntry[]=[
     "seedOrder": 33
   },
   {
-    "id": "foto-floripaz",
-    "slug": "floripaz",
-    "title": "Floripaz",
-    "author": "Beto Dornelles",
-    "category": "Literatura",
-    "about": "Obra de Beto Dornelles identificada na minha estante; ainda preciso completar a ficha com os detalhes desta edição.",
-    "review": "Gosto de preservar na biblioteca também os livros que fazem parte da minha trajetória em Santa Catarina. Vou complementar este registro com informações mais específicas sobre a obra.",
-    "lessons": "Valorizar a produção cultural e a memória local.",
-    "recommendFor": "Interessados em obras ligadas a Santa Catarina.",
-    "rating": null,
-    "affiliateUrl": null,
-    "reviewDraft": false,
-    "seedOrder": 34
-  },
-  {
     "id": "foto-a-filosofia-do-bitcoin",
     "slug": "a-filosofia-do-bitcoin",
     "title": "A filosofia do Bitcoin",
@@ -592,7 +577,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 35
+    "seedOrder": 35,
+    "imageUrl": "https://livrariascuritiba.vteximg.com.br/arquivos/ids/2172494-525-525/LV513558.jpg?v=638465368610500000",
+    "imageAlt": "Capa de A filosofia do Bitcoin"
   },
   {
     "id": "foto-casais-inteligentes-enriquecem-juntos",
@@ -707,7 +694,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 42
+    "seedOrder": 42,
+    "imageUrl": "https://down-br.img.susercontent.com/file/br-11134207-7r98o-m6strxkgr5frb6",
+    "imageAlt": "Capa de O mestre do amor"
   },
   {
     "id": "foto-o-monge-e-o-executivo",
@@ -773,7 +762,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 46
+    "seedOrder": 46,
+    "imageUrl": "https://4.bp.blogspot.com/-YE4GGU5wKq0/VQ4pLC4PIeI/AAAAAAAAER0/wASHRCz_RHE/s1600/111566550_2GG.jpg",
+    "imageAlt": "Capa de Chaves: A história oficial ilustrada"
   },
   {
     "id": "foto-impossibilidade-humana-possibilidade-divina",
@@ -788,7 +779,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 47
+    "seedOrder": 47,
+    "imageUrl": "https://acdn-us.mitiendanube.com/stores/245/634/products/impossibilidade-humana-possibilidade-divina1-3b96c9ce569452847415605224924059-640-0.webp",
+    "imageAlt": "Capa de Impossibilidade humana, possibilidade divina"
   },
   {
     "id": "foto-guia-pratico-do-gestor",
@@ -929,7 +922,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 56
+    "seedOrder": 56,
+    "imageUrl": "https://acdn-us.mitiendanube.com/stores/001/622/660/products/908793029-sonhos-e-disciplina-augusto-cury-editora-principis-44193-mi-jpg-96d385be450249fa9916381914319116-1024-1024.webp",
+    "imageAlt": "Capa de Sonhos e disciplina: transforme seus projetos em realidade"
   },
   {
     "id": "foto-va-mais-longe",
@@ -944,7 +939,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 57
+    "seedOrder": 57,
+    "imageUrl": "https://acdn-us.mitiendanube.com/stores/001/677/619/products/908719346-va-mais-longe-augusto-cury-editora-principis-44195-mi-jpg-2914b304aa848ebcb716381890358224-1024-1024.webp",
+    "imageAlt": "Capa de Vá mais longe: treine sua memória e sua inteligência"
   },
   {
     "id": "foto-uma-vida-com-propositos",
