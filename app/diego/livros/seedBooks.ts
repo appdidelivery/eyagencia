@@ -1041,7 +1041,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 63
+    "seedOrder": 63,
+    "imageUrl": "https://books.google.com/books/content?id=3_b1BQAAQBAJ&printsec=frontcover&img=1&zoom=2&source=gbs_api",
+    "imageAlt": "Capa da edição brasileira Como o Google funciona, de Eric Schmidt e Jonathan Rosenberg"
   },
   {
     "id": "foto-satisfacao-garantida",
