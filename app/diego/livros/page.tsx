@@ -11,13 +11,17 @@ export const metadata:Metadata={
  alternates:{canonical:url},
  openGraph:{title:'Livros que eu li | Diego Lemes',description:'Minhas leituras e resenhas pessoais.',url,siteName:'Diego Lemes',locale:'pt_BR',type:'website'}
 }
-const query='*[_type=="diegoBook" && published==true && readConfirmed==true && defined(title) && defined(author) && defined(about) && defined(review) && length(about)>0 && length(review)>0] | order(sortOrder asc, _createdAt desc) {"id":_id,"slug":slug.current,title,author,category,about,review,lessons,recommendFor,rating,readYear,affiliateUrl,"imageUrl":cover.asset->url,"imageAlt":cover.alt}'
+// Consultar também documentos despublicados evita que o fallback os exiba novamente.
+const query='*[_type=="diegoBook" && defined(slug.current)] | order(sortOrder asc, _createdAt desc) {"id":_id,"slug":slug.current,title,author,category,about,review,lessons,recommendFor,rating,readYear,affiliateUrl,published,readConfirmed,"imageUrl":coalesce(cover.asset->url,coverUrl),"imageAlt":cover.alt}'
+
 export default async function Page(){
- let approvedBooks:BookEntry[]=[]
- try{approvedBooks=await client.fetch<BookEntry[]>(query,{}, {cache:'no-store'})}
+ type CmsEntry=BookEntry&{published?:boolean;readConfirmed?:boolean}
+ let cmsBooks:CmsEntry[]=[]
+ try{cmsBooks=await client.fetch<CmsEntry[]>(query,{}, {cache:'no-store'})}
  catch(error){console.error('[diego-books] erro ao consultar catalogo',error)}
- const approvedSlugs=new Set(approvedBooks.map(book=>book.slug).filter(Boolean))
- const books:BookEntry[]=[...approvedBooks,...photographedBooks.filter(book=>!approvedSlugs.has(book.slug))]
+ const cmsSlugs=new Set(cmsBooks.map(book=>book.slug).filter(Boolean))
+ const publishedCms=cmsBooks.filter(book=>book.published===true&&book.readConfirmed===true&&book.title&&book.author&&book.about?.trim()&&book.review?.trim())
+ const books:BookEntry[]=[...publishedCms,...photographedBooks.filter(book=>!cmsSlugs.has(book.slug))]
 
  const personUrl='https://www.eyagencia.com.br/diego#person'
  const person={'@type':'Person',name:'Diego Lemes','@id':personUrl,url:'https://www.eyagencia.com.br/diego'}
