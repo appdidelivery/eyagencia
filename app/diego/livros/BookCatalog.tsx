@@ -2,7 +2,7 @@
 import {useMemo,useState} from 'react'
 import styles from './books.module.css'
 
-export type BookEntry={id:string;slug?:string|null;title:string;author:string;category?:string|null;about:string;review:string;lessons?:string|null;recommendFor?:string|null;rating?:number|null;readYear?:number|null;affiliateUrl?:string|null;imageUrl?:string|null;imageAlt?:string|null}
+export type BookEntry={id:string;slug?:string|null;title:string;author:string;category?:string|null;about:string;review:string;lessons?:string|null;recommendFor?:string|null;rating?:number|null;readYear?:number|null;affiliateUrl?:string|null;imageUrl?:string|null;imageAlt?:string|null;reviewDraft?:boolean;seedOrder?:number}
 const highlight='https://www.instagram.com/stories/highlights/17898572725107429/'
 const validBuy=(raw?:string|null)=>{
  if(!raw)return null
@@ -17,7 +17,7 @@ function Book({book}:{book:BookEntry}){
  const track=()=>{const w=window as Window&{dataLayer?:Array<Record<string,string>>};w.dataLayer ||= [];w.dataLayer.push({event:'diego_book_affiliate_click',book_id:book.slug||book.id,partner:'mercado_livre'})}
  return <article className={styles.book} id={book.slug||book.id}>
   <div className={styles.bookTop}>
-   <div className={styles.cover}>{book.imageUrl?<img src={book.imageUrl} alt={book.imageAlt||'Capa de '+book.title} loading="lazy"/>:<span aria-label="Capa pendente">▤</span>}</div>
+   <div className={styles.cover}>{book.imageUrl?<img src={book.imageUrl} alt={book.imageAlt||'Capa de '+book.title} loading="lazy"/>:<div className={styles.typographicCover}><small>{book.author}</small><strong>{book.title}</strong><span aria-hidden="true">▤</span></div>}</div>
    <div className={styles.info}>
     <small>{book.category||'Outras leituras'}</small>
     <h3>{book.title}</h3>
@@ -27,12 +27,12 @@ function Book({book}:{book:BookEntry}){
    </div>
   </div>
   <div className={styles.actions}>
-   <button type="button" aria-expanded={expanded} aria-controls={'review-'+book.id} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fechar resenha −':'Ler minha resenha +'}</button>
+   <button type="button" aria-expanded={expanded} aria-controls={'review-'+book.id} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fechar resenha −':book.reviewDraft?'Ver sinopse e resenha sugerida +':'Ler minha resenha +'}</button>
    {buy?<a href={buy} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={track}>Comprar no Mercado Livre ↗</a>:<span className={styles.pending}>Compra em breve</span>}
   </div>
   {expanded&&<div className={styles.review} id={'review-'+book.id}>
     <div><h4>Sobre o que é</h4><p>{book.about}</p></div>
-    <div className={styles.opinion}><h4>O que eu achei da leitura</h4><p>{book.review}</p></div>
+    <div className={styles.opinion}><h4>{book.reviewDraft?'Resenha sugerida · aguardando minha validação':'O que eu achei da leitura'}</h4>{book.reviewDraft&&<p className={styles.draftNotice}>Texto editorial em primeira pessoa, ainda não confirmado como minha opinião.</p>}<p>{book.review}</p></div>
     {book.lessons&&<div><h4>O que levei comigo</h4><p>{book.lessons}</p></div>}
     {book.recommendFor&&<div><h4>Eu indicaria para</h4><p>{book.recommendFor}</p></div>}
   </div>}
@@ -55,7 +55,7 @@ export default function BookCatalog({books}:{books:BookEntry[]}){
     <div className={styles.heroIcon}>▤</div>
     <p className={styles.eyebrow}>BIBLIOTECA PESSOAL · DIEGO LEMES</p>
     <h1>Livros que <em>eu li.</em></h1>
-    <p>Compartilho o que cada livro aborda, minha avaliação da leitura e as ideias que levo para minha vida, meus negócios e meus projetos.</p>
+    <p>Livros compartilhados nas minhas leituras, sinopses e reflexões sobre os temas. As resenhas em primeira pessoa estão sendo revisadas antes da versão definitiva.</p>
     <div className={styles.numbers}><span><b>{books.length}</b> {books.length===1?'livro':'livros'} no catálogo</span><span><b>{categories.length-1}</b> assuntos</span></div>
    </header>
    <section className={styles.content}>
@@ -68,7 +68,7 @@ export default function BookCatalog({books}:{books:BookEntry[]}){
     <p className={styles.count} aria-live="polite">{visible.length} {visible.length===1?'livro encontrado':'livros encontrados'}</p>
     {visible.length?<div className={styles.grid}>{visible.map(b=><Book book={b} key={b.id}/>)}</div>:<div className={styles.empty}><h3>Nenhum livro encontrado</h3><p>Tente outra busca ou categoria.</p><button onClick={()=>{setQ('');setCategory('Todas')}}>Limpar filtros</button></div>}</>:
       <div className={styles.empty}><div className={styles.emptyIcon}>▤</div><h3>Minha biblioteca está sendo organizada</h3><p>Estou selecionando os livros que li e preparando minhas resenhas. Enquanto isso, você pode acessar meu destaque <strong>Leitura📕</strong> no Instagram.</p><a href={highlight} target="_blank" rel="noopener noreferrer">Ver minhas leituras no Instagram ↗</a></div>}
-    <p className={styles.disclosure}>Transparência: os links de compra poderão ser de afiliado do Mercado Livre. Se você comprar por eles, posso receber comissão sem custo adicional para você. As avaliações são pessoais e independentes.</p>
+    <p className={styles.disclosure}>Transparência: os links de compra poderão ser de afiliado do Mercado Livre. Se você comprar por eles, posso receber comissão sem custo adicional para você. As resenhas identificadas como rascunho são sugestões editoriais e não representam ainda minha avaliação aprovada.</p>
    </section>
    <footer className={styles.footer}><span>Diego Lemes · Construir, aprender e compartilhar.</span><a href="/diego">Voltar ao perfil ↗</a></footer>
   </div>
