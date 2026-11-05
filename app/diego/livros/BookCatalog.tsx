@@ -7,7 +7,7 @@ const highlight='https://www.instagram.com/stories/highlights/17898572725107429/
 // Ofertas recebidas do programa de afiliados do Diego em 05/11/2026.
 // Links de livros ainda não publicados ficam preparados, sem marcá-los como lidos.
 // A associação por slug evita trocar títulos/edições; edições do CMS têm prioridade.
-const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string}>={
+const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string;editionNote?:string}>={
  'o-homem-mais-inteligente-da-historia':{mercadoLivre:'https://meli.la/13ijdKV'},
  'voce-e-insubstituivel':{mercadoLivre:'https://meli.la/2U64pQS'},
  'o-mestre-dos-mestres':{mercadoLivre:'https://meli.la/2pTiHWx'},
@@ -17,7 +17,12 @@ const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string}>={
  'ansiedade-digital':{mercadoLivre:'https://meli.la/13KRfSZ'},
  'pais-inteligentes-formam-sucessores-nao-herdeiros':{mercadoLivre:'https://meli.la/12eBQ3C'},
  'as-regras-de-ouro-dos-casais-saudaveis':{mercadoLivre:'https://meli.la/2V7eh2c'},
- 'felicidade-roubada':{mercadoLivre:'https://meli.la/29mfL5m'}
+ 'felicidade-roubada':{mercadoLivre:'https://meli.la/29mfL5m'},
+ 'chamando-atencao-da-sorte':{mercadoLivre:'https://meli.la/1k25yUT'},
+ 'instagram-whatsapp-e-facebook-para-negocios':{mercadoLivre:'https://meli.la/2mC75yT'}, // aguardando livro no catálogo
+ 'steve-jobs-para-jovens':{mercadoLivre:'https://meli.la/2JuMtZY',editionNote:'Edição em inglês'},
+ 'steve-jobs-walter-isaacson':{mercadoLivre:'https://meli.la/1pS9m7S'}, // biografia diferente, ainda sem registro
+ 'de-zero-a-um':{mercadoLivre:'https://meli.la/2Xa4Xdv'}
 }
 const christSeriesBox={mercadoLivre:'https://meli.la/1BW8wRa',amazon:'https://link.amazon/B0fA2qibf'}
 
@@ -38,7 +43,9 @@ function Book({book}:{book:BookEntry}){
  const [expanded,setExpanded]=useState(false)
  const [imageFailed,setImageFailed]=useState(false)
  const selectedOffer=book.slug?offerLinks[book.slug]:undefined
- const buy=validBuy(book.affiliateUrl||selectedOffer?.mercadoLivre)
+ const externalBuy=validBuy(book.affiliateUrl)
+ const buy=externalBuy||validBuy(selectedOffer?.mercadoLivre)
+ const buyLabel=externalBuy?'Mercado Livre ↗':selectedOffer?.editionNote?`Mercado Livre · ${selectedOffer.editionNote} ↗`:'Mercado Livre ↗'
  const amazon=validBuy(book.amazonAffiliateUrl||selectedOffer?.amazon,'amazon')
  const shopee=validBuy(book.shopeeAffiliateUrl,'shopee')
  const rating=book.rating&&Number.isInteger(book.rating)&&book.rating>0&&book.rating<=5?book.rating:0
@@ -56,7 +63,7 @@ function Book({book}:{book:BookEntry}){
   </div>
   <div className={styles.actions}>
    <button type="button" aria-expanded={expanded} aria-controls={'review-'+book.id} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fechar resenha −':'Ler minha resenha +'}</button>
-   {buy&&<a href={buy} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre')}>Mercado Livre ↗</a>}
+   {buy&&<a href={buy} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre')}>{buyLabel}</a>}
    {amazon&&<a href={amazon} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('amazon')}>Amazon ↗</a>}
    {shopee&&<a href={shopee} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('shopee')}>Shopee ↗</a>}
    {!buy&&!amazon&&!shopee&&<span className={styles.pending}>Compra em breve</span>}
