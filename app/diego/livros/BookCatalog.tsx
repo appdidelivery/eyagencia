@@ -8,6 +8,15 @@ const highlight='https://www.instagram.com/stories/highlights/17898572725107429/
 // Links de livros ainda não publicados ficam preparados, sem marcá-los como lidos.
 // A associação por slug evita trocar títulos/edições; edições do CMS têm prioridade.
 const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string;editionNote?:string}>={
+// Primeiros títulos: links encaminhados nos prints de 05/11/2026.
+ 'as-5-linguagens-do-amor':{mercadoLivre:'https://meli.la/13NR5gV'}, // edição tradicional (não a edição para homens)
+ 'os-7-habitos-das-pessoas-altamente-eficazes':{mercadoLivre:'https://meli.la/11rPFwi'},
+ 'almanaque-de-naval-ravikant':{mercadoLivre:'https://meli.la/2Jz8onR'},
+ 'a-startup-enxuta':{mercadoLivre:'https://meli.la/1qgWthY'},
+ 'bem-vindo-espirito-santo':{mercadoLivre:'https://meli.la/1zMtEAx'},
+ 'fora-de-serie-outliers':{mercadoLivre:'https://meli.la/1rH66HP'},
+ 'o-investidor-inteligente':{mercadoLivre:'https://meli.la/1bb8Tru'},
+ 'os-axiomas-de-zurique':{mercadoLivre:'https://meli.la/2I3US4h'},
  'o-homem-mais-inteligente-da-historia':{mercadoLivre:'https://meli.la/13ijdKV'},
  'voce-e-insubstituivel':{mercadoLivre:'https://meli.la/2U64pQS'},
  'o-mestre-dos-mestres':{mercadoLivre:'https://meli.la/2pTiHWx'},
@@ -25,6 +34,12 @@ const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string;editionNote?
  'de-zero-a-um':{mercadoLivre:'https://meli.la/2Xa4Xdv'}
 }
 const christSeriesBox={mercadoLivre:'https://meli.la/1BW8wRa',amazon:'https://link.amazon/B0fA2qibf'}
+// Edição especial distinta do livro padrão; não altera a contagem de livros lidos.
+const languagesForMen='https://meli.la/1kqkHiy'
+// Capa da mesma edição Best Business / ISBN 9788568905159 exibida na foto enviada.
+const verifiedCoverOverrides:Record<string,string>={
+ 'os-axiomas-de-zurique':'https://carrefourbr.vtexassets.com/arquivos/ids/7455066/MV28420319_Axiomas-de-Zurique--Os-_1_Zoom.jpg?v=637350061305170000'
+}
 
 const validBuy=(raw?:string|null,provider:'mercado_livre'|'amazon'|'shopee'='mercado_livre')=>{
  if(!raw)return null
@@ -42,17 +57,19 @@ const validBuy=(raw?:string|null,provider:'mercado_livre'|'amazon'|'shopee'='mer
 function Book({book}:{book:BookEntry}){
  const [expanded,setExpanded]=useState(false)
  const [imageFailed,setImageFailed]=useState(false)
+ const coverSrc=book.slug&&verifiedCoverOverrides[book.slug]||book.imageUrl
  const selectedOffer=book.slug?offerLinks[book.slug]:undefined
  const externalBuy=validBuy(book.affiliateUrl)
  const buy=externalBuy||validBuy(selectedOffer?.mercadoLivre)
  const buyLabel=externalBuy?'Mercado Livre ↗':selectedOffer?.editionNote?`Mercado Livre · ${selectedOffer.editionNote} ↗`:'Mercado Livre ↗'
  const amazon=validBuy(book.amazonAffiliateUrl||selectedOffer?.amazon,'amazon')
  const shopee=validBuy(book.shopeeAffiliateUrl,'shopee')
+ const menEdition=book.slug==='as-5-linguagens-do-amor'?validBuy(languagesForMen):null
  const rating=book.rating&&Number.isInteger(book.rating)&&book.rating>0&&book.rating<=5?book.rating:0
  const track=(partner:string)=>{const w=window as Window&{dataLayer?:Array<Record<string,string>>};w.dataLayer ||= [];w.dataLayer.push({event:'diego_book_affiliate_click',book_id:book.slug||book.id,partner})}
  return <article className={styles.book} id={book.slug||book.id}>
   <div className={styles.bookTop}>
-   <div className={styles.cover}>{book.imageUrl&&!imageFailed?<img src={book.imageUrl} alt={book.imageAlt||'Capa de '+book.title} loading="lazy" decoding="async" onError={()=>setImageFailed(true)}/>:<div className={styles.typographicCover}><small>{book.author}</small><strong>{book.title}</strong><span aria-hidden="true">▤</span></div>}</div>
+   <div className={styles.cover}>{coverSrc&&!imageFailed?<img src={coverSrc} alt={book.imageAlt||'Capa de '+book.title} loading="lazy" decoding="async" onError={()=>setImageFailed(true)}/>:<div className={styles.typographicCover}><small>{book.author}</small><strong>{book.title}</strong><span aria-hidden="true">▤</span></div>}</div>
    <div className={styles.info}>
     <small>{book.category||'Outras leituras'}</small>
     <h3>{book.title}</h3>
@@ -65,6 +82,7 @@ function Book({book}:{book:BookEntry}){
    <button type="button" aria-expanded={expanded} aria-controls={'review-'+book.id} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fechar resenha −':'Ler minha resenha +'}</button>
    {buy&&<a href={buy} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre')}>{buyLabel}</a>}
    {amazon&&<a href={amazon} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('amazon')}>Amazon ↗</a>}
+   {menEdition&&<a href={menEdition} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre_edicao_homens')}>Edição para homens · ML ↗</a>}
    {shopee&&<a href={shopee} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('shopee')}>Shopee ↗</a>}
    {!buy&&!amazon&&!shopee&&<span className={styles.pending}>Compra em breve</span>}
   </div>
