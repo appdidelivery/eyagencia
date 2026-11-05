@@ -273,7 +273,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 16
+    "seedOrder": 16,
+    "imageUrl": "https://www.touchelivros.com.br/wp-content/uploads/2024/08/9788567871257.jpg",
+    "imageAlt": "Capa do livro O fator atitude — Mark Murphy"
   },
   {
     "id": "foto-de-zero-a-um",
@@ -458,7 +460,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 27
+    "seedOrder": 27,
+    "imageUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/ce/2d/c1/ce2dc13c-d312-a254-43ba-a715dc68cc85/6610000292103.jpg/626x0w.jpg",
+    "imageAlt": "Capa do livro Guia definitivo para dominar o Bitcoin e as criptomoedas — Wayne Walker"
   },
   {
     "id": "foto-bitcoin-a-moeda-na-era-digital",
@@ -490,7 +494,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 29
+    "seedOrder": 29,
+    "imageUrl": "https://bibliotecamundial.com.br/imagens/capas/ethereum-daniel-duarte-pdf-B0BW67GB4V.webp",
+    "imageAlt": "Capa do livro Ethereum: O código da revolução — Daniel Duarte"
   },
   {
     "id": "foto-o-manual-do-criptoinvestidor",
@@ -505,7 +511,9 @@ export const photographedBooks:BookEntry[]=[
     "rating": null,
     "affiliateUrl": null,
     "reviewDraft": false,
-    "seedOrder": 30
+    "seedOrder": 30,
+    "imageUrl": "https://www.touchelivros.com.br/wp-content/uploads/2024/08/9786586082739.jpg",
+    "imageAlt": "Capa do livro O manual do criptoinvestidor — Alexandre Bianchi"
   },
   {
     "id": "foto-o-mestre-dos-mestres",
