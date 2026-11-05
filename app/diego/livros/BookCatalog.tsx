@@ -7,7 +7,7 @@ const highlight='https://www.instagram.com/stories/highlights/17898572725107429/
 // Ofertas recebidas do programa de afiliados do Diego em 05/11/2026.
 // Links de livros ainda não publicados ficam preparados, sem marcá-los como lidos.
 // A associação por slug evita trocar títulos/edições; edições do CMS têm prioridade.
-const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string;editionNote?:string}>={
+const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string;directMercadoLivre?:string;editionNote?:string}>={
 // Primeiros títulos: links encaminhados nos prints de 05/11/2026.
  'as-5-linguagens-do-amor':{mercadoLivre:'https://meli.la/13NR5gV'}, // edição tradicional (não a edição para homens)
  'os-7-habitos-das-pessoas-altamente-eficazes':{mercadoLivre:'https://meli.la/11rPFwi'},
@@ -40,6 +40,25 @@ const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string;editionNote?
  'bold-oportunidades-exponenciais':{mercadoLivre:'https://meli.la/1tMC2RS'}, // BOLD: Oportunidades exponenciais
  'do-mil-ao-milhao':{mercadoLivre:'https://meli.la/2sLjmqY'}, // Do mil ao milhão
  'o-poder-da-acao':{mercadoLivre:'https://meli.la/2cagsoq'}, // O poder da ação
+ 'o-jeito-warren-buffett-de-investir':{mercadoLivre:'https://meli.la/1dTStGM'},
+ 'a-startup-de-100':{mercadoLivre:'https://meli.la/2C2uQhR'},
+ 'bitcoinomics-uma-historia-de-rebeldia':{mercadoLivre:'https://meli.la/1DUSTeP'},
+ 'bitcoin-a-moeda-na-era-digital':{mercadoLivre:'https://meli.la/194uamg'},
+ 'a-filosofia-do-bitcoin':{mercadoLivre:'https://meli.la/32t5fs9'},
+ 'casais-inteligentes-enriquecem-juntos':{mercadoLivre:'https://meli.la/18Zqzku'},
+ 'bilionarios-do-bitcoin':{mercadoLivre:'https://meli.la/1LbHAaY'},
+ '40-dias-cheios-do-espirito-santo':{mercadoLivre:'https://meli.la/2JM8SCz'},
+ 'biblia-sagrada-letra-gigante':{mercadoLivre:'https://meli.la/2ErY5Am'},
+ 'nos-que-lutamos-com-deus':{mercadoLivre:'https://meli.la/2h6zkwm'},
+ 'ansiedade-2-autocontrole':{mercadoLivre:'https://meli.la/2Fki7si'},
+ 'o-mestre-do-amor':{mercadoLivre:'https://meli.la/1VBtc18'},
+ 'o-monge-e-o-executivo':{mercadoLivre:'https://meli.la/2FgjuKj'},
+ 'a-arte-de-viver-encheiridion':{mercadoLivre:'https://meli.la/1PookYN'},
+ 'o-universo-numa-casca-de-noz':{mercadoLivre:'https://meli.la/2rKBnUc'},
+ 'chaves-a-historia-oficial-ilustrada':{mercadoLivre:'https://meli.la/2jGbuLx'},
+ 'a-arte-da-guerra':{mercadoLivre:'https://meli.la/1rhxGFT'},
+ // Oferta comum de exemplar usado: NÃO é link gerado pelo programa de afiliados.
+ 'impossibilidade-humana-possibilidade-divina':{directMercadoLivre:'https://www.mercadolivre.com.br/livro-impossibilidade-humana-possibilidade-divina/up/MLBU1431271544?pdp_filters=item_id%3AMLB2631770181',editionNote:'Usado · sem afiliado'},
 }
 // O link de "Marketing Digital: O Segredo do Facebook" é diferente de
 // "Facebook Marketing", de Camila Porto; não vincular ao título errado.
@@ -48,7 +67,9 @@ const christSeriesBox={mercadoLivre:'https://meli.la/1BW8wRa',amazon:'https://li
 const languagesForMen='https://meli.la/1kqkHiy'
 // Capa da mesma edição Best Business / ISBN 9788568905159 exibida na foto enviada.
 const verifiedCoverOverrides:Record<string,string>={
- 'os-axiomas-de-zurique':'https://carrefourbr.vtexassets.com/arquivos/ids/7455066/MV28420319_Axiomas-de-Zurique--Os-_1_Zoom.jpg?v=637350061305170000'
+ 'os-axiomas-de-zurique':'https://carrefourbr.vtexassets.com/arquivos/ids/7455066/MV28420319_Axiomas-de-Zurique--Os-_1_Zoom.jpg?v=637350061305170000',
+ // Bíblia com Harpa e capa Leão da Tribo de Judá (mesma arte do anúncio compartilhado).
+ 'biblia-sagrada-letra-gigante':'https://down-br.img.susercontent.com/file/br-11134207-7r98o-lxgeh40vcon347'
 }
 
 const validBuy=(raw?:string|null,provider:'mercado_livre'|'amazon'|'shopee'='mercado_livre')=>{
@@ -70,7 +91,10 @@ function Book({book}:{book:BookEntry}){
  const coverSrc=book.slug&&verifiedCoverOverrides[book.slug]||book.imageUrl
  const selectedOffer=book.slug?offerLinks[book.slug]:undefined
  const externalBuy=validBuy(book.affiliateUrl)
- const buy=externalBuy||validBuy(selectedOffer?.mercadoLivre)
+ const normalAffiliateBuy=validBuy(selectedOffer?.mercadoLivre)
+ const nonAffiliateBuy=validBuy(selectedOffer?.directMercadoLivre)
+ const buy=externalBuy||normalAffiliateBuy||nonAffiliateBuy
+ const nonAffiliateOnly=!!nonAffiliateBuy&&!externalBuy&&!normalAffiliateBuy
  const buyLabel=externalBuy?'Mercado Livre ↗':selectedOffer?.editionNote?`Mercado Livre · ${selectedOffer.editionNote} ↗`:'Mercado Livre ↗'
  const amazon=validBuy(book.amazonAffiliateUrl||selectedOffer?.amazon,'amazon')
  const shopee=validBuy(book.shopeeAffiliateUrl,'shopee')
@@ -90,7 +114,7 @@ function Book({book}:{book:BookEntry}){
   </div>
   <div className={styles.actions}>
    <button type="button" aria-expanded={expanded} aria-controls={'review-'+book.id} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fechar resenha −':'Ler minha resenha +'}</button>
-   {buy&&<a href={buy} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre')}>{buyLabel}</a>}
+   {buy&&<a href={buy} rel={nonAffiliateOnly?'nofollow noopener noreferrer':'sponsored nofollow noopener noreferrer'} target="_blank" onClick={()=>track(nonAffiliateOnly?'mercado_livre_nao_afiliado':'mercado_livre')}>{buyLabel}</a>}
    {amazon&&<a href={amazon} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('amazon')}>Amazon ↗</a>}
    {menEdition&&<a href={menEdition} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre_edicao_homens')}>Edição para homens · ML ↗</a>}
    {shopee&&<a href={shopee} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('shopee')}>Shopee ↗</a>}
