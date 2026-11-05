@@ -31,8 +31,18 @@ const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string;editionNote?
  'instagram-whatsapp-e-facebook-para-negocios':{mercadoLivre:'https://meli.la/2mC75yT'}, // aguardando livro no catálogo
  'steve-jobs-para-jovens':{mercadoLivre:'https://meli.la/2JuMtZY',editionNote:'Edição em inglês'},
  'steve-jobs-walter-isaacson':{mercadoLivre:'https://meli.la/1pS9m7S'}, // biografia diferente, ainda sem registro
- 'de-zero-a-um':{mercadoLivre:'https://meli.la/2Xa4Xdv'}
+ 'de-zero-a-um':{mercadoLivre:'https://meli.la/2Xa4Xdv'},
+ 'scrum-dobro-trabalho-metade-tempo':{mercadoLivre:'https://meli.la/1eZXpx5'}, // Scrum: A arte de fazer o dobro do trabalho na metade do tempo
+ 'faca-o-teu-melhor':{mercadoLivre:'https://meli.la/2KJzU9B'}, // Faça o teu melhor!
+ 'marketing-digital-o-segredo-do-facebook':{mercadoLivre:'https://meli.la/1xyGoKS'}, // Marketing Digital: O Segredo do Facebook (título ainda não cadastrado)
+ 'receita-previsivel':{mercadoLivre:'https://meli.la/2HMb4dr'}, // Receita previsível
+ 'as-dez-leis-da-confianca':{mercadoLivre:'https://meli.la/23ebagF'}, // As dez leis da confiança
+ 'bold-oportunidades-exponenciais':{mercadoLivre:'https://meli.la/1tMC2RS'}, // BOLD: Oportunidades exponenciais
+ 'do-mil-ao-milhao':{mercadoLivre:'https://meli.la/2sLjmqY'}, // Do mil ao milhão
+ 'o-poder-da-acao':{mercadoLivre:'https://meli.la/2cagsoq'}, // O poder da ação
 }
+// O link de "Marketing Digital: O Segredo do Facebook" é diferente de
+// "Facebook Marketing", de Camila Porto; não vincular ao título errado.
 const christSeriesBox={mercadoLivre:'https://meli.la/1BW8wRa',amazon:'https://link.amazon/B0fA2qibf'}
 // Edição especial distinta do livro padrão; não altera a contagem de livros lidos.
 const languagesForMen='https://meli.la/1kqkHiy'
