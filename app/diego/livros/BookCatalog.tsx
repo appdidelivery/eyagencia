@@ -1,7 +1,6 @@
 'use client'
 import {useMemo,useState} from 'react'
 import styles from './books.module.css'
-import AuthorLibrary from './AuthorLibrary'
 
 export type BookEntry={id:string;slug?:string|null;title:string;author:string;category?:string|null;about:string;review:string;lessons?:string|null;recommendFor?:string|null;rating?:number|null;readYear?:number|null;affiliateUrl?:string|null;amazonAffiliateUrl?:string|null;shopeeAffiliateUrl?:string|null;imageUrl?:string|null;imageAlt?:string|null;reviewDraft?:boolean;seedOrder?:number}
 const highlight='https://www.instagram.com/stories/highlights/17898572725107429/'
@@ -82,9 +81,8 @@ export default function BookCatalog({books}:{books:BookEntry[]}){
     <p className={styles.count} aria-live="polite">{visible.length} {visible.length===1?'livro encontrado':'livros encontrados'}</p>
     {visible.length?<div className={styles.grid}>{visible.map(b=><Book book={b} key={b.id}/>)}</div>:<div className={styles.empty}><h3>Nenhum livro encontrado</h3><p>Tente outra busca ou categoria.</p><button onClick={()=>{setQ('');setCategory('Todas')}}>Limpar filtros</button></div>}</>:
       <div className={styles.empty}><div className={styles.emptyIcon}>▤</div><h3>Minha biblioteca está sendo organizada</h3><p>Estou selecionando os livros que li e preparando minhas resenhas. Enquanto isso, você pode acessar meu destaque <strong>Leitura📕</strong> no Instagram.</p><a href={highlight} target="_blank" rel="noopener noreferrer">Ver minhas leituras no Instagram ↗</a></div>}
-    <p className={styles.disclosure}>Transparência: os links de compra poderão ser de afiliado do Mercado Livre. Se você comprar por eles, posso receber comissão sem custo adicional para você. As resenhas expressam minhas reflexões sobre as leituras e os projetos que desenvolvo.</p>
+    <p className={styles.disclosure}>Transparência: os links de compra podem ser de afiliado do Mercado Livre, Amazon ou Shopee. Se você comprar por eles, posso receber comissão sem custo adicional para você. As resenhas expressam minhas reflexões sobre as leituras e os projetos que desenvolvo.</p>
    </section>
-   <AuthorLibrary books={books}/>
    <footer className={styles.footer}><span>Diego Lemes · Construir, aprender e compartilhar.</span><a href="/diego">Voltar ao perfil ↗</a></footer>
   </div>
  </main>
