@@ -127,6 +127,26 @@ export async function publishNextEyagenciaCarousel(): Promise<Outcome> {
   const keys = credentials()
   if (!keys) return {status: 'eyagencia_meta_credentials_missing'}
 
+  // The brand has one Instagram feed slot per Brazil-local day. The evening
+  // cron remains a recovery slot, not a second daily carousel.
+  const now = new Date()
+  const day = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(now)
+  const since = new Date(day + 'T03:00:00.000Z').toISOString()
+  const until = new Date(Date.parse(since) + 86400000).toISOString()
+  const alreadyPublished = await writeClient.fetch<number>(
+    'count(*[_type == "socialPackage" && defined(instagramCarouselPostId) && ' +
+    'publishedAt >= $since && publishedAt < $until])',
+    {since, until},
+  )
+  const newsAlreadyPublished = await writeClient.fetch<number>(
+    'count(*[_type == "socialNewsPost" && brand == "eyagencia" && day == $day && ' +
+    '(defined(instagramPostId) || defined(facebookPostId))])',
+    {day},
+  )
+  if (alreadyPublished || newsAlreadyPublished) return {status: 'daily_limit_reached'}
+
   const pkg = await findEligiblePackage()
   if (!pkg) return {status: 'no_rendered_carousel'}
   const result: Outcome = {status: 'failed', packageId: pkg._id}
