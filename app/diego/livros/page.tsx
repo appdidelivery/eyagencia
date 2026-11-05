@@ -12,7 +12,7 @@ export const metadata:Metadata={
  openGraph:{title:'Livros que eu li | Diego Lemes',description:'Minhas leituras e resenhas pessoais.',url,siteName:'Diego Lemes',locale:'pt_BR',type:'website'}
 }
 // Consultar também documentos despublicados evita que o fallback os exiba novamente.
-const query='*[_type=="diegoBook" && defined(slug.current)] | order(sortOrder asc, _createdAt desc) {"id":_id,"slug":slug.current,title,author,category,about,review,lessons,recommendFor,rating,readYear,affiliateUrl,published,readConfirmed,"imageUrl":coalesce(cover.asset->url,coverUrl),"imageAlt":cover.alt}'
+const query='*[_type=="diegoBook" && defined(slug.current)] | order(sortOrder asc, _createdAt desc) {"id":_id,"slug":slug.current,title,author,category,about,review,lessons,recommendFor,rating,readYear,affiliateUrl,amazonAffiliateUrl,shopeeAffiliateUrl,published,readConfirmed,"imageUrl":coalesce(cover.asset->url,coverUrl),"imageAlt":cover.alt}'
 
 export default async function Page(){
  type CmsEntry=BookEntry&{published?:boolean;readConfirmed?:boolean}
@@ -21,7 +21,15 @@ export default async function Page(){
  catch(error){console.error('[diego-books] erro ao consultar catalogo',error)}
  const cmsSlugs=new Set(cmsBooks.map(book=>book.slug).filter(Boolean))
  const publishedCms=cmsBooks.filter(book=>book.published===true&&book.readConfirmed===true&&book.title&&book.author&&book.about?.trim()&&book.review?.trim())
- const books:BookEntry[]=[...publishedCms,...photographedBooks.filter(book=>!cmsSlugs.has(book.slug))]
+ // Affiliate links in approved editorial seed remain available until the same title is edited in Sanity.
+ // CMS values always take precedence when supplied.
+ const seedBySlug=new Map(photographedBooks.map(book=>[book.slug,book]))
+ const resolvedCms:BookEntry[]=publishedCms.map(book=>({...book,
+  affiliateUrl:book.affiliateUrl||seedBySlug.get(book.slug)?.affiliateUrl||null,
+  amazonAffiliateUrl:book.amazonAffiliateUrl||seedBySlug.get(book.slug)?.amazonAffiliateUrl||null,
+  shopeeAffiliateUrl:book.shopeeAffiliateUrl||seedBySlug.get(book.slug)?.shopeeAffiliateUrl||null
+ }))
+ const books:BookEntry[]=[...resolvedCms,...photographedBooks.filter(book=>!cmsSlugs.has(book.slug))]
 
  const personUrl='https://www.eyagencia.com.br/diego#person'
  const person={'@type':'Person',name:'Diego Lemes','@id':personUrl,url:'https://www.eyagencia.com.br/diego'}
