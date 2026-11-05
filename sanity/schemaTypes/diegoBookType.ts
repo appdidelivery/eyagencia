@@ -12,6 +12,8 @@ export const diegoBookType=defineType({
   defineField({name:'slug',title:'Identificador',type:'slug',options:{source:'title'},validation:R=>R.required()}),
   defineField({name:'author',title:'Autor(a)',type:'string',validation:R=>R.required()}),
   defineField({name:'cover',title:'Capa',type:'image',options:{hotspot:true},fields:[defineField({name:'alt',title:'Texto alternativo',type:'string'})]}),
+  defineField({name:'coverUrl',title:'URL da capa importada',type:'url',description:'Capas externas preservadas após a importação. Uma imagem enviada no campo Capa tem prioridade no site.'}),
+  defineField({name:'affiliateUrl',title:'Link afiliado Mercado Livre',type:'url',description:'Cole seu link do Mercado Livre e publique o documento. O botão Comprar aparecerá no site.',validation:R=>R.custom(v=>!v||allowed(v)||'Somente HTTPS do Mercado Livre, mercado.li ou meli.la.')}),
   defineField({name:'category',title:'Assunto',type:'string',options:{list:['Negócios','E-commerce e marketing','IA e tecnologia','Finanças','Liderança','Desenvolvimento pessoal','Biografias','Literatura','Espiritualidade','Ciência','Mercado imobiliário','Formação técnica','Outros']}}),
   defineField({name:'readYear',title:'Ano da leitura',type:'number',validation:R=>R.integer().min(1950).max(2100)}),
   defineField({name:'about',title:'Sobre o que é',type:'text',rows:4}),
@@ -19,7 +21,7 @@ export const diegoBookType=defineType({
   defineField({name:'lessons',title:'O que aprendi',type:'text',rows:4}),
   defineField({name:'recommendFor',title:'Eu indicaria para',type:'text',rows:3}),
   defineField({name:'rating',title:'Minha nota (1–5)',type:'number',validation:R=>R.integer().min(1).max(5)}),
-  defineField({name:'affiliateUrl',title:'Link afiliado Mercado Livre',type:'url',validation:R=>R.custom(v=>!v||allowed(v)||'Somente HTTPS do Mercado Livre, mercado.li ou meli.la.')}),
+
   defineField({name:'sortOrder',title:'Ordem de exibição',type:'number'}),
   defineField({name:'readConfirmed',title:'Diego confirmou que leu?',type:'boolean',initialValue:false}),
   defineField({name:'published',title:'Exibir publicamente?',type:'boolean',initialValue:false}),
