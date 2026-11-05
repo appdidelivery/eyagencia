@@ -10,7 +10,8 @@ import {socialPublicationType} from './socialPublicationType'
 import {socialPackageType} from './socialPackageType'
 import {socialNewsPostType} from './socialNewsPostType'
 import {blogFeedbackType} from './blogFeedbackType'
+import {diegoBookType} from './diegoBookType'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [blockContentType, categoryType, postType, authorType, aiContentJobType, socialBrandType, socialPublicationType, socialPackageType, socialNewsPostType, blogFeedbackType],
+  types: [blockContentType, categoryType, postType, authorType, aiContentJobType, socialBrandType, socialPublicationType, socialPackageType, socialNewsPostType, blogFeedbackType, diegoBookType],
 }
