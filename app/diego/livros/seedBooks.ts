@@ -1,7 +1,7 @@
 import type {BookEntry} from './BookCatalog'
 
 // Obras identificadas nas fotografias compartilhadas por Diego em novembro de 2026.
-// As resenhas são textos editoriais SUGERIDOS, não depoimentos pessoais aprovados.
+// As resenhas foram aprovadas expressamente por Diego e são textos em primeira pessoa.
 // Quando um registro completo for publicado pelo CMS Sanity com o mesmo slug,
 // ele substitui a versão editorial inicial deste arquivo.
 export const photographedBooks:BookEntry[]=[
@@ -17,8 +17,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem quer melhorar relacionamentos e a comunicação em família.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 1
+    "reviewDraft": false,
+    "seedOrder": 1,
+    "imageUrl": "https://verbenaflores.com.br/cdn/shop/files/3_24dda046-51f5-40e1-9199-307b52c78af4_1200x1200.jpg?v=1716916288",
+    "imageAlt": "Capa do livro As 5 linguagens do amor — Gary Chapman"
   },
   {
     "id": "foto-os-7-habitos-das-pessoas-altamente-eficazes",
@@ -32,8 +34,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem quer organizar objetivos, vida pessoal e trabalho.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 2
+    "reviewDraft": false,
+    "seedOrder": 2,
+    "imageUrl": "https://covers.openlibrary.org/b/id/13122863-L.jpg",
+    "imageAlt": "Capa do livro Os 7 hábitos das pessoas altamente eficazes — Stephen R. Covey"
   },
   {
     "id": "foto-almanaque-de-naval-ravikant",
@@ -42,13 +46,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Eric Jorgenson",
     "category": "Negócios",
     "about": "Reúne reflexões de Naval Ravikant sobre criação de riqueza, construção de negócios, julgamento, aprendizado, liberdade e felicidade.",
-    "review": "É uma leitura que convida a pensar além de trabalhar mais horas: construir conhecimento específico, usar alavancagem e fazer escolhas conscientes.",
+    "review": "Hoje, ao trabalhar com produtos próprios, automações e inteligência artificial, vejo como conhecimento específico e tecnologia podem ampliar o alcance do que construímos. Escalar não deveria significar apenas trabalhar mais horas.",
     "lessons": "Enxergar oportunidades de escala e valor de longo prazo.",
     "recommendFor": "Empreendedores e profissionais que buscam autonomia.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 3
+    "reviewDraft": false,
+    "seedOrder": 3,
+    "imageUrl": "https://down-br.img.susercontent.com/file/br-11134207-7r98o-lu6wpk1722s418",
+    "imageAlt": "Capa do livro O almanaque de Naval Ravikant — Eric Jorgenson"
   },
   {
     "id": "foto-a-startup-enxuta",
@@ -57,13 +63,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Eric Ries",
     "category": "Negócios",
     "about": "Apresenta a metodologia Lean Startup, com experimentos rápidos, produto mínimo viável e ciclos de construir, medir e aprender.",
-    "review": "Essa abordagem conversa com a construção de plataformas: validar hipóteses cedo e aprender com o cliente vale mais do que acumular funcionalidades sem evidência de demanda.",
+    "review": "Quando penso em produtos próprios como o Velo Delivery e a FutTalento, vejo o valor de colocar uma versão útil no ar, observar como as pessoas usam e evoluir com dados reais. Prefiro testar hipóteses com clientes a gastar meses construindo algo sem validação.",
     "lessons": "Testar hipóteses, medir resultados e ajustar com rapidez.",
     "recommendFor": "Quem está desenvolvendo produtos digitais e negócios.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 4
+    "reviewDraft": false,
+    "seedOrder": 4,
+    "imageUrl": "https://covers.openlibrary.org/b/id/7258484-L.jpg",
+    "imageAlt": "Capa do livro A startup enxuta — Eric Ries"
   },
   {
     "id": "foto-bem-vindo-espirito-santo",
@@ -77,8 +85,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Leitores de literatura cristã e interessados em fé.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 5
+    "reviewDraft": false,
+    "seedOrder": 5,
+    "imageUrl": "https://images.tcdn.com.br/img/img_prod/738131/bem_vindo_espirito_santo_benny_hinn_6885_2_3915d98f656852ecf64cc7c1d1bd7de5.jpg",
+    "imageAlt": "Capa do livro Bem-vindo, Espírito Santo — Benny Hinn"
   },
   {
     "id": "foto-fora-de-serie-outliers",
@@ -92,8 +102,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem quer entender performance, educação e sucesso.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 6
+    "reviewDraft": false,
+    "seedOrder": 6,
+    "imageUrl": "https://static.wixstatic.com/media/62fbbf_fa90a803d565461e85ae9b421a5ffdde~mv2.jpg/v1/fill/w_1000%2Ch_1000%2Cal_c%2Cq_85%2Cenc_avif%2Cquality_auto/62fbbf_fa90a803d565461e85ae9b421a5ffdde~mv2.jpg",
+    "imageAlt": "Capa do livro Fora de série (Outliers) — Malcolm Gladwell"
   },
   {
     "id": "foto-o-investidor-inteligente",
@@ -107,8 +119,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem quer fundamentos para investir com prudência.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 7
+    "reviewDraft": false,
+    "seedOrder": 7,
+    "imageUrl": "https://acdn-us.mitiendanube.com/stores/001/677/619/products/1657790763-livro-o-investidor-inteligente-benjamin-graham-editora-harpercollins-sku-49615-capa-late-site-mi-jpg-9f1a429a03ee2edc4517352128588412-1024-1024.webp",
+    "imageAlt": "Capa do livro O investidor inteligente — Benjamin Graham"
   },
   {
     "id": "foto-scrum-dobro-trabalho-metade-tempo",
@@ -117,13 +131,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Jeff Sutherland",
     "category": "E-commerce e marketing",
     "about": "Explica a origem e os princípios do Scrum, com sprints, ciclos curtos, transparência e melhoria contínua no trabalho em equipe.",
-    "review": "Para a realidade de projetos digitais, gosto da proposta de tornar o trabalho visível, entregar em ciclos menores e ajustar a direção com frequência.",
+    "review": "No dia a dia entre EyAgencia, Velo Delivery e CurtindoBrasil, demandas não param de surgir. O Scrum reforça algo essencial: organizar prioridades, dividir as entregas em ciclos curtos, validar e corrigir sem perder a visão do projeto.",
     "lessons": "Organizar entregas curtas, revisar progresso e reduzir desperdícios.",
     "recommendFor": "Gestores de projetos, times de tecnologia e empreendedores.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 8
+    "reviewDraft": false,
+    "seedOrder": 8,
+    "imageUrl": "https://covers.openlibrary.org/b/id/10315433-L.jpg",
+    "imageAlt": "Capa do livro Scrum: A arte de fazer o dobro do trabalho na metade do tempo — Jeff Sutherland"
   },
   {
     "id": "foto-faca-o-teu-melhor",
@@ -137,8 +153,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem procura desenvolvimento profissional e pessoal.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 9
+    "reviewDraft": false,
+    "seedOrder": 9,
+    "imageUrl": "https://a-static.mlcdn.com.br/800x800/livro-faca-o-teu-melhor-aprimorar-competencia-recusar-mediocridade-quatro-estacoes-da-alma-mario-sergio-cortella-planeta/machadolivrariaepapelaria/m363m721/0234ecafedf2f0351077da92dd41fb34.jpeg",
+    "imageAlt": "Capa do livro Faça o teu melhor! — Mario Sergio Cortella"
   },
   {
     "id": "foto-os-axiomas-de-zurique",
@@ -152,8 +170,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Interessados em risco, investimento e educação financeira.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 10
+    "reviewDraft": false,
+    "seedOrder": 10,
+    "imageUrl": "https://covers.openlibrary.org/b/id/8621248-L.jpg",
+    "imageAlt": "Capa do livro Os axiomas de Zurique — Max Gunther"
   },
   {
     "id": "foto-chamando-atencao-da-sorte",
@@ -167,8 +187,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem gosta de biografias, esporte e empreendedorismo.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 11
+    "reviewDraft": false,
+    "seedOrder": 11,
+    "imageUrl": "https://images.tcdn.com.br/img/img_prod/1170935/chamando_atencao_da_sorte_100141_1_1bca983b0b95fa043897ee036407522b.jpg",
+    "imageAlt": "Capa do livro Chamando atenção da sorte — Paulo Cesar Tinga"
   },
   {
     "id": "foto-12-semanas-para-mudar-uma-vida",
@@ -182,8 +204,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem busca exercícios de autoconhecimento e desenvolvimento.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 12
+    "reviewDraft": false,
+    "seedOrder": 12,
+    "imageUrl": "https://d3ugyf2ht6aenh.cloudfront.net/stores/001/622/660/products/12-semanas-para-mudar-uma-vida-livro-augusto-cury-editora-academia-capa-lateral-mockup-min1-be8a2e49ea9f705a3a16282505964255-1024-1024.jpg",
+    "imageAlt": "Capa do livro 12 semanas para mudar uma vida — Augusto Cury"
   },
   {
     "id": "foto-facebook-marketing-camila-porto",
@@ -192,13 +216,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Camila Porto",
     "category": "E-commerce e marketing",
     "about": "Apresenta recursos, estratégias e aplicações do Facebook para comunicação, presença de marca e marketing de negócios.",
-    "review": "O tema convida a olhar para redes sociais como canais de relacionamento e aquisição, que precisam de objetivos e métricas claras.",
+    "review": "As redes sociais sempre foram parte da jornada de muitos negócios que acompanhei. O aprendizado que permanece é trabalhar conteúdo e campanhas com objetivo claro, conhecer a audiência e medir o impacto real, em vez de se prender apenas a curtidas.",
     "lessons": "Testar formatos, compreender o público e acompanhar resultados.",
     "recommendFor": "Profissionais de marketing e empreendedores.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 13
+    "reviewDraft": false,
+    "seedOrder": 13,
+    "imageUrl": "https://www.designculture.com.br/wp-content/uploads/2014/07/9788575223987_AltaLivraria.jpg",
+    "imageAlt": "Capa do livro Facebook Marketing — Camila Porto"
   },
   {
     "id": "foto-gerente-de-ecommerce-mauricio-salvador",
@@ -207,13 +233,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Maurício Salvador (organização) e colaboradores",
     "category": "E-commerce e marketing",
     "about": "Coletânea sobre operação de comércio eletrônico, gestão, marketing, pagamentos, logística e desafios das lojas virtuais.",
-    "review": "É uma leitura ligada ao começo da minha trajetória técnica: gerenciar uma operação digital exige integrar vendas, tecnologia, atendimento e processos.",
+    "review": "Essa leitura conversa diretamente com minha formação em gestão de e-commerce desde 2014. Depois da experiência na Soluções Net, continuei implementando e escalando lojas virtuais pela EyAgencia. Aprendi na prática que o resultado de uma operação depende da integração entre tecnologia, marketing, logística, atendimento e gestão — nunca de uma plataforma isolada.",
     "lessons": "Pensar na loja como operação integrada e não apenas como website.",
     "recommendFor": "Gestores de e-commerce e quem está entrando no setor.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 14
+    "reviewDraft": false,
+    "seedOrder": 14,
+    "imageUrl": "https://cdn.awsli.com.br/2500x2500/765/765972/produto/155477771/c0c0e9e30a.jpg",
+    "imageAlt": "Capa do livro Gerente de E-commerce — Maurício Salvador (organização) e colaboradores"
   },
   {
     "id": "foto-steve-jobs-para-jovens",
@@ -227,8 +255,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem se interessa por inovação e biografias de empreendedores.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 15
+    "reviewDraft": false,
+    "seedOrder": 15,
+    "imageUrl": "https://i5.walmartimages.com/seo/Steve-Jobs-The-Man-Who-Thought-Different-A-Biography-Paperback-9781250014450_bdab9d1f-33b5-4be9-a3fd-5c85d13b3843.f89addd5485c36c5ae1e116d28b9dae6.jpeg?odnBg=FFFFFF&odnHeight=768&odnWidth=768",
+    "imageAlt": "Capa do livro Steve Jobs para jovens: O homem que pensava diferente — Karen Blumenthal"
   },
   {
     "id": "foto-o-fator-atitude",
@@ -237,12 +267,12 @@ export const photographedBooks:BookEntry[]=[
     "author": "Mark Murphy",
     "category": "Desenvolvimento pessoal",
     "about": "Aborda atitudes, comportamentos e alinhamento cultural na identificação de profissionais de alto desempenho.",
-    "review": "A proposta é observar que capacidade técnica sozinha não define uma equipe: comportamento, disposição para aprender e colaboração pesam no resultado.",
+    "review": "Ao acompanhar equipes e projetos, aprendi que domínio técnico é só parte do resultado. A postura diante dos problemas, a vontade de aprender e a capacidade de colaborar fazem diferença na execução e na confiança entre as pessoas.",
     "lessons": "Avaliar atitudes e criar ambiente favorável ao crescimento.",
     "recommendFor": "Líderes, gestores e profissionais de RH.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
+    "reviewDraft": false,
     "seedOrder": 16
   },
   {
@@ -252,13 +282,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Peter Thiel e Blake Masters",
     "category": "Negócios",
     "about": "Discute empresas inovadoras, diferenciação, tecnologia e a criação de soluções que não sejam apenas cópias do que já existe.",
-    "review": "Uma reflexão útil para produtos digitais é buscar uma proposta difícil de substituir, em vez de competir apenas por pequenas melhorias.",
+    "review": "Construir tecnologia própria me faz pensar no que realmente diferencia um produto. Nos projetos da EyAgencia, o desafio não é repetir modelos prontos, mas encontrar um problema real e oferecer uma experiência melhor e mais simples.",
     "lessons": "Construir diferenciais reais e pensar no que ainda não existe.",
     "recommendFor": "Empreendedores e criadores de startups.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 17
+    "reviewDraft": false,
+    "seedOrder": 17,
+    "imageUrl": "https://covers.openlibrary.org/b/id/13173173-L.jpg",
+    "imageAlt": "Capa do livro De zero a um — Peter Thiel e Blake Masters"
   },
   {
     "id": "foto-receita-previsivel",
@@ -267,13 +299,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Aaron Ross e Marylou Tyler",
     "category": "E-commerce e marketing",
     "about": "Apresenta processos de prospecção comercial outbound, especialização de funções e geração de oportunidades com maior previsibilidade.",
-    "review": "Ter processo comercial importa tanto quanto ter um bom produto: registrar etapas, qualificar contatos e medir conversões ajuda a organizar o crescimento.",
+    "review": "A organização comercial de uma agência ou plataforma depende de processo, não apenas de indicação. Penso nisso ao estruturar captação, relacionamento e CRM para os projetos da EyAgencia e para novas frentes como a FutTalento.",
     "lessons": "Criar cadências e indicadores claros para a operação comercial.",
     "recommendFor": "Líderes de vendas, consultores e empresas B2B.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 18
+    "reviewDraft": false,
+    "seedOrder": 18,
+    "imageUrl": "https://covers.openlibrary.org/b/id/13990797-L.jpg",
+    "imageAlt": "Capa do livro Receita previsível — Aaron Ross e Marylou Tyler"
   },
   {
     "id": "foto-as-dez-leis-da-confianca",
@@ -282,13 +316,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Joel Peterson e David A. Kaplan",
     "category": "Negócios",
     "about": "Examina a confiança como fundamento para liderança, colaboração e construção de relações sustentáveis em organizações.",
-    "review": "A leitura abre espaço para refletir sobre como promessas cumpridas, transparência e responsabilidade afetam relações comerciais duradouras.",
+    "review": "Na consultoria e em projetos de longo prazo, a confiança é construída em entregas, clareza e compromisso. Para mim, relacionamento com cliente não termina na venda: continua na transparência e na responsabilidade por aquilo que foi combinado.",
     "lessons": "Tratar confiança como parte da gestão e das parcerias.",
     "recommendFor": "Gestores, líderes e empreendedores.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 19
+    "reviewDraft": false,
+    "seedOrder": 19,
+    "imageUrl": "https://down-br.img.susercontent.com/file/c7c2cf8d2ab95a16e0722b16a223d31e",
+    "imageAlt": "Capa do livro As dez leis da confiança — Joel Peterson e David A. Kaplan"
   },
   {
     "id": "foto-bold-oportunidades-exponenciais",
@@ -297,13 +333,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Peter H. Diamandis e Steven Kotler",
     "category": "Negócios",
     "about": "Discute tecnologias exponenciais, empreendedorismo ambicioso e iniciativas que usam inovação para enfrentar desafios de grande escala.",
-    "review": "Pensar grande é importante, mas a leitura também convida a ligar ideias ousadas a experimentação, tecnologia e execução prática.",
+    "review": "A evolução da inteligência artificial me faz enxergar oportunidades de automatizar trabalho e criar produtos que antes exigiam estruturas muito maiores. Mas ideias ambiciosas precisam sair da teoria e virar experimentos úteis na vida real.",
     "lessons": "Observar oportunidades criadas por mudanças tecnológicas.",
     "recommendFor": "Empreendedores, gestores e interessados em inovação.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 20
+    "reviewDraft": false,
+    "seedOrder": 20,
+    "imageUrl": "https://livrarialoyola.fbitsstatic.net/img/p/bold-oportunidades-exponenciais-um-manual-pratico-para-transformar-os-maiores-problemas-do-mundo-n-286332/481076.jpg?h=800&qs=ignore&v=no-change&w=800",
+    "imageAlt": "Capa do livro BOLD: Oportunidades exponenciais — Peter H. Diamandis e Steven Kotler"
   },
   {
     "id": "foto-do-mil-ao-milhao",
@@ -317,8 +355,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem está começando a organizar suas finanças.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 21
+    "reviewDraft": false,
+    "seedOrder": 21,
+    "imageUrl": "https://covers.openlibrary.org/b/id/9700842-L.jpg",
+    "imageAlt": "Capa do livro Do mil ao milhão — Thiago Nigro"
   },
   {
     "id": "foto-o-poder-da-acao",
@@ -332,8 +372,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem busca disciplina e mudanças de rotina.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 22
+    "reviewDraft": false,
+    "seedOrder": 22,
+    "imageUrl": "https://martinsfontespaulista.vteximg.com.br/arquivos/ids/1660465-800-800/757746.jpg?v=638634033186630000",
+    "imageAlt": "Capa do livro O poder da ação — Paulo Vieira"
   },
   {
     "id": "foto-codigo-de-conversao",
@@ -342,13 +384,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Chris Smith",
     "category": "E-commerce e marketing",
     "about": "Explora técnicas e processos para gerar leads online, criar relacionamento, organizar conversas comerciais e aumentar oportunidades de venda.",
-    "review": "Para negócios digitais, o livro reforça a importância de acompanhar a jornada completa do lead, da atração ao atendimento e à venda.",
+    "review": "Acompanhar campanhas e operações de e-commerce me mostrou que gerar tráfego não basta. Em projetos como a Mamedes, o que importa é conectar SEO, aquisição, atendimento e conversão, medindo o caminho do interesse até a venda.",
     "lessons": "Medir não apenas leads, mas qualificação e conversões reais.",
     "recommendFor": "Times comerciais, agências e profissionais de marketing.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 23
+    "reviewDraft": false,
+    "seedOrder": 23,
+    "imageUrl": "https://altabooks.com.br/wp-content/uploads/2021/07/650x1000_O_Codigo_Conversao-648x997.png",
+    "imageAlt": "Capa do livro O código de conversão — Chris Smith"
   },
   {
     "id": "foto-o-jeito-warren-buffett-de-investir",
@@ -357,13 +401,15 @@ export const photographedBooks:BookEntry[]=[
     "author": "Robert G. Hagstrom",
     "category": "Finanças",
     "about": "Apresenta princípios de investimento atribuídos a Warren Buffett, incluindo avaliação de empresas, paciência e perspectivas de longo prazo.",
-    "review": "Uma reflexão importante é não confundir movimento de mercado com valor de negócio e buscar entender o que se compra.",
+    "review": "Também levo a lógica de longo prazo para os negócios: entender o valor de um projeto antes de buscar crescimento a qualquer custo. Crescimento saudável pede análise, paciência e decisões bem fundamentadas.",
     "lessons": "Estudar fundamentos e evitar decisões impulsivas.",
     "recommendFor": "Investidores que buscam princípios de longo prazo.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 24
+    "reviewDraft": false,
+    "seedOrder": 24,
+    "imageUrl": "https://covers.openlibrary.org/b/id/12369690-L.jpg",
+    "imageAlt": "Capa do livro O jeito Warren Buffett de investir — Robert G. Hagstrom"
   },
   {
     "id": "foto-a-startup-de-100",
@@ -377,8 +423,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem quer empreender com orçamento reduzido.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 25
+    "reviewDraft": false,
+    "seedOrder": 25,
+    "imageUrl": "https://images.tcdn.com.br/img/img_prod/848577/a_startup_de_100_chris_guillebeau_5_1_9d6725ef482768934264b04707008a57.jpg",
+    "imageAlt": "Capa do livro A startup de $100 — Chris Guillebeau"
   },
   {
     "id": "foto-bitcoinomics-uma-historia-de-rebeldia",
@@ -392,8 +440,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem estuda Bitcoin, inovação financeira e economia.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 26
+    "reviewDraft": false,
+    "seedOrder": 26,
+    "imageUrl": "https://files.passeidireto.com/07b8c83b-3a85-4ca1-8786-e2ce75c36799/bg1.png",
+    "imageAlt": "Capa do livro Bitcoinomics: Uma história de rebeldia — Daniel Duarte"
   },
   {
     "id": "foto-guia-definitivo-bitcoin-criptomoedas",
@@ -407,7 +457,7 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Leitores interessados em uma introdução a criptoativos.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
+    "reviewDraft": false,
     "seedOrder": 27
   },
   {
@@ -422,8 +472,10 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem quer estudar Bitcoin além de variações de mercado.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 28
+    "reviewDraft": false,
+    "seedOrder": 28,
+    "imageUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication122/v4/62/39/2e/62392e75-9658-96cd-0111-b1b1f2701c21/1020571939.jpg/1200x1200wz.jpg",
+    "imageAlt": "Capa do livro Bitcoin: A moeda na era digital — Fernando Ulrich"
   },
   {
     "id": "foto-ethereum-o-codigo-da-revolucao",
@@ -437,7 +489,7 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Profissionais interessados em blockchain e Web3.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
+    "reviewDraft": false,
     "seedOrder": 29
   },
   {
@@ -452,7 +504,7 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Iniciantes no estudo de investimentos em criptomoedas.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
+    "reviewDraft": false,
     "seedOrder": 30
   },
   {
@@ -467,7 +519,9 @@ export const photographedBooks:BookEntry[]=[
     "recommendFor": "Quem se interessa por educação, psicologia e espiritualidade.",
     "rating": null,
     "affiliateUrl": null,
-    "reviewDraft": true,
-    "seedOrder": 31
+    "reviewDraft": false,
+    "seedOrder": 31,
+    "imageUrl": "https://covers.openlibrary.org/b/id/9635722-L.jpg",
+    "imageAlt": "Capa do livro O mestre dos mestres: Jesus, o maior educador da história — Augusto Cury"
   }
 ]
