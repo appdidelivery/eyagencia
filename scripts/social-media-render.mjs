@@ -96,9 +96,11 @@ export function makeSocialSvg(pkg,frame,format,index,count){
   </svg>`
 }
 async function getPackages(cfg){
-  const groq='*[_type=="socialPackage" && state != "published" && (coalesce(mediaStatus,"") != "rendered" || count(carouselMedia) != 8 || count(storyMedia) != 4)] | order(createdAt asc)[0...20]{_id,_rev,title,sourceSlug,sourcePostId,carousel,stories,mediaStatus,carouselMedia,storyMedia}'
+  const since=new Date(Date.now()-21*86400000).toISOString()
+  const groq='*[_type=="socialPackage" && defined(sourcePublishedAt) && sourcePublishedAt >= $since && state != "published" && (coalesce(mediaStatus,"") != "rendered" || count(carouselMedia) != 8 || count(storyMedia) != 4)] | order(sourcePublishedAt desc)[0...20]{_id,_rev,title,sourceSlug,sourcePostId,carousel,stories,mediaStatus,carouselMedia,storyMedia}'
   const url=new URL(cfg.root+'/data/query/'+encodeURIComponent(cfg.dataset))
   url.searchParams.set('query',groq)
+  url.searchParams.set('$since',JSON.stringify(since))
   const response=await fetch(url,{headers:{Authorization:'Bearer '+cfg.token},cache:'no-store',signal:AbortSignal.timeout(30000)})
   if(!response.ok)throw Error('Social media read failed HTTP '+response.status)
   return (await response.json()).result||[]
