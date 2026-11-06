@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/cron/social-agent",
-      "schedule": "0 13 * * *"
+      "schedule": "0 13,21 * * *"
     },
     {
       "path": "/api/cron/social-assets",
