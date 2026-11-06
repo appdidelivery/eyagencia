@@ -28,7 +28,7 @@ const RELEVANCE:Record<Brand,RegExp> = {
   'velo-delivery':/delivery|restaurante|foodservice|gastronom|bares|card[aá]pio|pedido|fideliz|atendimento|cozinha|marketing|consumidor|gest[aã]o|opera[cç][aã]o|vendas|food|pix|pagamento|faturamento/i,
 }
 const REJECT=/elei[cç][aã]o|pol[ií]tic|boicote|den[uú]ncia|trag[eé]dia|crime|viol[eê]ncia|cupom|sorteio|giveaway|promessa garantida/i
-const LIMIT_PER_WEEK=3
+const LIMIT_PER_WEEK=2
 const GRAPH='https://graph.facebook.com/v26.0'
 
 function localDay(now=new Date()) {
@@ -152,8 +152,8 @@ export async function runNativeRepostRadar() {
   if(!process.env.SANITY_API_WRITE_TOKEN)
     return {enabled:true,results:[{brand:'eyagencia' as Brand,status:'sanity_missing'}]}
   const day=localDay()
-  // Monday, Wednesday, Friday only; one candidate per brand per day.
-  if(![1,3,5].includes(weekday(day)))return {enabled:true,day,results:[] as Outcome[],status:'not_scheduled'}
+  // Wednesday and Saturday only; one candidate per brand per day.
+  if(![3,6].includes(weekday(day)))return {enabled:true,day,results:[] as Outcome[],status:'not_scheduled'}
   const results:Outcome[]=[]
   for(const brand of ['eyagencia','velo-delivery'] as Brand[]){
     try{results.push(await choose(brand,day))}
