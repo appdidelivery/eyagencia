@@ -1,5 +1,5 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
-import {makeBrandSocialSvg, supportedBrandSlug} from '../../../scripts/brand-social-visual.mjs'
+import {makeBrandSocialSvg, makeBrandMotivationSvg, supportedBrandSlug} from '../../../scripts/brand-social-visual.mjs'
 import {renderBrandArt} from '../../../scripts/render-brand-art.mjs'
 
 type Brand = {
@@ -333,14 +333,128 @@ async function buildVeloCarousel(brand: Brand, day: string, topic: string,
   return {images, assetIds}
 }
 
+
+// Each phrase is original, not copied or attributed to a viral third-party
+// post. The week-index rotation prevents repetitive feed covers.
+type Motivation = {cover:string; messages:string[]}
+const MOTIVATION: Record<'eyagencia' | 'velo-delivery', {monday:Motivation[];friday:Motivation[]}> = {
+  eyagencia: {
+    monday:[
+      {cover:'Bom dia. Grandes negócios começam com pequenas decisões bem feitas.',messages:[
+        'Comece pelo que está sob seu controle.',
+        'Consistência constrói o que o impulso não sustenta.',
+        'Ouvir seu cliente também é estratégia.',
+        'Uma melhoria por dia muda a operação.',
+        'Não compare bastidores com vitrines.',
+        'Seu negócio merece foco, não pressa.',
+      ]},
+      {cover:'Bom dia. Sua empresa cresce quando você segue aprendendo.',messages:[
+        'Toda semana traz uma oportunidade de melhorar.',
+        'Comece ouvindo antes de anunciar.',
+        'Uma experiência clara vale muito.',
+        'Organização é parte do crescimento.',
+        'A evolução pode começar no detalhe.',
+        'Construa um passo de cada vez.',
+      ]},
+      {cover:'Bom dia. O progresso nasce do trabalho que você repete.',messages:[
+        'Valorize os ajustes que ninguém vê.',
+        'Melhore processos antes de multiplicar tarefas.',
+        'Tenha clareza sobre a próxima prioridade.',
+        'Quem mede consegue decidir melhor.',
+        'Relacionamento também é patrimônio.',
+        'Faça hoje o que aproxima sua empresa do amanhã.',
+      ]},
+    ],
+    friday:[
+      {cover:'Feche a semana reconhecendo o que você fez avançar.',messages:[]},
+      {cover:'Que seu fim de semana tenha descanso e orgulho do caminho.',messages:[]},
+      {cover:'Você construiu mais uma semana. Reconheça cada passo.',messages:[]},
+    ],
+  },
+  'velo-delivery': {
+    monday:[
+      {cover:'Bom dia, quem abre as portas e faz o delivery acontecer.',messages:[
+        'Por trás de cada pedido existe uma equipe.',
+        'Uma operação organizada começa no básico.',
+        'Clareza no cardápio ajuda o atendimento.',
+        'Cuidar do cliente começa antes do pedido.',
+        'A rotina melhora com processos consistentes.',
+        'Sua dedicação movimenta o negócio.',
+      ]},
+      {cover:'Bom dia. Que a semana traga boas escolhas para sua operação.',messages:[
+        'Cada detalhe do atendimento importa.',
+        'Uma equipe alinhada trabalha com mais clareza.',
+        'Ouça as dúvidas que os clientes repetem.',
+        'Prepare a casa antes do horário de pico.',
+        'Revise o que pode ser mais simples.',
+        'Valorize quem constrói a jornada junto com você.',
+      ]},
+      {cover:'Bom dia. O cuidado de hoje prepara o serviço de amanhã.',messages:[
+        'Comece a semana organizando as prioridades.',
+        'Uma informação clara evita muitas dúvidas.',
+        'A cozinha e o atendimento precisam conversar.',
+        'Faça o simples funcionar bem.',
+        'Respeite o ritmo de quem faz acontecer.',
+        'Uma boa experiência começa nos bastidores.',
+      ]},
+    ],
+    friday:[
+      {cover:'Que sua sexta termine com bons pedidos e uma equipe valorizada.',messages:[]},
+      {cover:'Encerrar a semana também é reconhecer quem fez acontecer.',messages:[]},
+      {cover:'Depois de tantos pedidos, que venha um descanso merecido.',messages:[]},
+    ],
+  },
+}
+function weeklyMotivation(slug:string, day:string, weekday:number) {
+  if(slug!=='eyagencia' && slug!=='velo-delivery') throw new Error('unknown_motivational_brand')
+  const kind=weekday===1?'monday':'friday'
+  const pool=MOTIVATION[slug][kind]
+  const weekIndex=Math.floor(Date.parse(day+'T12:00:00Z')/604800000)
+  const choice=pool[((weekIndex%pool.length)+pool.length)%pool.length]
+  const hashtag=slug==='eyagencia'?'#EyAgencia #Empreendedorismo #Negocios':
+    '#VeloDelivery #Restaurantes #Delivery'
+  const intro=weekday===1?'☀️ Bom dia, empreendedor!':'✨ Uma excelente sexta-feira!'
+  return {
+    cover:choice.cover,slides:choice.messages,
+    caption:[intro,'',choice.cover,'',
+      weekday===1?'Qual prioridade você vai assumir nesta semana?':
+        'Qual foi a pequena conquista da sua equipe nesta semana?',
+      '',hashtag].join('\n'),
+  }
+}
+async function createMotivationImage(brand:Brand,day:string,title:string,closing:boolean) {
+  const buffer=await renderBrandArt(makeBrandMotivationSvg({
+    slug:brand.slug,topic:title,date:day,closing,
+  }))
+  const asset=await writeClient.assets.upload('image',buffer,{
+    filename:'weekly-motivation-'+brand.slug+'-'+day+'.png',contentType:'image/png',
+  })
+  return {url:asset.url,assetId:asset._id}
+}
+async function buildMotivationCarousel(brand:Brand,day:string,coverUrl:string,messages:string[]) {
+  if(messages.length!==6)throw new Error('motivation_slides_invalid')
+  const content=[...messages,'Salve este lembrete e compartilhe com quem empreende.']
+  const images=[coverUrl],assetIds:string[]=[]
+  for(let i=0;i<content.length;i++){
+    const buffer=await renderBrandArt(makeBrandMotivationSvg({
+      slug:brand.slug,topic:content[i],date:day+'-'+i,
+    }))
+    const asset=await writeClient.assets.upload('image',buffer,{
+      filename:'weekly-motivation-'+brand.slug+'-'+day+'-'+(i+2)+'.png',
+      contentType:'image/png',
+    })
+    assetIds.push(asset._id)
+    images.push(publicJpeg(asset.url))
+  }
+  if(images.length!==8)throw new Error('motivation_carousel_incomplete')
+  return {images,assetIds}
+}
+
 async function processBrand(brand: Brand, day: string, weekday: number): Promise<Result> {
   const slug = brand.slug
-  if (!brand.days?.includes(String(weekday))) return {brand: brand.name, status: 'not-scheduled'}
+  if (![1,5].includes(weekday)) return {brand: brand.name, status: 'not-scheduled'}
   const keys = credentials(brand)
   if (!keys) return {brand: brand.name, status: 'credentials-missing'}
-  if (!brand.topics?.length || !brand.brandGuide?.trim()) {
-    return {brand: brand.name, status: 'editorial-config-missing'}
-  }
   const publicationId = 'social-' + slug + '-' + day
   const already = await writeClient.fetch<{
     _rev: string; status?: string; attempts?: number; publishStartedAt?: string;
@@ -359,8 +473,8 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
     !already.instagramPostId && !already.facebookPostId &&
     Number(already.attempts || 1) < 2)
   if (already && !canRetry) return {brand: brand.name, status: 'already-processed'}
-  const topicIndex = Math.floor(Date.parse(day + 'T12:00:00Z') / 86400000) % brand.topics.length
-  const topic = brand.topics[topicIndex]
+  const motivational=weeklyMotivation(slug,day,weekday)
+  const topic=motivational.cover
   try {
     if (already && canRetry) {
       await writeClient.patch(publicationId).ifRevisionId(already._rev).set({
@@ -377,11 +491,12 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
   } catch {return {brand: brand.name, status: 'already-reserved'}}
   try {
     await writeClient.patch(publicationId).set({status: 'generating'}).commit()
-    const generated = await createCaption(brand, topic, day)
-    const photo = await createImage(brand, generated.concept, day, topic)
+    const generated = motivational
+    const photo = await createMotivationImage(brand,day,generated.cover,weekday===5)
     const jpeg = publicJpeg(photo.url)
-    const carousel = slug === 'velo-delivery'
-      ? await buildVeloCarousel(brand, day, topic, generated.concept, jpeg, generated.slides)
+    // Monday: eight-slide inspirational carousel. Friday: one closing quote.
+    const carousel = weekday===1
+      ? await buildMotivationCarousel(brand,day,jpeg,generated.slides)
       : null
     await writeClient.patch(publicationId).set({
       caption: generated.caption, imageUrl: jpeg, imageAssetId: photo.assetId,
@@ -462,6 +577,23 @@ async function ensureInitialBrand() {
   })
 }
 
+async function ensureEyagenciaBrand() {
+  const exists=await writeClient.fetch<string|null>(
+    '*[_type=="socialBrand" && slug.current=="eyagencia"][0]._id'
+  )
+  if(exists)return
+  await writeClient.createIfNotExists({
+    _id:'social-brand-eyagencia-weekly',_type:'socialBrand',
+    name:'EyAgencia',slug:{_type:'slug',current:'eyagencia'},enabled:true,
+    brandGuide:'Agência de marketing digital para negócios e e-commerce. Tom profissional, humano e inspirador. Identidade verde-petróleo, turquesa e coral, sem promessas de resultado.',
+    audience:'Empresários, lojistas, gestores e empreendedores brasileiros',
+    verifiedFacts:['EyAgencia atua com estratégia de marketing digital.'],
+    topics:['Empreendedorismo e consistência','Estratégia de negócios','Valorização de equipes'],
+    days:['1','5'],instagramEnabled:true,facebookEnabled:true,
+    createdAt:new Date().toISOString(),
+  })
+}
+
 export async function runSocialPublishing() {
   if (process.env.VERCEL_ENV !== 'production' ||
       process.env.SOCIAL_AGENT_ENABLED !== 'true' ||
@@ -472,16 +604,21 @@ export async function runSocialPublishing() {
     return {enabled: true, results: [{brand: 'system', status: 'sanity-token-missing'}]}
   }
   const {day, weekday} = brazilDay()
+  // Start next Monday: do not create a Friday post on a transition day
+  // that may already contain a published legacy EyAgencia carousel.
+  if (day < '2026-11-09') return {enabled:true,day,results:[] as Result[]}
+  if (![1,5].includes(weekday)) return {enabled:true, day, results:[] as Result[]}
   await ensureInitialBrand()
+  await ensureEyagenciaBrand()
   const brands = await writeClient.fetch<Brand[]>(
     '*[_type == "socialBrand" && enabled == true]{_id,name,"slug":slug.current,brandGuide,audience,verifiedFacts,topics,days,website,instagramEnabled,facebookEnabled,approvedImages[]{asset->{url}}}'
   )
-  const results: Result[] = []
-  // Bounded parallelism keeps the daily job within the function duration.
-  // EyAgencia is handled by the blog carousel publisher, not this image feed.
-  const scheduled = (brands || []).filter((b) => b.slug === 'velo-delivery').slice(0, 1)
-  results.push(...await Promise.all(scheduled.map((brand) => processBrand(brand, day, weekday))))
-  return {enabled: true, day, results}
+  const results:Result[]=[]
+  // One scheduled authorial publication per brand; other agents do not post
+  // blog articles to the feed under the weekly calendar.
+  const scheduled=(brands||[]).filter(b=>b.slug==='velo-delivery'||b.slug==='eyagencia')
+  results.push(...await Promise.all(scheduled.map(brand=>processBrand(brand,day,weekday))))
+  return {enabled:true,day,results}
 }
 
 
