@@ -11,7 +11,9 @@ import {socialPackageType} from './socialPackageType'
 import {socialNewsPostType} from './socialNewsPostType'
 import {blogFeedbackType} from './blogFeedbackType'
 import {diegoBookType} from './diegoBookType'
+import {diegoFloodChapterType} from './diegoFloodChapterType'
+import {diegoFloodMediaType} from './diegoFloodMediaType'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [blockContentType, categoryType, postType, authorType, aiContentJobType, socialBrandType, socialPublicationType, socialPackageType, socialNewsPostType, blogFeedbackType, diegoBookType],
+  types: [blockContentType, categoryType, postType, authorType, aiContentJobType, socialBrandType, socialPublicationType, socialPackageType, socialNewsPostType, blogFeedbackType, diegoBookType, diegoFloodChapterType, diegoFloodMediaType],
 }

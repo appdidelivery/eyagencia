@@ -56,6 +56,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/diego/obras`,
+      lastModified: new Date('2026-11-06'),
+      changeFrequency: 'monthly',
+      priority: 0.55,
+    },
+    {
       url: `${baseUrl}/ia-ecommerce`,
       lastModified: new Date('2026-09-29'),
       changeFrequency: 'weekly',
