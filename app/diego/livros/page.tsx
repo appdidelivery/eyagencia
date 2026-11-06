@@ -37,8 +37,8 @@ export default async function Page(){
   const book={'@type':'Book','@id':url+'#'+encodeURIComponent(b.slug||b.id),name:b.title,author:{'@type':'Person',name:b.author},
    inLanguage:'pt-BR',description:b.about,url:url+'#'+encodeURIComponent(b.slug||b.id),
    ...(b.imageUrl?{image:b.imageUrl}:{}),
-   review:{'@type':'Review',author:{'@id':personUrl},reviewBody:b.review,
-    ...(b.rating&&b.rating>=1&&b.rating<=5?{reviewRating:{'@type':'Rating',ratingValue:b.rating,bestRating:5,worstRating:1}}:{})}
+   ...(!b.reviewDraft&&b.review?.trim()?{review:{'@type':'Review',author:{'@id':personUrl},reviewBody:b.review,
+    ...(b.rating&&b.rating>=1&&b.rating<=5?{reviewRating:{'@type':'Rating',ratingValue:b.rating,bestRating:5,worstRating:1}}:{})}}:{})
   }
   return {'@type':'ListItem',position:index+1,item:book}
  })

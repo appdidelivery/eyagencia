@@ -110,10 +110,11 @@ function Book({book}:{book:BookEntry}){
     <p>{book.author}{book.readYear?' · Leitura de '+book.readYear:''}</p>
     {rating>0&&<p className={styles.stars} aria-label={'Minha avaliação: '+rating+' de 5'}>{'★'.repeat(rating)}{'☆'.repeat(5-rating)} <small>{rating}/5</small></p>}
     <p className={styles.preview}>{book.about}</p>
+    {book.reviewDraft&&<p style={{fontSize:11,color:'#b8d8be',marginTop:8}}>Resenha pessoal em preparação · sinopse bibliográfica conferida</p>}
    </div>
   </div>
   <div className={styles.actions}>
-   <button type="button" aria-expanded={expanded} aria-controls={'review-'+book.id} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fechar resenha −':'Ler minha resenha +'}</button>
+   <button type="button" aria-expanded={expanded} aria-controls={'review-'+book.id} onClick={()=>setExpanded(v=>!v)}>{expanded?(book.reviewDraft?'Fechar detalhes −':'Fechar resenha −'):(book.reviewDraft?'Conhecer o livro +':'Ler minha resenha +')}</button>
    {buy&&<a href={buy} rel={nonAffiliateOnly?'nofollow noopener noreferrer':'sponsored nofollow noopener noreferrer'} target="_blank" onClick={()=>track(nonAffiliateOnly?'mercado_livre_nao_afiliado':'mercado_livre')}>{buyLabel}</a>}
    {amazon&&<a href={amazon} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('amazon')}>Amazon ↗</a>}
    {menEdition&&<a href={menEdition} rel="sponsored nofollow noopener noreferrer" target="_blank" onClick={()=>track('mercado_livre_edicao_homens')}>Edição para homens · ML ↗</a>}
@@ -129,7 +130,7 @@ function Book({book}:{book:BookEntry}){
   </aside>}
   {expanded&&<div className={styles.review} id={'review-'+book.id}>
     <div><h4>Sobre o que é</h4><p>{book.about}</p></div>
-    <div className={styles.opinion}><h4>O que eu achei da leitura</h4><p>{book.review}</p></div>
+    {book.reviewDraft?<div className={styles.opinion}><h4>Minha resenha</h4><p>Minha avaliação pessoal desta leitura ainda está sendo preparada. Por enquanto, o catálogo apresenta apenas informações sobre a obra.</p></div>:<div className={styles.opinion}><h4>O que eu achei da leitura</h4><p>{book.review}</p></div>}
     {book.lessons&&<div><h4>O que levei comigo</h4><p>{book.lessons}</p></div>}
     {book.recommendFor&&<div><h4>Eu indicaria para</h4><p>{book.recommendFor}</p></div>}
   </div>}
