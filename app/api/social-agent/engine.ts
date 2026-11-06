@@ -342,15 +342,36 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
     return {brand: brand.name, status: 'editorial-config-missing'}
   }
   const publicationId = 'social-' + slug + '-' + day
-  const already = await writeClient.fetch<string | null>('*[_id == $id][0]._id', {id: publicationId})
-  if (already) return {brand: brand.name, status: 'already-processed'}
+  const already = await writeClient.fetch<{
+    _rev: string; status?: string; attempts?: number; publishStartedAt?: string;
+    instagramPostId?: string; facebookPostId?: string
+  } | null>(
+    '*[_id == $id][0]{_rev,status,attempts,publishStartedAt,instagramPostId,facebookPostId}',
+    {id: publicationId},
+  )
+  // A failed draft can be retried once, but NEVER retry after any Meta
+  // submission began: the response could be lost after a real publication.
+  const canRetry = Boolean(already &&
+    already.status === 'blocked' &&
+    !already.publishStartedAt &&
+    !already.instagramPostId && !already.facebookPostId &&
+    Number(already.attempts || 1) < 2)
+  if (already && !canRetry) return {brand: brand.name, status: 'already-processed'}
   const topicIndex = Math.floor(Date.parse(day + 'T12:00:00Z') / 86400000) % brand.topics.length
   const topic = brand.topics[topicIndex]
   try {
-    await writeClient.create({
-      _id: publicationId, _type: 'socialPublication', brandId: brand._id,
-      brandName: brand.name, day, topic, status: 'reserved', createdAt: new Date().toISOString(),
-    })
+    if (already && canRetry) {
+      await writeClient.patch(publicationId).ifRevisionId(already._rev).set({
+        status: 'reserved', attempts: Number(already.attempts || 1) + 1,
+        errors: [], lastRetryAt: new Date().toISOString(),
+      }).commit()
+    } else {
+      await writeClient.create({
+        _id: publicationId, _type: 'socialPublication', brandId: brand._id,
+        brandName: brand.name, day, topic, status: 'reserved', attempts: 1,
+        createdAt: new Date().toISOString(),
+      })
+    }
   } catch {return {brand: brand.name, status: 'already-reserved'}}
   try {
     await writeClient.patch(publicationId).set({status: 'generating'}).commit()
@@ -369,6 +390,21 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
     let facebookPostId: string | null = null
     let instagramPostId: string | null = null
     // Each platform has its own result: success on one platform never causes duplicate posting there.
+    // Reserve the external submission phase before any Meta request. On
+    // ambiguity, leave this daily job locked to prevent duplicate feed posts.
+    await writeClient.patch(publicationId).set({
+      status: 'publishing', publishStartedAt: new Date().toISOString(),
+    }).commit()
+    // Instagram carousel takes priority. Facebook must not consume the
+    // function budget before we have published the primary 8-slide post.
+    if (brand.instagramEnabled && keys.instagramId) {
+      try {
+        instagramPostId = carousel
+          ? await publishInstagramCarousel(keys.instagramId, keys.pageToken, carousel.images, generated.caption)
+          : await publishInstagram(keys.instagramId, keys.pageToken, jpeg, generated.caption)
+        await writeClient.patch(publicationId).set({instagramPostId}).commit()
+      } catch (error) {errors.push('Instagram: ' + (error instanceof Error ? error.message : 'falha'))}
+    }
     if (brand.facebookEnabled && keys.pageId) {
       try {
         facebookPostId = carousel
@@ -378,14 +414,6 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
             })
         await writeClient.patch(publicationId).set({facebookPostId}).commit()
       } catch (error) {errors.push('Facebook: ' + (error instanceof Error ? error.message : 'falha'))}
-    }
-    if (brand.instagramEnabled && keys.instagramId) {
-      try {
-        instagramPostId = carousel
-          ? await publishInstagramCarousel(keys.instagramId, keys.pageToken, carousel.images, generated.caption)
-          : await publishInstagram(keys.instagramId, keys.pageToken, jpeg, generated.caption)
-        await writeClient.patch(publicationId).set({instagramPostId}).commit()
-      } catch (error) {errors.push('Instagram: ' + (error instanceof Error ? error.message : 'falha'))}
     }
     const success = Boolean(facebookPostId || instagramPostId)
     const status = errors.length ? (success ? 'partial' : 'failed') : 'published'
