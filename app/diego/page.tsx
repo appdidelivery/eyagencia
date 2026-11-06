@@ -90,13 +90,6 @@ const publishedLinks: LiveLink[] = [
     subtitle: "Converse com a EyAgencia sobre seu projeto",
     href: "https://wa.me/554832200260?text=Ol%C3%A1%2C%20vim%20pelo%20perfil%20do%20Diego%20Lemes%20e%20gostaria%20de%20conversar%20sobre%20um%20projeto.",
     icon: "✉"
-  },
-  {
-    title: "Enquanto a Água Subia · meu segundo livro",
-    subtitle: "A enchente de 2024, minha família e a memória de quem ajudou",
-    href: "/diego/obras/enquanto-a-agua-subia",
-    icon: "≋",
-    label: "LIVRO VIVO · EM CONSTRUÇÃO"
   }
 ];
 
@@ -105,6 +98,12 @@ const upcoming = [
     title: "A Defesa Mais Importante",
     subtitle: "",
     icon: "◫",
+    phase: "Em breve"
+  },
+  {
+    title: "Enquanto a Água Subia",
+    subtitle: "Livro 02 · enchente de 2024, memória e solidariedade",
+    icon: "≋",
     phase: "Em breve"
   },
   {
@@ -121,7 +120,7 @@ const upcoming = [
   }
 ];
 
-const bioLinkIds = ["eyagencia", "velo_delivery", "livros", "playlist", "projetos", "trajetoria", "ia_ecommerce", "artigos", "contato", "obra_enchente"];
+const bioLinkIds = ["eyagencia", "velo_delivery", "livros", "playlist", "projetos", "trajetoria", "ia_ecommerce", "artigos", "contato"];
 
 function LiveCard({ item, position }: { item: LiveLink; position: number }) {
   const external = item.href.startsWith("https://");
