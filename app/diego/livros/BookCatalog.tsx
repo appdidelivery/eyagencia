@@ -100,7 +100,7 @@ function Book({book}:{book:BookEntry}){
  const shopee=validBuy(book.shopeeAffiliateUrl,'shopee')
  const menEdition=book.slug==='as-5-linguagens-do-amor'?validBuy(languagesForMen):null
  const rating=book.rating&&Number.isInteger(book.rating)&&book.rating>0&&book.rating<=5?book.rating:0
- const track=(partner:string)=>{const w=window as Window&{dataLayer?:Array<Record<string,string>>};w.dataLayer ||= [];w.dataLayer.push({event:'diego_book_affiliate_click',book_id:book.slug||book.id,partner})}
+ const track=(partner:string)=>{const w=window as Window&{dataLayer?:Array<Record<string,string>>};w.dataLayer ||= [];w.dataLayer.push({event:'diego_book_affiliate_click',book_id:book.slug||book.id,partner});try{const data=JSON.stringify({kind:'affiliate',linkId:book.slug||book.id,partner,source:new URLSearchParams(window.location.search).get('utm_source')||'',medium:new URLSearchParams(window.location.search).get('utm_medium')||''});if(navigator.sendBeacon){navigator.sendBeacon('/api/diego/click',new Blob([data],{type:'application/json'}))}else{void fetch('/api/diego/click',{method:'POST',headers:{'content-type':'application/json'},body:data,keepalive:true})}}catch{/* navegação não pode depender da medição */}}
  return <article className={styles.book} id={book.slug||book.id}>
   <div className={styles.bookTop}>
    <div className={styles.cover}>{coverSrc&&!imageFailed?<img src={coverSrc} alt={book.imageAlt||'Capa de '+book.title} loading="lazy" decoding="async" onError={()=>setImageFailed(true)}/>:<div className={styles.typographicCover}><small>{book.author}</small><strong>{book.title}</strong><span aria-hidden="true">▤</span></div>}</div>

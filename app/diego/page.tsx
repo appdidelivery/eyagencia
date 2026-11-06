@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import TrackedLink from "./TrackedLink";
 import styles from "./page.module.css";
 
 const siteUrl = "https://www.eyagencia.com.br/diego";
@@ -113,10 +114,14 @@ const upcoming = [
   }
 ];
 
-function LiveCard({ item }: { item: LiveLink }) {
+const bioLinkIds = ["eyagencia", "velo_delivery", "livros", "playlist", "projetos", "trajetoria", "ia_ecommerce", "artigos", "contato"];
+
+function LiveCard({ item, position }: { item: LiveLink; position: number }) {
   const external = item.href.startsWith("https://");
   return (
-    <a
+    <TrackedLink
+      linkId={bioLinkIds[position - 1] || "outro"}
+      position={position}
       href={item.href}
       className={item.featured ? styles.featuredCard : styles.linkCard}
       target={external ? "_blank" : undefined}
@@ -129,7 +134,7 @@ function LiveCard({ item }: { item: LiveLink }) {
         <small>{item.subtitle}</small>
       </span>
       <span className={styles.cardArrow} aria-hidden="true">↗</span>
-    </a>
+    </TrackedLink>
   );
 }
 
@@ -167,9 +172,12 @@ export default function DiegoBioPage() {
 
         <main className={styles.layout}>
           <section className={styles.identity} aria-labelledby="name">
-            <div className={styles.portrait}>
-              <Image src="/diego-avatar.jpg" width={96} height={96} alt="Retrato de Diego Lemes" className={styles.avatarPhoto} unoptimized priority />
-              <span className={styles.portraitDot} />
+            <div className={styles.storyMosaic} role="group" aria-label="Cinco fotos da minha trajetória profissional e familiar">
+              <div className={styles.mosaicLead}><Image src="/diego/mosaico/startup-summit.jpg" alt="No Startup Summit em Florianópolis, ao lado de duas pessoas da equipe" fill sizes="(max-width:850px) 42vw, 175px" priority /></div>
+              <div className={styles.mosaicTile}><Image src="/diego/mosaico/familia-festa.jpg" alt="Encontro em família ao ar livre" fill sizes="(max-width:850px) 26vw, 100px" /></div>
+              <div className={styles.mosaicTile}><Image src="/diego/mosaico/familia-lara.jpg" alt="Celebração e chegada de um bebê à família" fill sizes="(max-width:850px) 26vw, 100px" /></div>
+              <div className={styles.mosaicTile}><Image src="/diego/mosaico/familia-memorias.jpg" alt="Uma lembrança de infância e família" fill sizes="(max-width:850px) 26vw, 100px" /></div>
+              <div className={styles.mosaicTile}><Image src="/diego/mosaico/familia-origens.jpg" alt="Memória de uma caminhada em família em meio à natureza" fill sizes="(max-width:850px) 26vw, 100px" /></div>
             </div>
             <p className={styles.eyebrow}>PROJETOS REAIS · CONHECIMENTO APLICADO</p>
             <h1 id="name">Diego <em>Lemes.</em></h1>
@@ -188,10 +196,10 @@ export default function DiegoBioPage() {
               <div><b>2014</b><small>formação<br />ComSchool</small></div>
             </div>
 
-            <a className={styles.instagram} href="https://www.instagram.com/tidiegolemes/" target="_blank" rel="noopener noreferrer">
+            <TrackedLink linkId="instagram" position={10} className={styles.instagram} href="https://www.instagram.com/tidiegolemes/" target="_blank" rel="noopener noreferrer">
               <span className={styles.instagramIcon} aria-hidden="true">◎</span>
               Acompanhe no Instagram <span aria-hidden="true">↗</span>
-            </a>
+            </TrackedLink>
 
             <section id="trajetoria" className={styles.story}>
               <div className={styles.storyTag}>UM POUCO SOBRE MIM</div>
@@ -228,7 +236,7 @@ export default function DiegoBioPage() {
                 <h2 id="active-title">Meus negócios e projetos</h2>
                 <span className={styles.ready}><span /> DISPONÍVEL</span>
               </div>
-              <div className={styles.cardList}>{publishedLinks.map(item => <LiveCard key={item.title} item={item} />)}</div>
+              <div className={styles.cardList}>{publishedLinks.map((item, index) => <LiveCard key={item.title} item={item} position={index + 1} />)}</div>
             </section>
 
             <section className={styles.linkSection} aria-labelledby="soon-title">
