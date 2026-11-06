@@ -736,10 +736,11 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
     post.title,
     'Por que esse assunto importa? '+post.excerpt,
     ...sections.map(item=>String(item.title)+': '+String(item.text)),
-    'Na prática: '+String(sections[0]?.text||post.excerpt),
+    ...(sections.length===3?['Na prática: '+String(sections[0]?.text||post.excerpt)]:[]),
+    'Em resumo: '+post.excerpt,
     'Leia o artigo completo no blog da Velo Delivery.',
   ]
-  if(slides.length!==8)throw new Error('Velo: blog carousel needs four verified sections')
+  if(slides.length!==8)throw new Error('Velo: blog carousel incomplete')
   const images:string[]=[],assetIds:string[]=[]
   for(const [i,title] of slides.entries()){
     const image=makeBrandSocialSvg({
