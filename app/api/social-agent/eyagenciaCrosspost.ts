@@ -99,6 +99,7 @@ async function findPackage():Promise<Package|null>{
   const rows=await writeClient.fetch<Package[]>(
     '*[_type=="socialPackage" && defined(instagramCarouselPostId) && '+
     'defined(sourcePublishedAt) && sourcePublishedAt >= $since && '+
+    'publishedAt >= $socialStart && '+
     '!(crosspostStatus in ["publishing","verification_required"]) && '+
     'coalesce(crosspostAttempts,0)<3 && '+
     '(!defined(facebookCarouselPostId) || count(instagramStoryPosts)!=4)] '+
@@ -107,7 +108,7 @@ async function findPackage():Promise<Package|null>{
     'carouselMedia[]{index,imageUrl},storyMedia[]{index,imageUrl},'+
     'facebookCarouselPostId,facebookPublishStatus,instagramStoryPosts[]{_key,index,postId},'+
     'instagramStoryStatus,crosspostStatus,crosspostAttempts}',
-    {since},
+    {since,socialStart:'2026-11-08T03:00:00.000Z'},
   )
   return rows[0]||null
 }

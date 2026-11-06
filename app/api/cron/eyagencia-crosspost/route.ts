@@ -9,6 +9,13 @@ export async function GET(request:NextRequest){
   if(!process.env.CRON_SECRET ||
      request.headers.get('authorization')!=='Bearer '+process.env.CRON_SECRET)
     return NextResponse.json({ok:false,error:'Não autorizado.'},{status:401})
+  const dayName=new Intl.DateTimeFormat('en-US',{
+    timeZone:'America/Sao_Paulo',weekday:'short',
+  }).format(new Date())
+  if(!['Tue','Sun'].includes(dayName))
+    return NextResponse.json({ok:true,status:'not-scheduled'},{
+      headers:{'Cache-Control':'no-store'},
+    })
   try{
     const result=await publishMissingEyagenciaChannels()
     console.info('[eyagencia-crosspost-cron]',JSON.stringify({

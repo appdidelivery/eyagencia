@@ -4,12 +4,15 @@ import {makeBrandMotivationSvg} from './brand-social-visual.mjs'
 
 const cron=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8')).crons
 const schedule=Object.fromEntries(cron.map(item=>[item.path,item.schedule]))
-assert.equal(schedule['/api/cron/social-agent'],'0 13,21 * * 1,5')
+assert.equal(schedule['/api/cron/content-agent'],'30 12,22 * * *')
+assert.equal(schedule['/api/cron/social-agent'],'0 13,21 * * 1,4,5')
+assert.equal(schedule['/api/cron/velo-blog-social'],'0 16,23 * * 0,2')
 assert.equal(schedule['/api/cron/native-reposts'],'20 14 * * 3,6')
-assert.equal(schedule['/api/cron/content-agent'],'30 12,22 * * 0,2')
-for(const old of ['/api/cron/social-assets','/api/cron/eyagencia-carousel','/api/cron/eyagencia-crosspost','/api/cron/social-news']){
-  assert.equal(schedule[old],undefined,'Legacy autopublisher should not have a scheduled cron')
-}
+assert.equal(schedule['/api/cron/social-assets'],'15 14,23 * * 0,2')
+assert.equal(schedule['/api/cron/eyagencia-carousel'],'45 14,23 * * 0,2')
+assert.equal(schedule['/api/cron/eyagencia-crosspost'],'15 0,16 * * *')
+assert.equal(schedule['/api/cron/social-news'],undefined)
+assert.equal(cron.length,Object.keys(schedule).length,'All scheduled paths must be unique')
 for(const slug of ['eyagencia','velo-delivery']){
   const monday=makeBrandMotivationSvg({
     slug,topic:'Bom dia. Uma nova semana começa com escolhas conscientes.',date:'2026-11-09',
@@ -24,4 +27,4 @@ for(const slug of ['eyagencia','velo-delivery']){
     assert.ok(art.includes('font-family="Noto Sans"'))
   }
 }
-console.info('[weekly-social-selftest] 2 feed slots, 2 native repost slots, 2 blogs, brand sunrise art passed')
+console.info('[weekly-social-selftest] daily blogs unchanged; Mon/Thu/Fri authorial, Tue/Sun blog carousels, Wed/Sat native reposts passed')

@@ -450,9 +450,82 @@ async function buildMotivationCarousel(brand:Brand,day:string,coverUrl:string,me
   return {images,assetIds}
 }
 
+
+type PracticalEdition={cover:string;messages:[string,string,string,string,string,string]}
+const PRACTICAL: Record<'eyagencia'|'velo-delivery',PracticalEdition[]> = {
+  eyagencia:[
+    {cover:'5 ajustes que ajudam uma loja virtual a ser mais clara',messages:[
+      'Organize as categorias com nomes que o cliente entende.',
+      'Responda às dúvidas mais comuns nas páginas dos produtos.',
+      'Deixe as condições de entrega fáceis de localizar.',
+      'Revise a experiência de navegação no celular.',
+      'Mostre informações úteis antes de pedir o cadastro.',
+      'Acompanhe as perguntas repetidas no atendimento.',
+    ]},
+    {cover:'Como organizar melhor a comunicação do seu negócio',messages:[
+      'Comece definindo o que sua empresa resolve.',
+      'Fale com clareza sobre sua oferta e público.',
+      'Planeje conteúdos que respondam perguntas reais.',
+      'Apresente próximos passos sem pressionar o cliente.',
+      'Mantenha o mesmo tom em todos os seus canais.',
+      'Revise o que as pessoas realmente querem saber.',
+    ]},
+  ],
+  'velo-delivery':[
+    {cover:'6 cuidados simples com a operação do delivery',messages:[
+      'Revise os horários e informações do cardápio.',
+      'Organize os produtos para facilitar a escolha.',
+      'Combine o fluxo de pedidos com a equipe.',
+      'Confira as informações importantes antes da entrega.',
+      'Prepare orientações para as dúvidas mais comuns.',
+      'Registre oportunidades de melhoria para a próxima semana.',
+    ]},
+    {cover:'Como melhorar a comunicação do restaurante com o cliente',messages:[
+      'Deixe claros os canais de atendimento.',
+      'Mostre os detalhes que ajudam na escolha do pedido.',
+      'Informe mudanças de horário com antecedência.',
+      'Escute os problemas que se repetem no atendimento.',
+      'Não prometa prazos que a operação não consegue cumprir.',
+      'Use o retorno dos clientes para revisar processos.',
+    ]},
+  ],
+}
+function weeklyPractical(slug:string,day:string){
+  if(slug!=='eyagencia'&&slug!=='velo-delivery')throw new Error('unknown_brand')
+  const pool=PRACTICAL[slug]
+  const idx=Math.floor(Date.parse(day+'T12:00:00Z')/604800000)%pool.length
+  const p=pool[idx]
+  const hashtag=slug==='eyagencia'?'#EyAgencia #Ecommerce #Empreendedorismo':
+    '#VeloDelivery #Delivery #Gestao'
+  return {
+    cover:p.cover,slides:p.messages,
+    caption:['📌 Dicas práticas para quem empreende','',p.cover,'',
+      'Salve este carrossel para revisar com a equipe.','',hashtag].join('\n'),
+  }
+}
+async function buildPracticalCarousel(brand:Brand,day:string,coverUrl:string,messages:string[]){
+  if(messages.length!==6)throw new Error('practical_slides_invalid')
+  const images=[coverUrl],assetIds:string[]=[]
+  const captions=[...messages,'Salve este guia e escolha um ajuste para colocar em prática.']
+  for(const [i,title] of captions.entries()){
+    const svg=makeBrandSocialSvg({
+      slug:brand.slug,topic:title,concept:'Dica prática para a operação',date:day+'-tip-'+(i+2),
+    })
+    const png=await renderBrandArt(svg)
+    const asset=await writeClient.assets.upload('image',png,{
+      filename:'social-practical-'+brand.slug+'-'+day+'-'+(i+2)+'.png',
+      contentType:'image/png',
+    })
+    assetIds.push(asset._id)
+    images.push(publicJpeg(asset.url))
+  }
+  if(images.length!==8)throw new Error('practical_carousel_incomplete')
+  return {images,assetIds}
+}
+
 async function processBrand(brand: Brand, day: string, weekday: number): Promise<Result> {
   const slug = brand.slug
-  if (![1,5].includes(weekday)) return {brand: brand.name, status: 'not-scheduled'}
+  if (![1,4,5].includes(weekday)) return {brand: brand.name, status: 'not-scheduled'}
   const keys = credentials(brand)
   if (!keys) return {brand: brand.name, status: 'credentials-missing'}
   const publicationId = 'social-' + slug + '-' + day
@@ -473,8 +546,8 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
     !already.instagramPostId && !already.facebookPostId &&
     Number(already.attempts || 1) < 2)
   if (already && !canRetry) return {brand: brand.name, status: 'already-processed'}
-  const motivational=weeklyMotivation(slug,day,weekday)
-  const topic=motivational.cover
+  const plan=weekday===4?weeklyPractical(slug,day):weeklyMotivation(slug,day,weekday)
+  const topic=plan.cover
   try {
     if (already && canRetry) {
       await writeClient.patch(publicationId).ifRevisionId(already._rev).set({
@@ -491,13 +564,16 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
   } catch {return {brand: brand.name, status: 'already-reserved'}}
   try {
     await writeClient.patch(publicationId).set({status: 'generating'}).commit()
-    const generated = motivational
-    const photo = await createMotivationImage(brand,day,generated.cover,weekday===5)
+    const generated = plan
+    const photo = weekday===4
+      ? await createImage(brand,generated.cover,day,generated.cover)
+      : await createMotivationImage(brand,day,generated.cover,weekday===5)
     const jpeg = publicJpeg(photo.url)
-    // Monday: eight-slide inspirational carousel. Friday: one closing quote.
+    // Monday: inspirational carousel. Thursday: practical carousel.
+    // Friday: original end-of-week image.
     const carousel = weekday===1
       ? await buildMotivationCarousel(brand,day,jpeg,generated.slides)
-      : null
+      : weekday===4 ? await buildPracticalCarousel(brand,day,jpeg,generated.slides) : null
     await writeClient.patch(publicationId).set({
       caption: generated.caption, imageUrl: jpeg, imageAssetId: photo.assetId,
       ...(carousel ? {format: 'carousel', slideCount: carousel.images.length,
@@ -607,7 +683,7 @@ export async function runSocialPublishing() {
   // Start next Monday: do not create a Friday post on a transition day
   // that may already contain a published legacy EyAgencia carousel.
   if (day < '2026-11-09') return {enabled:true,day,results:[] as Result[]}
-  if (![1,5].includes(weekday)) return {enabled:true, day, results:[] as Result[]}
+  if (![1,4,5].includes(weekday)) return {enabled:true, day, results:[] as Result[]}
   await ensureInitialBrand()
   await ensureEyagenciaBrand()
   const brands = await writeClient.fetch<Brand[]>(
@@ -625,6 +701,165 @@ export async function runSocialPublishing() {
 // One-off production test, authenticated by Vercel Cron and locked in Sanity.
 // Only the designated brand and date are eligible. A second trigger never
 // publishes again, even if the first invocation partially succeeds.
+
+type VeloBlogSource = {
+  id?:string; slug?:string; url?:string; title?:string;
+  publishedAt?:string; excerpt?:string;
+  sections?:Array<{title?:string;text?:string}>
+}
+function saneArticle(post:VeloBlogSource) {
+  try {
+    const link=new URL(post.url||'')
+    const when=Date.parse(post.publishedAt||'')
+    return Boolean(link.protocol==='https:'&&link.hostname==='velodelivery.com.br'&&
+      link.pathname==='/blog/'+encodeURIComponent(post.slug||'')&&
+      post.title&&post.title.length>=15&&post.excerpt&&post.excerpt.length>=45&&
+      post.sections&&post.sections.length>=3&&
+      post.sections.every(item=>item.title&&item.text&&item.text.length>=35)&&
+      Number.isFinite(when)&&when<=Date.now()+3600000&&Date.now()-when<21*86400000)
+  }catch{return false}
+}
+async function veloBlogCandidates():Promise<VeloBlogSource[]> {
+  const response=await fetch('https://velodelivery.com.br/api/social-blog-source',{
+    cache:'no-store',redirect:'error',signal:AbortSignal.timeout(18000),
+    headers:{Accept:'application/json'},
+  })
+  if(!response.ok)throw new Error('Velo blog source HTTP '+response.status)
+  const data=await response.json() as {ok?:boolean;posts?:VeloBlogSource[]}
+  if(!data.ok||!Array.isArray(data.posts))throw new Error('Velo blog source unavailable')
+  return data.posts.filter(saneArticle)
+}
+async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
+  if(!post.title||!post.sections||!post.excerpt)throw new Error('Velo: blog content incomplete')
+  const sections=post.sections.slice(0,4)
+  const slides=[
+    post.title,
+    'Por que esse assunto importa? '+post.excerpt,
+    ...sections.map(item=>String(item.title)+': '+String(item.text)),
+    ...(sections.length===3?['Na prática: '+String(sections[0]?.text||post.excerpt)]:[]),
+    'Em resumo: '+post.excerpt,
+    'Leia o artigo completo no blog da Velo Delivery.',
+  ]
+  if(slides.length!==8)throw new Error('Velo: blog carousel incomplete')
+  const images:string[]=[],assetIds:string[]=[]
+  for(const [i,title] of slides.entries()){
+    const image=makeBrandSocialSvg({
+      slug:'velo-delivery',topic:title.slice(0,125),
+      concept:'Conteúdo do blog Velo Delivery: '+(post.title||''),
+      date:day+'-blog-'+(i+1),
+    })
+    const png=await renderBrandArt(image)
+    const asset=await writeClient.assets.upload('image',png,{
+      filename:'velo-blog-carousel-'+day+'-'+(i+1)+'.png',
+      contentType:'image/png',
+    })
+    assetIds.push(asset._id)
+    images.push(publicJpeg(asset.url))
+  }
+  return {images,assetIds}
+}
+export async function runVeloBlogSocial() {
+  if(process.env.VERCEL_ENV!=='production'||
+     process.env.SOCIAL_AGENT_ENABLED!=='true'||
+     process.env.SOCIAL_AGENT_AUTOPUBLISH_ENABLED!=='true')
+    return {enabled:false,results:[] as Result[]}
+  const {day,weekday}=brazilDay()
+  if(day<'2026-11-08'||![0,2].includes(weekday))
+    return {enabled:true,day,results:[{brand:'Velo Delivery',status:'not-scheduled'}]}
+  if(!process.env.SANITY_API_WRITE_TOKEN)
+    return {enabled:true,day,results:[{brand:'Velo Delivery',status:'sanity-token-missing'}]}
+  const publicationId='social-blog-velo-delivery-'+day
+  try {
+    await ensureInitialBrand()
+    const brand=await writeClient.fetch<Brand|null>(
+      '*[_type=="socialBrand" && enabled==true && slug.current=="velo-delivery"][0]'+
+      '{_id,name,"slug":slug.current,instagramEnabled,facebookEnabled}',
+    )
+    if(!brand)return {enabled:true,day,results:[{brand:'Velo Delivery',status:'brand-unavailable'}]}
+    const keys=credentials(brand)
+    if(!keys)return {enabled:true,day,results:[{brand:brand.name,status:'credentials-missing'}]}
+    const already=await writeClient.fetch<string|null>(
+      '*[_id==$id][0]._id',{id:publicationId},
+    )
+    if(already)return {enabled:true,day,results:[{brand:brand.name,status:'already-processed'}]}
+    const posts=await veloBlogCandidates()
+    let chosen:VeloBlogSource|null=null
+    for(const post of posts){
+      const used=await writeClient.fetch<number>(
+        'count(*[_type=="socialPublication" && sourceUrl==$url && brandName==$brand])',
+        {url:post.url,brand:brand.name},
+      )
+      if(!used){chosen=post;break}
+    }
+    if(!chosen)return {enabled:true,day,results:[{brand:brand.name,status:'no_new_blog_article'}]}
+    const article=chosen
+    const caption=[
+      '📚 Velo Insights | Conteúdo para gestores de delivery',
+      '',article.title||'',article.excerpt||'',
+      'Confira o artigo completo: '+article.url,'','#VeloDelivery #Delivery #Gestao',
+    ].join('\n').slice(0,2100)
+    try {
+      await writeClient.create({
+        _id:publicationId,_type:'socialPublication',
+        brandId:brand._id,brandName:brand.name,day,
+        topic:article.title,status:'reserved',attempts:1,format:'carousel',
+        sourceUrl:article.url,sourcePostId:article.id,
+        sourcePublishedAt:article.publishedAt,caption,
+        createdAt:new Date().toISOString(),
+      })
+    }catch{return {enabled:true,day,results:[{brand:brand.name,status:'already-reserved'}]}}
+    try {
+      await writeClient.patch(publicationId).set({status:'generating'}).commit()
+      const slides=await renderVeloBlogCarousel(article,day)
+      await writeClient.patch(publicationId).set({
+        imageUrl:slides.images[0],carouselImages:slides.images,
+        carouselAssetIds:slides.assetIds,slideCount:slides.images.length,
+        status:'ready-to-publish',
+      }).commit()
+      // From this point, a lost Graph response cannot trigger a duplicate post.
+      await writeClient.patch(publicationId).set({
+        status:'publishing',publishStartedAt:new Date().toISOString(),
+      }).commit()
+      const errors:string[]=[]
+      let instagramPostId:string|null=null,facebookPostId:string|null=null
+      if(brand.instagramEnabled && keys.instagramId){
+        try{
+          instagramPostId=await publishInstagramCarousel(
+            keys.instagramId,keys.pageToken,slides.images,caption)
+          await writeClient.patch(publicationId).set({instagramPostId}).commit()
+        }catch(e){errors.push('Instagram: '+(e instanceof Error?e.message:'unknown'))}
+      }
+      if(brand.facebookEnabled && keys.pageId){
+        try{
+          facebookPostId=await publishFacebookCarousel(
+            keys.pageId,keys.pageToken,slides.images,caption)
+          await writeClient.patch(publicationId).set({facebookPostId}).commit()
+        }catch(e){errors.push('Facebook: '+(e instanceof Error?e.message:'unknown'))}
+      }
+      const success=Boolean(instagramPostId||facebookPostId)
+      const status=errors.length?(success?'partial':'failed'):'published'
+      await writeClient.patch(publicationId).set({
+        status,errors,finishedAt:new Date().toISOString(),
+      }).commit()
+      console.info('[velo-blog-social] publishing',JSON.stringify({
+        day,status,slides:slides.images.length,instagram:!!instagramPostId,
+        facebook:!!facebookPostId,errors:errors.length,
+      }))
+      return {enabled:true,day,results:[{brand:brand.name,status,
+        detail:errors.join(' | ').slice(0,180)||undefined}]}
+    }catch(error){
+      const reason=error instanceof Error?error.message.slice(0,160):'unknown'
+      await writeClient.patch(publicationId).set({
+        status:'blocked',errors:[reason],finishedAt:new Date().toISOString(),
+      }).commit().catch(()=>{})
+      return {enabled:true,day,results:[{brand:brand.name,status:'blocked',detail:reason}]}
+    }
+  }catch(error){
+    const reason=error instanceof Error?error.message.slice(0,160):'unknown'
+    return {enabled:true,day,results:[{brand:'Velo Delivery',status:'source-unavailable',detail:reason}]}
+  }
+}
+
 export async function runOneTimeSocialPilot() {
   const {day} = brazilDay()
   if (process.env.VERCEL_ENV !== 'production' || day !== '2026-10-28') {

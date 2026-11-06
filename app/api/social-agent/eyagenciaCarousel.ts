@@ -98,13 +98,15 @@ async function ready(containerId: string, token: string) {
 }
 
 async function findEligiblePackage(): Promise<Package | null> {
+  const since=new Date(Date.now()-21*86400000).toISOString()
   const packages = await writeClient.fetch<Package[]>(
     '*[_type == "socialPackage" && state == "rendered" && mediaStatus == "rendered" && ' +
-    'count(carouselMedia) == 8 && !defined(instagramCarouselPostId) && ' +
+    'count(carouselMedia) == 8 && defined(sourcePublishedAt) && sourcePublishedAt >= $since && ' +
+    '!defined(instagramCarouselPostId) && ' +
     '!(publishStatus in ["publishing","published","verification_required"]) && ' +
     'coalesce(publishAttempts,0) < $maxAttempts] | order(sourcePublishedAt desc)[0...8]' +
     '{_id,_rev,title,caption,sourcePostId,sourceSlug,sourceUrl,carouselMedia[]{index,imageUrl},publishAttempts}',
-    {maxAttempts: MAX_ATTEMPTS},
+    {maxAttempts: MAX_ATTEMPTS,since},
   )
   return packages[0] || null
 }
@@ -130,6 +132,10 @@ export async function publishNextEyagenciaCarousel(): Promise<Outcome> {
   // The brand has one Instagram feed slot per Brazil-local day. The evening
   // cron remains a recovery slot, not a second daily carousel.
   const now = new Date()
+  const localWeekday = new Intl.DateTimeFormat('en-US', {
+    timeZone:'America/Sao_Paulo',weekday:'short',
+  }).format(now)
+  if(!['Tue','Sun'].includes(localWeekday))return {status:'not-scheduled'}
   const day = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(now)
