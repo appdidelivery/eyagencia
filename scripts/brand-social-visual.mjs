@@ -121,3 +121,47 @@ export function makeBrandSocialSvg({slug,topic,concept='',date=''}) {
     '<text x="995" y="1040" text-anchor="end" fill="'+brand.soft+'" font-size="23" font-family="Noto Sans">'+escapeXml(brand.label)+'</text>'+
     '</svg>'
 }
+
+
+// Original sunrise and horizon artwork for the weekly founder/restaurant
+// motivational series. Intentionally does not reproduce third-party quotes,
+// photographs, logos, or a viral post's design.
+export function makeBrandMotivationSvg({slug,topic,date='',closing=false}) {
+  const brand=palettes[String(slug||'')]
+  if(!brand)throw new Error('Brand identity unavailable')
+  const title=clean(topic,155)
+  const rows=lines(title,21,5)
+  const fontSize=rows.length>=5?60:rows.length>=4?67:78
+  const lineHeight=fontSize+14
+  const offset=rows.length>=5?304:rows.length>=4?330:365
+  const text=rows.map((row,index)=>
+    '<text x="94" y="'+(offset+index*lineHeight)+'" fill="#f8fcff" font-family="Noto Sans" font-size="'+fontSize+'" font-weight="700">'+escapeXml(row)+'</text>'
+  ).join('')
+  const rays=Array.from({length:11},(_,i)=>{
+    const angle=i*Math.PI/10
+    const x=855+Math.cos(angle)*590
+    const y=380-Math.sin(angle)*590
+    return '<path d="M855 380 L'+x.toFixed(0)+' '+y.toFixed(0)+'" stroke="'+brand.soft+'" stroke-width="3" opacity=".12"/>'
+  }).join('')
+  const greeting=closing?'UMA BOA SEMANA MERECE UM BOM ENCERRAMENTO':'BOM DIA, QUEM FAZ ACONTECER'
+  const label=brand.kind==='velo'?'GESTÃO, CORAGEM E DELIVERY':'EMPREENDEDORISMO E PROPÓSITO'
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">'+
+    '<defs><linearGradient id="sky" x1="0" x2=".8" y1="0" y2="1">'+
+    '<stop stop-color="'+brand.bg+'"/><stop offset=".56" stop-color="'+brand.bg2+'"/>'+
+    '<stop offset="1" stop-color="'+brand.accent+'"/></linearGradient>'+
+    '<radialGradient id="sun"><stop stop-color="#fff3c7" stop-opacity=".8"/>'+
+    '<stop offset="1" stop-color="'+brand.highlight+'" stop-opacity=".1"/></radialGradient></defs>'+
+    '<rect width="1080" height="1080" fill="url(#sky)"/>'+rays+
+    '<circle cx="855" cy="380" r="235" fill="url(#sun)" opacity=".65"/>'+
+    '<circle cx="855" cy="380" r="115" fill="#ffdf9c" opacity=".27"/>'+
+    '<path d="M0 775 L155 630 L340 797 L535 610 L790 860 L1080 610 V1080 H0Z" fill="'+brand.bg2+'" opacity=".74"/>'+
+    '<path d="M0 890 L185 735 L409 915 L625 710 L884 932 L1080 790 V1080 H0Z" fill="'+brand.bg+'" opacity=".8"/>'+
+    '<rect x="62" y="232" width="840" height="532" rx="42" fill="'+brand.bg+'" opacity=".63"/>'+
+    '<text x="92" y="105" font-family="Noto Sans" font-size="47" fill="#f8fcff" font-weight="700">'+escapeXml(brand.brand)+'</text>'+
+    '<text x="94" y="196" font-family="Noto Sans" font-size="26" fill="'+brand.soft+'" font-weight="700">'+escapeXml(greeting)+'</text>'+
+    text+
+    '<path d="M92 836 H650" stroke="'+brand.accent+'" stroke-width="9" stroke-linecap="round"/>'+
+    '<text x="92" y="906" font-family="Noto Sans" font-size="28" fill="#ffffff">'+escapeXml(label)+'</text>'+
+    '<text x="92" y="1027" font-family="Noto Sans" font-size="28" fill="#ffffff" font-weight="700">'+escapeXml(brand.website)+'</text>'+
+    '</svg>'
+}
