@@ -1011,6 +1011,76 @@ export async function POST(request: NextRequest) {
         console.warn('[content-agent] Uma revisão automática não foi concluída:', repairError instanceof Error ? repairError.message : 'erro')
       }
     }
+    // A second, strictly bounded content repair is allowed only with literal,
+    // independently retrieved evidence. Neither the editor nor QA may bypass
+    // deterministic checks or assign approval just to fill a publishing slot.
+    if (supportedFacts.length >= 2 &&
+        (!qaResult.passed || Number(qaResult.score || 0) < 90 ||
+         qaResult.publicationRisk !== 'low' || structuralIssues.length > 0)) {
+      try {
+        const focusedEditor = await callAgent({
+          maxOutputTokens: 7500,
+          instructions:
+            'Você é um editor B2B especializado em e-commerce. A versão anterior foi REPROVADA. ' +
+            'Reescreva o artigo INTEIRO, em JSON válido com title, slug, seoTitle, seoDescription, excerpt, searchIntent, ' +
+            'sections [{heading,paragraphs,bullets}], faq, internalLinks, sources. ' +
+            'Crie uma abordagem realmente específica à pauta e útil ao gestor, em pelo menos cinco seções substanciais, ' +
+            'cada uma com recomendações práticas distintas; FAQ curta e sem repetição. ' +
+            'Não atribua qualquer fato a ANPD, MDIC ou legislação sem evidênciaQuote literal correspondente no mesmo parágrafo. ' +
+            'Não invente ROI, estatísticas, leis, resultados, clientes, testes realizados, URLs ou efeitos de IA. ' +
+            'Prefira orientações de execução e verificação, claramente condicionais e sem garantias. ' +
+            'Para fontes, use somente URLs do pacote oficial; links internos apenas da allowlist. ' +
+            'Respeite seoTitle 50–60 e seoDescription 150–160 caracteres. ' +
+            'Se o lastro não permitir um artigo adequado, retorne {} em vez de fabricar informação.',
+          input:
+            'PAUTA: ' + topic +
+            '\nERROS DO QA A CORRIGIR: ' + JSON.stringify(qaResult) +
+            '\nPROBLEMAS DETERMINÍSTICOS: ' + JSON.stringify(structuralIssues) +
+            '\nFATOS LITERALMENTE COMPROVADOS: ' + JSON.stringify(safeFactCheck) +
+            '\nFONTES PERMITIDAS: ' + JSON.stringify(evidenceBundle.sources.map(
+              ({title, url}) => ({title, url}))) +
+            '\nVERSÃO REPROVADA: ' + JSON.stringify(article) +
+            '\nLINKS INTERNOS: /ia-ecommerce, /ia-ecommerce/ferramentas, /ia-ecommerce/guias, ' +
+            '/ia-ecommerce/metodologia, /blog, /clientes, /parceiros',
+        })
+        const candidate = parseJson(focusedEditor.text, 'revisão direcionada do editor')
+        if (candidate && typeof candidate.title === 'string' &&
+            Array.isArray(candidate.sections) && candidate.sections.length >= 3) {
+          const candidateStructural = checkArticleQuality(candidate, supportedFacts)
+          const candidateQa = await callAgent({
+            maxOutputTokens: 2800,
+            instructions:
+              'Você é o auditor independente de qualidade, fontes e segurança de um artigo B2B. ' +
+              'Não considere a publicação obrigatória. Reprove fatos inventados, atribuições jurídicas não verificadas, ' +
+              'citações sem trecho literal, causalidade sem teste, repetição, afirmações comerciais sem provas e conteúdo superficial. ' +
+              'Retorne SOMENTE JSON com passed booleano, score entre 0 e 100, issues array, fixes array e publicationRisk low|medium|high.',
+            input:
+              'FATOS E FONTES: ' + JSON.stringify(safeFactCheck) +
+              '\nARTIGO: ' + JSON.stringify(candidate) +
+              '\nPROBLEMAS INDEPENDENTES: ' + JSON.stringify(candidateStructural),
+          })
+          const verdict = parseJson(candidateQa.text, 'QA independente da revisão direcionada')
+          if (verdict.passed === true && Number(verdict.score) >= 90 &&
+              verdict.publicationRisk === 'low' &&
+              (!Array.isArray(verdict.issues) || verdict.issues.length === 0) &&
+              candidateStructural.length === 0) {
+            article = candidate
+            structuralIssues = candidateStructural
+            qaResult = verdict
+            revisionAttempted = true
+            console.info('[content-agent] targeted_repair_passed', JSON.stringify({topic}))
+          } else {
+            console.info('[content-agent] targeted_repair_rejected', JSON.stringify({
+              topic, structural: candidateStructural.length, score: Number(verdict.score || 0),
+            }))
+          }
+        }
+      } catch (error) {
+        console.warn('[content-agent] targeted_repair_failed',
+          error instanceof Error ? error.message.slice(0, 160) : 'unexpected')
+      }
+    }
+
     // Narrow and controlled editorial fallback. An unsafe draft never passes by
     // changing its score. Only a completely independent article can be selected,
     // and only if it passes a fresh QA check with low publication risk.
