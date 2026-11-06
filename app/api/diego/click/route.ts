@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from 'next/server'
 import {createClient} from 'next-sanity'
 export const runtime='nodejs'
 
-const bioIds=new Set(['eyagencia','velo_delivery','livros','playlist','projetos','trajetoria','ia_ecommerce','artigos','contato','instagram','obra_enchente'])
+const bioIds=new Set(['eyagencia','velo_delivery','livros','playlist','academia_ia','projetos','trajetoria','ia_ecommerce','artigos','contato','instagram','obra_enchente'])
 const partners=new Set(['mercado_livre','amazon','shopee','mercado_livre_nao_afiliado','mercado_livre_box_5_volumes','amazon_box_5_volumes','mercado_livre_edicao_homens'])
 const clean=(v:unknown,max=80)=>typeof v==='string'?v.replace(/[^a-zA-Z0-9áàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ._ -]/g,'').slice(0,max):''
 export async function POST(request:NextRequest){

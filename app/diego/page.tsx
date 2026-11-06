@@ -62,6 +62,13 @@ const publishedLinks: LiveLink[] = [
     label: "MINHA PLAYLIST"
   },
   {
+    title: "Academia gratuita · IA na Prática",
+    subtitle: "15 missões para aprender, aplicar e criar serviços com IA",
+    href: "/academia-ia",
+    icon: "✳",
+    label: "CURSOS GRATUITOS · MISSÕES"
+  },
+  {
     title: "Projetos e cases de e-commerce",
     subtitle: "Negócios, experiências e soluções em operação",
     href: "/clientes",
@@ -107,12 +114,6 @@ const upcoming = [
     phase: "Em breve"
   },
   {
-    title: "Cursos gratuitos de IA na prática",
-    subtitle: "Do primeiro contato com IA à criação de serviços",
-    icon: "✧",
-    phase: "Em planejamento"
-  },
-  {
     title: "Materiais, produtos e metodologias",
     subtitle: "Guias, templates e recursos aplicáveis ao seu negócio",
     icon: "◇",
@@ -120,7 +121,7 @@ const upcoming = [
   }
 ];
 
-const bioLinkIds = ["eyagencia", "velo_delivery", "livros", "playlist", "projetos", "trajetoria", "ia_ecommerce", "artigos", "contato"];
+const bioLinkIds = ["eyagencia", "velo_delivery", "livros", "playlist", "academia_ia", "projetos", "trajetoria", "ia_ecommerce", "artigos", "contato"];
 
 function LiveCard({ item, position }: { item: LiveLink; position: number }) {
   const external = item.href.startsWith("https://");
@@ -202,7 +203,7 @@ export default function DiegoBioPage() {
               <div><b>2014</b><small>formação<br />ComSchool</small></div>
             </div>
 
-            <TrackedLink linkId="instagram" position={10} className={styles.instagram} href="https://www.instagram.com/tidiegolemes/" target="_blank" rel="noopener noreferrer">
+            <TrackedLink linkId="instagram" position={11} className={styles.instagram} href="https://www.instagram.com/tidiegolemes/" target="_blank" rel="noopener noreferrer">
               <span className={styles.instagramIcon} aria-hidden="true">◎</span>
               Acompanhe no Instagram <span aria-hidden="true">↗</span>
             </TrackedLink>

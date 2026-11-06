@@ -62,6 +62,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.55,
     },
     {
+      url: `${baseUrl}/academia-ia`,
+      lastModified: new Date('2026-11-06'),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/ia-ecommerce`,
       lastModified: new Date('2026-09-29'),
       changeFrequency: 'weekly',
