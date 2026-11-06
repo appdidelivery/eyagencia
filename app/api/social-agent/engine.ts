@@ -450,9 +450,82 @@ async function buildMotivationCarousel(brand:Brand,day:string,coverUrl:string,me
   return {images,assetIds}
 }
 
+
+type PracticalEdition={cover:string;messages:[string,string,string,string,string,string]}
+const PRACTICAL: Record<'eyagencia'|'velo-delivery',PracticalEdition[]> = {
+  eyagencia:[
+    {cover:'5 ajustes que ajudam uma loja virtual a ser mais clara',messages:[
+      'Organize as categorias com nomes que o cliente entende.',
+      'Responda às dúvidas mais comuns nas páginas dos produtos.',
+      'Deixe as condições de entrega fáceis de localizar.',
+      'Revise a experiência de navegação no celular.',
+      'Mostre informações úteis antes de pedir o cadastro.',
+      'Acompanhe as perguntas repetidas no atendimento.',
+    ]},
+    {cover:'Como organizar melhor a comunicação do seu negócio',messages:[
+      'Comece definindo o que sua empresa resolve.',
+      'Fale com clareza sobre sua oferta e público.',
+      'Planeje conteúdos que respondam perguntas reais.',
+      'Apresente próximos passos sem pressionar o cliente.',
+      'Mantenha o mesmo tom em todos os seus canais.',
+      'Revise o que as pessoas realmente querem saber.',
+    ]},
+  ],
+  'velo-delivery':[
+    {cover:'6 cuidados simples com a operação do delivery',messages:[
+      'Revise os horários e informações do cardápio.',
+      'Organize os produtos para facilitar a escolha.',
+      'Combine o fluxo de pedidos com a equipe.',
+      'Confira as informações importantes antes da entrega.',
+      'Prepare orientações para as dúvidas mais comuns.',
+      'Registre oportunidades de melhoria para a próxima semana.',
+    ]},
+    {cover:'Como melhorar a comunicação do restaurante com o cliente',messages:[
+      'Deixe claros os canais de atendimento.',
+      'Mostre os detalhes que ajudam na escolha do pedido.',
+      'Informe mudanças de horário com antecedência.',
+      'Escute os problemas que se repetem no atendimento.',
+      'Não prometa prazos que a operação não consegue cumprir.',
+      'Use o retorno dos clientes para revisar processos.',
+    ]},
+  ],
+}
+function weeklyPractical(slug:string,day:string){
+  if(slug!=='eyagencia'&&slug!=='velo-delivery')throw new Error('unknown_brand')
+  const pool=PRACTICAL[slug]
+  const idx=Math.floor(Date.parse(day+'T12:00:00Z')/604800000)%pool.length
+  const p=pool[idx]
+  const hashtag=slug==='eyagencia'?'#EyAgencia #Ecommerce #Empreendedorismo':
+    '#VeloDelivery #Delivery #Gestao'
+  return {
+    cover:p.cover,slides:p.messages,
+    caption:['📌 Dicas práticas para quem empreende','',p.cover,'',
+      'Salve este carrossel para revisar com a equipe.','',hashtag].join('\n'),
+  }
+}
+async function buildPracticalCarousel(brand:Brand,day:string,coverUrl:string,messages:string[]){
+  if(messages.length!==6)throw new Error('practical_slides_invalid')
+  const images=[coverUrl],assetIds:string[]=[]
+  const captions=[...messages,'Salve este guia e escolha um ajuste para colocar em prática.']
+  for(const [i,title] of captions.entries()){
+    const svg=makeBrandSocialSvg({
+      slug:brand.slug,topic:title,concept:'Dica prática para a operação',date:day+'-tip-'+(i+2),
+    })
+    const png=await renderBrandArt(svg)
+    const asset=await writeClient.assets.upload('image',png,{
+      filename:'social-practical-'+brand.slug+'-'+day+'-'+(i+2)+'.png',
+      contentType:'image/png',
+    })
+    assetIds.push(asset._id)
+    images.push(publicJpeg(asset.url))
+  }
+  if(images.length!==8)throw new Error('practical_carousel_incomplete')
+  return {images,assetIds}
+}
+
 async function processBrand(brand: Brand, day: string, weekday: number): Promise<Result> {
   const slug = brand.slug
-  if (![1,5].includes(weekday)) return {brand: brand.name, status: 'not-scheduled'}
+  if (![1,4,5].includes(weekday)) return {brand: brand.name, status: 'not-scheduled'}
   const keys = credentials(brand)
   if (!keys) return {brand: brand.name, status: 'credentials-missing'}
   const publicationId = 'social-' + slug + '-' + day
@@ -473,8 +546,8 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
     !already.instagramPostId && !already.facebookPostId &&
     Number(already.attempts || 1) < 2)
   if (already && !canRetry) return {brand: brand.name, status: 'already-processed'}
-  const motivational=weeklyMotivation(slug,day,weekday)
-  const topic=motivational.cover
+  const plan=weekday===4?weeklyPractical(slug,day):weeklyMotivation(slug,day,weekday)
+  const topic=plan.cover
   try {
     if (already && canRetry) {
       await writeClient.patch(publicationId).ifRevisionId(already._rev).set({
@@ -491,13 +564,16 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
   } catch {return {brand: brand.name, status: 'already-reserved'}}
   try {
     await writeClient.patch(publicationId).set({status: 'generating'}).commit()
-    const generated = motivational
-    const photo = await createMotivationImage(brand,day,generated.cover,weekday===5)
+    const generated = plan
+    const photo = weekday===4
+      ? await createImage(brand,generated.cover,day,generated.cover)
+      : await createMotivationImage(brand,day,generated.cover,weekday===5)
     const jpeg = publicJpeg(photo.url)
-    // Monday: eight-slide inspirational carousel. Friday: one closing quote.
+    // Monday: inspirational carousel. Thursday: practical carousel.
+    // Friday: original end-of-week image.
     const carousel = weekday===1
       ? await buildMotivationCarousel(brand,day,jpeg,generated.slides)
-      : null
+      : weekday===4 ? await buildPracticalCarousel(brand,day,jpeg,generated.slides) : null
     await writeClient.patch(publicationId).set({
       caption: generated.caption, imageUrl: jpeg, imageAssetId: photo.assetId,
       ...(carousel ? {format: 'carousel', slideCount: carousel.images.length,
@@ -607,7 +683,7 @@ export async function runSocialPublishing() {
   // Start next Monday: do not create a Friday post on a transition day
   // that may already contain a published legacy EyAgencia carousel.
   if (day < '2026-11-09') return {enabled:true,day,results:[] as Result[]}
-  if (![1,5].includes(weekday)) return {enabled:true, day, results:[] as Result[]}
+  if (![1,4,5].includes(weekday)) return {enabled:true, day, results:[] as Result[]}
   await ensureInitialBrand()
   await ensureEyagenciaBrand()
   const brands = await writeClient.fetch<Brand[]>(
