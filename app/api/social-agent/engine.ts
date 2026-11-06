@@ -604,6 +604,9 @@ export async function runSocialPublishing() {
     return {enabled: true, results: [{brand: 'system', status: 'sanity-token-missing'}]}
   }
   const {day, weekday} = brazilDay()
+  // Start next Monday: do not create a Friday post on a transition day
+  // that may already contain a published legacy EyAgencia carousel.
+  if (day < '2026-11-09') return {enabled:true,day,results:[] as Result[]}
   if (![1,5].includes(weekday)) return {enabled:true, day, results:[] as Result[]}
   await ensureInitialBrand()
   await ensureEyagenciaBrand()
