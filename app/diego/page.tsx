@@ -47,6 +47,20 @@ const publishedLinks: LiveLink[] = [
     label: "PRODUTO DIGITAL"
   },
   {
+    title: "Livros que eu li · minha biblioteca",
+    subtitle: "Minha opinião, aprendizados e indicações",
+    href: "/diego/livros",
+    icon: "▥",
+    label: "CATÁLOGO INTERATIVO"
+  },
+  {
+    title: "Minha playlist · YouTube Music",
+    subtitle: "Músicas que acompanham minha rotina",
+    href: "https://music.youtube.com/playlist?list=PLFV65sgoXYGw&si=hZmQB6RTTWlBMKmn",
+    icon: "♫",
+    label: "MINHA PLAYLIST"
+  },
+  {
     title: "Projetos e cases de e-commerce",
     subtitle: "Negócios, experiências e soluções em operação",
     href: "/clientes",
@@ -69,13 +83,6 @@ const publishedLinks: LiveLink[] = [
     subtitle: "E-commerce, SEO, dados, automação e IA",
     href: "/blog",
     icon: "▤"
-  },
-  {
-    title: "Livros que eu li · minha biblioteca",
-    subtitle: "Minha opinião, aprendizados e indicações",
-    href: "/diego/livros",
-    icon: "▥",
-    label: "CATÁLOGO INTERATIVO"
   },
   {
     title: "Contato profissional",
