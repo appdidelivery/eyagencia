@@ -344,9 +344,10 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
   const publicationId = 'social-' + slug + '-' + day
   const already = await writeClient.fetch<{
     _rev: string; status?: string; attempts?: number; publishStartedAt?: string;
+    imageUrl?: string; carouselImages?: string[];
     instagramPostId?: string; facebookPostId?: string
   } | null>(
-    '*[_id == $id][0]{_rev,status,attempts,publishStartedAt,instagramPostId,facebookPostId}',
+    '*[_id == $id][0]{_rev,status,attempts,publishStartedAt,imageUrl,carouselImages,instagramPostId,facebookPostId}',
     {id: publicationId},
   )
   // A failed draft can be retried once, but NEVER retry after any Meta
@@ -354,6 +355,7 @@ async function processBrand(brand: Brand, day: string, weekday: number): Promise
   const canRetry = Boolean(already &&
     already.status === 'blocked' &&
     !already.publishStartedAt &&
+    !already.imageUrl && !already.carouselImages?.length &&
     !already.instagramPostId && !already.facebookPostId &&
     Number(already.attempts || 1) < 2)
   if (already && !canRetry) return {brand: brand.name, status: 'already-processed'}
