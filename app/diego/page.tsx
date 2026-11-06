@@ -29,6 +29,7 @@ type LiveLink = {
   icon: string;
   label?: string;
   featured?: boolean;
+  spotlight?: boolean;
 };
 
 const publishedLinks: LiveLink[] = [
@@ -60,6 +61,22 @@ const publishedLinks: LiveLink[] = [
     href: "https://music.youtube.com/playlist?list=PLFV65sgoXYGw&si=hZmQB6RTTWlBMKmn",
     icon: "♫",
     label: "MINHA PLAYLIST"
+  },
+  {
+    title: "Dia Nacional da Coleta de Alimentos",
+    subtitle: "Nossa família há 11+ anos nesta corrente de solidariedade · 07/11/2026",
+    href: "/diego/coleta-de-alimentos",
+    icon: "♥",
+    label: "AÇÃO SOLIDÁRIA · FAÇA PARTE",
+    spotlight: true
+  },
+  {
+    title: "Seja voluntário · Coleta de Alimentos",
+    subtitle: "Grande Florianópolis · entre no grupo e participe da ação de 07/11",
+    href: "https://chat.whatsapp.com/G22xoJnYVLRLQj3KjB6CTX?s=cl&p=a&iam=2",
+    icon: "✳",
+    label: "ENTRAR NO GRUPO · VOLUNTARIADO",
+    spotlight: true
   },
   {
     title: "Academia gratuita · IA na Prática",
@@ -121,7 +138,7 @@ const upcoming = [
   }
 ];
 
-const bioLinkIds = ["eyagencia", "velo_delivery", "livros", "playlist", "academia_ia", "projetos", "trajetoria", "ia_ecommerce", "artigos", "contato"];
+const bioLinkIds = ["eyagencia", "velo_delivery", "livros", "playlist", "coleta_projeto", "coleta_voluntarios", "academia_ia", "projetos", "trajetoria", "ia_ecommerce", "artigos", "contato"];
 
 function LiveCard({ item, position }: { item: LiveLink; position: number }) {
   const external = item.href.startsWith("https://");
@@ -130,7 +147,7 @@ function LiveCard({ item, position }: { item: LiveLink; position: number }) {
       linkId={bioLinkIds[position - 1] || "outro"}
       position={position}
       href={item.href}
-      className={item.featured ? styles.featuredCard : styles.linkCard}
+      className={item.featured ? styles.featuredCard : item.spotlight ? styles.spotlightCard : styles.linkCard}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
     >
@@ -140,6 +157,7 @@ function LiveCard({ item, position }: { item: LiveLink; position: number }) {
         <strong>{item.title}</strong>
         <small>{item.subtitle}</small>
       </span>
+      <span className={styles.activeMark} aria-label="Link ativo" title="Link disponível">✓</span>
       <span className={styles.cardArrow} aria-hidden="true">↗</span>
     </TrackedLink>
   );
@@ -203,7 +221,7 @@ export default function DiegoBioPage() {
               <div><b>2014</b><small>formação<br />ComSchool</small></div>
             </div>
 
-            <TrackedLink linkId="instagram" position={11} className={styles.instagram} href="https://www.instagram.com/tidiegolemes/" target="_blank" rel="noopener noreferrer">
+            <TrackedLink linkId="instagram" position={13} className={styles.instagram} href="https://www.instagram.com/tidiegolemes/" target="_blank" rel="noopener noreferrer">
               <span className={styles.instagramIcon} aria-hidden="true">◎</span>
               Acompanhe no Instagram <span aria-hidden="true">↗</span>
             </TrackedLink>
@@ -240,7 +258,7 @@ export default function DiegoBioPage() {
 
             <section className={styles.linkSection} aria-labelledby="active-title">
               <div className={styles.sectionHead}>
-                <h2 id="active-title">Meus negócios e projetos</h2>
+                <h2 id="active-title">Projetos, livros e solidariedade</h2>
                 <span className={styles.ready}><span /> DISPONÍVEL</span>
               </div>
               <div className={styles.cardList}>{publishedLinks.map((item, index) => <LiveCard key={item.title} item={item} position={index + 1} />)}</div>

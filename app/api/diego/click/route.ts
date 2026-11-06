@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from 'next/server'
 import {createClient} from 'next-sanity'
 export const runtime='nodejs'
 
-const bioIds=new Set(['eyagencia','velo_delivery','livros','playlist','academia_ia','projetos','trajetoria','ia_ecommerce','artigos','contato','instagram','obra_enchente'])
+const bioIds=new Set(['eyagencia','velo_delivery','livros','playlist','academia_ia','coleta_projeto','coleta_voluntarios','coleta_grupo','coleta_instagram','projetos','trajetoria','ia_ecommerce','artigos','contato','instagram','obra_enchente'])
 const partners=new Set(['mercado_livre','amazon','shopee','mercado_livre_nao_afiliado','mercado_livre_box_5_volumes','amazon_box_5_volumes','mercado_livre_edicao_homens'])
 const clean=(v:unknown,max=80)=>typeof v==='string'?v.replace(/[^a-zA-Z0-9áàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ._ -]/g,'').slice(0,max):''
 export async function POST(request:NextRequest){
@@ -28,7 +28,7 @@ export async function POST(request:NextRequest){
   const dataset=process.env.NEXT_PUBLIC_SANITY_DATASET
   if(!token||!projectId||!dataset)return new NextResponse(null,{status:503})
   const client=createClient({projectId,dataset,apiVersion:'2026-07-01',useCdn:false,token})
-  await client.create({_type:'diegoBioClick',kind,linkId,partner,position:kind==='bio'?Math.max(0,Math.min(10,Number(body?.position)||0)):null,source:clean(body?.source),medium:clean(body?.medium),campaign:clean(body?.campaign),referrerHost:clean(body?.referrerHost),clickedAt:new Date().toISOString()})
+  await client.create({_type:'diegoBioClick',kind,linkId,partner,position:kind==='bio'?Math.max(0,Math.min(25,Number(body?.position)||0)):null,source:clean(body?.source),medium:clean(body?.medium),campaign:clean(body?.campaign),referrerHost:clean(body?.referrerHost),clickedAt:new Date().toISOString()})
   return new NextResponse(null,{status:204})
  }catch(error){console.error('[diego-analytics] falha na coleta',error instanceof Error?error.message:'erro');return new NextResponse(null,{status:500})}
 }

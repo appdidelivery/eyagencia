@@ -14,6 +14,7 @@ import {schema} from './sanity/schemaTypes'
 import {structure} from './sanity/structure'
 import BookImportTool from './sanity/tools/BookImportTool'
 import DiegoBioInsightsTool from './sanity/tools/DiegoBioInsightsTool'
+import AcademiaInsightsTool from './sanity/tools/AcademiaInsightsTool'
 
 export default defineConfig({
   basePath: '/studio',
@@ -21,7 +22,7 @@ export default defineConfig({
   dataset,
   // Add and edit the content schema in the './sanity/schemaTypes' folder
   schema,
-  tools: [{name:'importar-livros',title:'Importar livros',component:BookImportTool},{name:'bio-insights',title:'Bio · cliques',component:DiegoBioInsightsTool}],
+  tools: [{name:'importar-livros',title:'Importar livros',component:BookImportTool},{name:'bio-insights',title:'Bio · cliques',component:DiegoBioInsightsTool},{name:'academia-insights',title:'Academia · Alunos',component:AcademiaInsightsTool}],
   plugins: [
     structureTool({structure}),
     // Vision is for querying with GROQ from inside the Studio

@@ -56,6 +56,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/diego`,
+      lastModified: new Date('2026-11-06'),
+      changeFrequency: 'monthly',
+      priority: 0.75,
+    },
+    {
+      url: `${baseUrl}/diego/coleta-de-alimentos`,
+      lastModified: new Date('2026-11-06'),
+      changeFrequency: 'yearly',
+      priority: 0.75,
+    },
+    {
       url: `${baseUrl}/diego/obras`,
       lastModified: new Date('2026-11-06'),
       changeFrequency: 'monthly',

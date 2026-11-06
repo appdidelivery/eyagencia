@@ -4,6 +4,7 @@ import {useClient} from 'sanity'
 type Row={kind?:string;linkId?:string;partner?:string;source?:string;medium?:string;referrerHost?:string;clickedAt?:string}
 const labels:Record<string,string>={
  eyagencia:'EyAgencia',velo_delivery:'Velo Delivery',livros:'Livros que eu li',playlist:'YouTube Music',
+ coleta_projeto:'Dia Nacional da Coleta · projeto',coleta_voluntarios:'Coleta · grupo voluntários',coleta_grupo:'Coleta · grupo (landing)',coleta_instagram:'Coleta · Instagram oficial',academia_ia:'Academia IA na Prática',
  projetos:'Projetos e cases',trajetoria:'Minha trajetória',ia_ecommerce:'IA aplicada',artigos:'Artigos',
  contato:'Contato profissional',instagram:'Instagram'
 }

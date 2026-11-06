@@ -4,7 +4,7 @@ import { academyUrl, missions, tracks } from "./data";
 
 export const metadata: Metadata = {
   title: "IA na Prática | Academia gratuita de IA da EyAgencia",
-  description: "Aprenda IA do zero, aplique em negócios e construa um serviço digital. 15 missões gratuitas com exercícios, prompts, ferramentas e progresso salvo, sem cadastro obrigatório.",
+  description: "Aprenda IA do zero, aplique em negócios e construa um serviço digital. 15 missões gratuitas com exercícios, prompts, ferramentas e progresso salvo, sem cadastro obrigatório para iniciar.",
   alternates: { canonical: academyUrl },
   keywords: ["curso gratuito de inteligência artificial", "IA na prática", "curso de IA para iniciantes", "IA para e-commerce", "IA para negócios", "aprender ChatGPT", "IA para gerar renda com serviços"],
   openGraph: {

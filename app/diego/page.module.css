@@ -15,3 +15,16 @@
 @media(max-width:850px){.storyMosaic{max-width:540px;height:clamp(200px,45vw,280px)}}
 @media(max-width:480px){.storyMosaic{height:210px;gap:4px;border-radius:16px;margin-bottom:22px}}
 @media(prefers-reduced-motion:reduce){.storyMosaic img{transition:none}}
+
+
+/* Ações disponíveis e campanha anual: identidade visual de impacto mantendo a leitura da bio. */
+.spotlightCard{min-height:91px;border:1px solid rgba(204,245,155,.48);display:flex;align-items:center;gap:12px;text-decoration:none;border-radius:17px;padding:13px 14px;color:#f1ffea;background:linear-gradient(115deg,rgba(50,99,44,.6),rgba(28,67,45,.64));transition:transform .18s,border-color .18s,background .18s;position:relative}
+.spotlightCard:hover,.spotlightCard:focus-visible{transform:translateY(-2px);border-color:#daf7a4;background:linear-gradient(115deg,rgba(71,125,56,.7),rgba(40,94,65,.73))}
+.spotlightCard .cardIcon{color:#d6ffac;background:rgba(165,225,127,.16);border-color:rgba(208,253,151,.23)}
+.spotlightCard .cardKicker{color:#d2f4a2;letter-spacing:.12em}
+.spotlightCard .cardText small{color:#cde0bd}
+.activeMark{display:grid;place-items:center;flex:0 0 19px;width:19px;height:19px;border-radius:50%;border:1px solid rgba(134,232,163,.55);background:rgba(88,185,121,.21);color:#a0f5b8;font-size:11px;font-weight:900}
+.featuredCard .activeMark{background:#175b3c;color:#e6ffed;border-color:rgba(15,90,61,.4)}
+.spotlightCard .activeMark{color:#dbffab;border-color:rgba(213,250,172,.54)}
+@media(max-width:480px){.spotlightCard{gap:9px;padding:12px 10px;min-height:86px}.activeMark{flex-basis:17px;width:17px;height:17px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.spotlightCard{transition:none}}

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { challengePaths, missions, tracks, type Mission, type TrackId } from "./data";
 import styles from "./academia.module.css";
 
