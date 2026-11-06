@@ -25,7 +25,7 @@ export const diegoBookType=defineType({
   defineField({name:'recommendFor',title:'Eu indicaria para',type:'text',rows:3}),
   defineField({name:'rating',title:'Minha nota (1–5)',type:'number',validation:R=>R.integer().min(1).max(5)}),
 
-  defineField({name:'amazonAffiliateUrl',title:'Link afiliado Amazon',type:'url',description:'Link gerado no programa de Associados Amazon; não use URLs comuns para atribuir comissão.',validation:R=>R.custom(v=>!v||fromStore(v,['amazon.com.br','amzn.to','a.co'])||'Use um link HTTPS válido da Amazon ou amzn.to')}),
+  defineField({name:'amazonAffiliateUrl',title:'Link afiliado Amazon',type:'url',description:'Link gerado no programa de Associados Amazon; não use URLs comuns para atribuir comissão.',validation:R=>R.custom(v=>!v||fromStore(v,['amazon.com.br','amzn.to','a.co','link.amazon'])||'Use um link HTTPS válido da Amazon ou amzn.to')}),
   defineField({name:'shopeeAffiliateUrl',title:'Link afiliado Shopee',type:'url',description:'Opcional: link gerado no programa de afiliados Shopee.',validation:R=>R.custom(v=>!v||fromStore(v,['shopee.com.br','shope.ee'])||'Use um link HTTPS válido da Shopee ou shope.ee')}),
   defineField({name:'sortOrder',title:'Ordem de exibição',type:'number'}),
   defineField({name:'readConfirmed',title:'Diego confirmou que leu?',type:'boolean',initialValue:false}),

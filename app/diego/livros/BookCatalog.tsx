@@ -60,6 +60,22 @@ const offerLinks:Record<string,{mercadoLivre?:string;amazon?:string;directMercad
  // Oferta comum de exemplar usado: NÃO é link gerado pelo programa de afiliados.
  'impossibilidade-humana-possibilidade-divina':{directMercadoLivre:'https://www.mercadolivre.com.br/livro-impossibilidade-humana-possibilidade-divina/up/MLBU1431271544?pdp_filters=item_id%3AMLB2631770181',editionNote:'Usado · sem afiliado'},
 }
+// Links Mercado Livre dos prints enviados em 06/11/2026, vinculados à capa e ao título exatos.
+// Quando o CMS ainda guarda um link antigo, esta lista revisada prevalece.
+// Links Amazon link.amazon recebidos sem destino verificável ficam fora da publicação.
+const latestNov6MercadoLinks:Record<string,string>={
+ 'cafe-com-deus-pai':'https://meli.la/1t7U8nQ',
+ 'fome-de-poder-ray-kroc':'https://meli.la/2k4rMhS',
+ 'transformando-suor-em-ouro':'https://meli.la/1zDenUJ',
+ 'a-cabana':'https://meli.la/24MsBqJ',
+ 'de-volta-a-cabana':'https://meli.la/23nL9ot',
+ 'essencialismo':'https://meli.la/1P9zsfc',
+ 'va-mais-longe':'https://meli.la/1Uf3LPa',
+ 'como-usar-a-internet-para-alavancar-suas-vendas':'https://meli.la/15pU5WK',
+ 'uma-vida-com-propositos':'https://meli.la/1QYQE8N',
+ 'satisfacao-garantida':'https://meli.la/1m5uNaV',
+ 'o-mestre-da-vida':'https://meli.la/15bZaVd'
+}
 // O link de "Marketing Digital: O Segredo do Facebook" é diferente de
 // "Facebook Marketing", de Camila Porto; não vincular ao título errado.
 const christSeriesBox={mercadoLivre:'https://meli.la/1BW8wRa',amazon:'https://link.amazon/B0fA2qibf'}
@@ -93,9 +109,10 @@ function Book({book}:{book:BookEntry}){
  const externalBuy=validBuy(book.affiliateUrl)
  const normalAffiliateBuy=validBuy(selectedOffer?.mercadoLivre)
  const nonAffiliateBuy=validBuy(selectedOffer?.directMercadoLivre)
- const buy=externalBuy||normalAffiliateBuy||nonAffiliateBuy
- const nonAffiliateOnly=!!nonAffiliateBuy&&!externalBuy&&!normalAffiliateBuy
- const buyLabel=externalBuy?'Mercado Livre ↗':selectedOffer?.editionNote?`Mercado Livre · ${selectedOffer.editionNote} ↗`:'Mercado Livre ↗'
+ const latestBuy=validBuy(book.slug?latestNov6MercadoLinks[book.slug]:null)
+ const buy=latestBuy||externalBuy||normalAffiliateBuy||nonAffiliateBuy
+ const nonAffiliateOnly=!!nonAffiliateBuy&&!latestBuy&&!externalBuy&&!normalAffiliateBuy
+ const buyLabel=latestBuy||externalBuy?'Mercado Livre ↗':selectedOffer?.editionNote?`Mercado Livre · ${selectedOffer.editionNote} ↗`:'Mercado Livre ↗'
  const amazon=validBuy(book.amazonAffiliateUrl||selectedOffer?.amazon,'amazon')
  const shopee=validBuy(book.shopeeAffiliateUrl,'shopee')
  const menEdition=book.slug==='as-5-linguagens-do-amor'?validBuy(languagesForMen):null
@@ -136,14 +153,34 @@ function Book({book}:{book:BookEntry}){
   </div>}
  </article>
 }
+// Quantidades publicadas por editoras/autores (não são um ranking auditado de todos os livros).
+// Em caso de empate ou falta de dados, preservamos a ordem editorial original.
+const reportedWorldwideCopies:Record<string,number>={
+ 'uma-vida-com-propositos':50_000_000,
+ 'os-7-habitos-das-pessoas-altamente-eficazes':40_000_000,
+ 'a-cabana':25_000_000,
+ 'as-5-linguagens-do-amor':20_000_000
+}
+const categoryIcons:Record<string,string>={
+ 'Todas':'📚','Negócios':'💼','E-commerce e marketing':'🛒','IA e tecnologia':'🤖',
+ 'Finanças':'📈','Liderança':'🧭','Desenvolvimento pessoal':'🌱','Biografias':'👤',
+ 'Literatura':'📖','Espiritualidade':'✨','Ciência':'🔬','Mercado imobiliário':'🏡',
+ 'Formação técnica':'🎓','Outros':'📚','Outras leituras':'📚'
+}
 export default function BookCatalog({books}:{books:BookEntry[]}){
- const [q,setQ]=useState(''),[category,setCategory]=useState('Todas'),[sort,setSort]=useState('editorial')
+ const [q,setQ]=useState(''),[category,setCategory]=useState('Todas'),[sort,setSort]=useState('global')
  const categories=useMemo(()=>['Todas',...Array.from(new Set(books.map(b=>b.category||'Outras leituras'))).sort((a,b)=>a.localeCompare(b,'pt-BR'))],[books])
  const visible=useMemo(()=>{
   const needle=q.trim().toLocaleLowerCase('pt-BR')
+  const sourceIndex=new Map(books.map((b,i)=>[b.id,i]))
   const arr=books.filter(b=>(category==='Todas'||(b.category||'Outras leituras')===category)&&(!needle||[b.title,b.author,b.about,b.review,b.lessons||''].join(' ').toLocaleLowerCase('pt-BR').includes(needle)))
   if(sort==='title')arr.sort((a,b)=>a.title.localeCompare(b.title,'pt-BR'))
   if(sort==='rating')arr.sort((a,b)=>(b.rating||0)-(a.rating||0))
+  if(sort==='global')arr.sort((a,b)=>{
+   const salesA=reportedWorldwideCopies[a.slug||'']||0
+   const salesB=reportedWorldwideCopies[b.slug||'']||0
+   return salesB-salesA||(sourceIndex.get(a.id)||0)-(sourceIndex.get(b.id)||0)
+  })
   return arr
  },[books,q,category,sort])
  return <main className={styles.page}>
@@ -160,9 +197,18 @@ export default function BookCatalog({books}:{books:BookEntry[]}){
     <div className={styles.heading}><div><small>MINHA ESTANTE</small><h2>Explore as leituras</h2></div><a href={highlight} target="_blank" rel="noopener noreferrer">Destaque Leitura📕 ↗</a></div>
     {books.length>0?<><div className={styles.filters}>
       <label><span>Buscar</span><input type="search" placeholder="Livro, autor ou assunto" value={q} onChange={e=>setQ(e.target.value)}/></label>
-      <label><span>Assunto</span><select value={category} onChange={e=>setCategory(e.target.value)}>{categories.map(c=><option value={c} key={c}>{c}</option>)}</select></label>
-      <label><span>Ordenar</span><select value={sort} onChange={e=>setSort(e.target.value)}><option value="editorial">Minha seleção</option><option value="rating">Minha nota</option><option value="title">Título A–Z</option></select></label>
+      <label><span>Ordenar</span><select value={sort} onChange={e=>setSort(e.target.value)}><option value="global">Mais vendidos mundialmente (estimativa)</option><option value="editorial">Minha seleção</option><option value="rating">Minha nota</option><option value="title">Título A–Z</option></select></label>
     </div>
+    <div className={styles.categoryArea}>
+      <p className={styles.categoryHeading}>Filtrar por categoria</p>
+      <div className={styles.categoryNav} role="group" aria-label="Escolher categoria de livros">
+       {categories.map(c=><button key={c} type="button" aria-pressed={category===c}
+        className={category===c?styles.categoryActive:''} onClick={()=>setCategory(c)}>
+        <span aria-hidden="true">{categoryIcons[c]||'📚'}</span><span>{c}</span>
+       </button>)}
+      </div>
+    </div>
+    {sort==='global'&&<p className={styles.salesNote}>Ordem indicativa: títulos com números de vendas mundiais divulgados aparecem primeiro; os demais seguem minha seleção original. Não é um ranking completo de vendas.</p>}
     <p className={styles.count} aria-live="polite">{visible.length} {visible.length===1?'livro encontrado':'livros encontrados'}</p>
     {visible.length?<div className={styles.grid}>{visible.map(b=><Book book={b} key={b.id}/>)}</div>:<div className={styles.empty}><h3>Nenhum livro encontrado</h3><p>Tente outra busca ou categoria.</p><button onClick={()=>{setQ('');setCategory('Todas')}}>Limpar filtros</button></div>}</>:
       <div className={styles.empty}><div className={styles.emptyIcon}>▤</div><h3>Minha biblioteca está sendo organizada</h3><p>Estou selecionando os livros que li e preparando minhas resenhas. Enquanto isso, você pode acessar meu destaque <strong>Leitura📕</strong> no Instagram.</p><a href={highlight} target="_blank" rel="noopener noreferrer">Ver minhas leituras no Instagram ↗</a></div>}

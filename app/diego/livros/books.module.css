@@ -43,3 +43,18 @@
 .authorCollectionOffer a:active{transform:translateY(3px);border-bottom-width:1px}
 .authorCollectionOffer a:focus-visible{outline:3px solid #edffa9;outline-offset:3px}
 @media(max-width:480px){.authorCollectionOffer a{width:100%}}
+
+
+/* Biblioteca Diego: seleção por categorias e classificação transparente. */
+.filters{grid-template-columns:minmax(0,1.65fr) minmax(240px,1fr)}
+.categoryArea{margin:12px 0 11px}
+.categoryHeading{margin-bottom:10px;color:#b6dcc4;font-size:11px;font-weight:800;letter-spacing:.04em}
+.categoryNav{display:flex;flex-wrap:wrap;gap:8px}
+.categoryNav button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;background:#153523;border:1px solid #3f7855;color:#c9e7d2;border-radius:13px;font-size:12px;font-weight:750;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,transform .15s}
+.categoryNav button span:first-child{font-size:17px}
+.categoryNav button:hover{background:#24523a;border-color:#75d99a}
+.categoryNav button.categoryActive{background:#80edac;color:#0b2d1c;border-color:#bdffd6;box-shadow:0 2px 0 #348452}
+.categoryNav button:focus-visible{outline:3px solid #e0ff9b;outline-offset:2px}
+.salesNote{color:#9ecbb0;font-size:11px;line-height:1.65;margin:12px 0}
+@media(max-width:850px){.filters{grid-template-columns:1fr 1fr}.filters label:first-child{grid-column:auto}}
+@media(max-width:660px){.filters{grid-template-columns:1fr}.filters label:first-child{grid-column:1/-1}.categoryNav{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:10px;-webkit-overflow-scrolling:touch}.categoryNav button{scroll-snap-align:start;flex:none}.categoryArea{margin-right:-14px}}
