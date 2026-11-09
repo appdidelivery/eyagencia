@@ -13,6 +13,16 @@ type Result = {brand: BrandKey; status: string; sourceUrl?: string; instagramPos
 type MetaResult = {id?: string; status_code?: string; error?: {code?: number; error_subcode?: number}}
 const GRAPH = 'https://graph.facebook.com/v26.0'
 const SOURCE_LIMIT = 6
+// Multiple pre-approved primary sources. The official websites are read only;
+// the publication artwork and editorial commentary are fully original.
+const EXTRA_SOURCES:Record<BrandKey,Source[]> = {
+  eyagencia:[
+    {name:'Nuvemshop',host:'www.nuvemshop.com.br',listUrl:'https://www.nuvemshop.com.br/blog/',articlePrefix:'/blog/'},
+    {name:'Tray',host:'tray.com.br',listUrl:'https://tray.com.br/escola/',articlePrefix:'/escola/'},
+  ],
+  'velo-delivery':[],
+}
+function allowedSources(brand:BrandKey):Source[]{return [NEWS_SOURCES[brand] as Source,...EXTRA_SOURCES[brand]]}
 
 function brazilDate(now = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now)
@@ -38,8 +48,11 @@ async function fetchHtml(url: string, allowedHost: string) {
   if(address.protocol !== 'https:' || address.hostname !== allowedHost) throw new Error('disallowed_source')
   const response = await fetch(url,{
     headers:{'Accept':'text/html','User-Agent':'EyAgencia-NewsRadar/1.0 (+https://www.eyagencia.com.br)'},
-    redirect:'error',cache:'no-store',signal:AbortSignal.timeout(16000),
+    redirect:'follow',cache:'no-store',signal:AbortSignal.timeout(16000),
   })
+  // A redirect must stay on the pre-approved publisher host.
+  const finalUrl=new URL(response.url)
+  if(finalUrl.protocol!=='https:'||finalUrl.hostname!==allowedHost)throw new Error('source_redirect_disallowed')
   if(!response.ok) throw new Error('source_http_'+response.status)
   if(!(response.headers.get('content-type')||'').includes('text/html'))throw new Error('source_not_html')
   const html=await response.text()
@@ -229,19 +242,19 @@ async function publishInstagram(keys:{instagramId:string;token:string},jpeg:stri
 // Read-only preview diagnostic: public metadata only, never loads assets or
 // executes a Meta request or writes to the CMS.
 export async function inspectIndustrySources() {
-  const results=[]
-  for(const brand of ['eyagencia','velo-delivery'] as BrandKey[]) {
-    const source=NEWS_SOURCES[brand] as Source
-    try{
-      const articles=await relevantArticles(brand,source)
-      results.push({brand,source:source.name,eligible:articles.length,
-        titles:articles.slice(0,3).map(article=>({title:article.title,publishedAt:article.publishedAt,url:article.url}))})
-    }catch(error){
-      results.push({brand,source:source.name,eligible:0,
-        error:error instanceof Error?error.message.slice(0,90):'unavailable'})
-    }
-  }
-  return results
+  const rows=await Promise.all((['eyagencia','velo-delivery'] as BrandKey[]).flatMap(brand=>
+    allowedSources(brand).map(async source=>{
+      try{
+        const articles=await relevantArticles(brand,source)
+        return {brand,source:source.name,eligible:articles.length,
+          titles:articles.slice(0,3).map(article=>({title:article.title,publishedAt:article.publishedAt,url:article.url}))}
+      }catch(error){
+        return {brand,source:source.name,eligible:0,
+          error:error instanceof Error?error.message.slice(0,90):'unavailable'}
+      }
+    }),
+  ))
+  return rows
 }
 
 export async function runIndustryNewsRadar() {
@@ -274,7 +287,7 @@ export async function runIndustryNewsRadar() {
       results.push({brand, status:'daily_limit_reached'})
       continue
     }
-    const source=NEWS_SOURCES[brand] as Source
+    let source=NEWS_SOURCES[brand] as Source
     const keys=credentials(brand)
     if(!keys){results.push({brand,status:'credentials_missing'});continue}
     const id='social-news-'+brand+'-'+today+'-'+slot
@@ -283,21 +296,24 @@ export async function runIndustryNewsRadar() {
     )
     if(exists){results.push({brand,status:'already_processed'});continue}
     let article:Article|null=null
-    try {
-      const candidates=await relevantArticles(brand,source)
-      for(const candidate of candidates){
-        const posted=await writeClient.fetch<number>(
-          'count(*[_type=="socialNewsPost" && brand==$brand && sourceUrl==$url])',
-          {brand,url:candidate.url},
-        )
-        if(posted===0){article=candidate;break}
+    const failures:string[]=[]
+    for(const publisher of allowedSources(brand)){
+      try{
+        const candidates=await relevantArticles(brand,publisher)
+        for(const candidate of candidates){
+          const posted=await writeClient.fetch<number>(
+            'count(*[_type=="socialNewsPost" && brand==$brand && sourceUrl==$url])',
+            {brand,url:candidate.url},
+          )
+          if(posted===0){article=candidate;source=publisher;break}
+        }
+        if(article)break
+      }catch(error){
+        failures.push(publisher.name+': '+(error instanceof Error?error.message.slice(0,50):'unavailable'))
       }
-    }catch(error) {
-      const reason=error instanceof Error?error.message.slice(0,110):'source_unavailable'
-      results.push({brand,status:'source_unavailable',reason})
-      continue
     }
-    if(!article){results.push({brand,status:'no_fresh_relevant_news'});continue}
+    if(!article){results.push({brand,status:'no_fresh_relevant_news',
+      reason:failures.join('; ').slice(0,180)});continue}
     const text=captionFor(brand,source,article)
     try {
       await writeClient.create({
