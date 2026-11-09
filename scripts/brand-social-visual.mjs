@@ -1,3 +1,4 @@
+import {officialLogoSvg} from './official-velo-logo.mjs'
 // Deterministic, brand-specific artwork for social feed posts.
 // Inspired by the supplied visual directions, not a reproduction of reference images.
 // No third-party photos, copyrighted quotes or fabricated logos are used.
@@ -74,54 +75,67 @@ function art(type) {
   }
   return '<g '+common+'>'+byType[type]+'</g>'
 }
-export function makeBrandSocialSvg({slug,topic,concept='',date=''}) {
+export function makeBrandSocialSvg({slug,topic,concept='',date='',cover=false,subtitle='',photographic=false}) {
   const brand=palettes[String(slug||'')]
   if(!brand) throw new Error('Identidade social indisponível para a marca')
-  const title=clean(topic,130) || 'Ideias para seu negócio'
+  const title=clean(topic,122) || 'Ideias para seu negócio'
   const semantic=subject(title+' '+clean(concept,150))
-  const titleLines=lines(title,brand.kind==='velo'?18:20,5)
   const seed=hash(title+'|'+date)
-  const tilt=(seed%17)-8
-  const y0=brand.kind==='velo'?308:318
-  const lineHeight=titleLines.length>=5?76:84
-  const size=titleLines.length>=5?62:72
-  const ink=titleLines.map((l,i)=>{
-    const color=brand.kind==='velo' && i===titleLines.length-1 ? brand.accent : '#f8fbff'
-    const scaled = Math.min(size,Math.floor(630 / Math.max(1,l.length*0.68)))
-    return '<text x="83" y="'+(y0+i*lineHeight)+'" fill="'+color+'" font-family="Noto Sans" font-size="'+scaled+'" font-weight="700" letter-spacing="-.5">'+escapeXml(l)+'</text>'
+  const variant=seed%4
+  const titleLines=lines(title,brand.kind==='velo'?19:20,subtitle?4:5)
+  const bodyLines=subtitle?lines(subtitle,35,3):[]
+  const titleHeight=titleLines.length>=5?73:80
+  const titleSize=titleLines.length>=5?64:74
+  const textY=subtitle?345:subtitle?345:330
+  const ink=titleLines.map((line,i)=>{
+    const color=i===titleLines.length-1?brand.accent:'#f8fbff'
+    const scaled=Math.min(titleSize,Math.floor(628/Math.max(1,line.length*.63)))
+    return '<text x="88" y="'+(textY+i*titleHeight)+'" fill="'+color+
+      '" font-family="Noto Sans" font-size="'+scaled+'" font-weight="700">'+escapeXml(line)+'</text>'
   }).join('')
-  const rect=brand.kind==='velo'
-    ? '<path d="M0 900 Q540 1030 1080 785 L1080 1080 H0 Z" fill="#6327b4" opacity=".56"/><path d="M0 945 Q540 1050 1080 850" fill="none" stroke="#ff812b" stroke-width="13" opacity=".9"/>'
-    : '<path d="M0 920 Q570 840 1080 1020 L1080 1080 H0 Z" fill="#0b5151" opacity=".7"/><rect x="0" y="0" width="16" height="1080" fill="#ff997c" opacity=".8"/>'
-  const opening=brand.kind==='velo'
-    ? '<text x="86" y="109" fill="#f9fdff" font-size="50" font-weight="700" font-family="Noto Sans">VELO</text><text x="240" y="109" fill="#a66dff" font-size="50" font-weight="700" font-family="Noto Sans">DELIVERY</text>'
-    : '<text x="86" y="110" fill="#b2f1df" font-size="48" font-weight="700" font-family="Noto Sans">EyAgencia</text>'
-  const glow=brand.kind==='velo' ? '#f26d1b' : '#4cae99'
+  const subStart=Math.max(685,textY+titleLines.length*titleHeight+19)
+  const supporting=bodyLines.map((line,i)=>
+    '<text x="89" y="'+(subStart+i*53)+'" fill="#e3edff" font-size="34" font-family="Noto Sans">'+
+    escapeXml(line)+'</text>').join('')
+  const brandMark=cover&&brand.kind==='velo'
+    ?officialLogoSvg({x:82,y:47,width:490,height:132})
+    :'<text x="87" y="118" fill="'+brand.soft+
+      '" font-size="33" font-weight="700" font-family="Noto Sans">'+
+      escapeXml(cover?brand.brand:'GUIA PRÁTICO · '+semantic.tag)+'</text>'
+  const ornament=[
+    '<path d="M670 1010 L1068 590 M790 1050 L1080 754" stroke="'+brand.accent+'" stroke-width="5" opacity=".3"/>',
+    '<circle cx="933" cy="738" r="290" fill="none" stroke="'+brand.soft+'" stroke-width="5" opacity=".23"/><circle cx="933" cy="738" r="344" fill="none" stroke="'+brand.accent+'" stroke-width="3" opacity=".17"/>',
+    '<path d="M680 965 L1000 640 L1080 730 M765 1080 L1080 795" stroke="'+brand.highlight+'" stroke-width="8" opacity=".23" fill="none"/>',
+    '<rect x="750" y="575" width="285" height="355" rx="64" stroke="'+brand.soft+'" stroke-width="6" opacity=".27" fill="none" transform="rotate(8 900 750)"/>',
+  ][variant]
+  const motif='<g transform="translate(754 524) scale(.72)" color="'+(variant%2?brand.soft:brand.accent)+'" opacity=".88">'+art(semantic.motif)+'</g>'
+  const background=photographic
+    ?'<rect width="1080" height="1080" fill="'+brand.bg+'" opacity=".61"/>'+
+      '<rect x="59" y="254" width="720" height="626" rx="45" fill="'+brand.bg+'" opacity=".79"/>'
+    :'<rect width="1080" height="1080" fill="url(#back)"/>'+
+      '<circle cx="'+(810+variant*49)+'" cy="'+(440+variant*90)+'" r="410" fill="url(#glow)" opacity=".66"/>'+
+      '<path d="M0 980 Q480 920 1080 740 L1080 1080 H0 Z" fill="'+brand.highlight+'" opacity=".17"/>'+
+      '<path d="M0 1050 Q510 970 1080 830" fill="none" stroke="'+brand.soft+'" stroke-width="5" opacity=".28"/>'+
+      ornament+motif+
+      '<rect x="62" y="255" width="722" height="625" rx="44" fill="'+brand.bg+'" opacity=".74"/>'
+  const minLabel=semantic.tag.length>24?22:25
+  const badgeWidth=Math.min(710,semantic.tag.length*17+65)
   return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">'+
-    '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="'+brand.bg+'"/><stop offset="1" stop-color="'+brand.bg2+'"/></linearGradient>'+
-    '<radialGradient id="gl"><stop stop-color="'+glow+'" stop-opacity=".50"/><stop offset="1" stop-color="'+glow+'" stop-opacity="0"/></radialGradient>'+
-    '</defs><rect width="1080" height="1080" fill="url(#bg)"/>'+
-    '<circle cx="963" cy="357" r="424" fill="url(#gl)"/>'+
-    '<circle cx="944" cy="730" r="380" fill="'+brand.highlight+'" opacity=".055"/>'+
-    '<path d="M580 1080 L1080 580 M673 1080 L1080 674" stroke="'+brand.accent+'" stroke-width="3" opacity=".24"/>'+
-    opening+
-    '<rect x="80" y="172" width="'+Math.min(660,semantic.tag.length*21+65)+'" height="58" rx="16" fill="'+brand.accent+'"/>'+
-    '<text x="105" y="209" fill="'+brand.bg+'" font-size="25" font-weight="700" font-family="Noto Sans">'+escapeXml(semantic.tag)+'</text>'+
-    '<g transform="translate(722 518) rotate('+tilt+' 175 200)">'+
-    '<rect x="0" y="0" width="398" height="440" rx="58" fill="'+brand.highlight+'" opacity=".08"/>'+
-    '<g transform="translate(16 29)" color="'+brand.accent+'" opacity=".9">'+art(semantic.motif)+'</g>'+
-    '</g>'+
-    '<rect x="58" y="255" width="702" height="530" rx="35" fill="'+brand.bg+'" opacity=".28"/>'+
-    ink+
-    '<text x="86" y="809" fill="#f0f8ff" font-size="34" font-family="Noto Sans" opacity=".86">'+
-    (brand.kind==='velo'?'INSIGHTS PARA GESTORES DE DELIVERY':'CONTEÚDO PARA E-COMMERCE')+'</text>'+
-    rect+
-    '<path d="M85 991 H995" stroke="'+brand.accent+'" stroke-width="4" opacity=".8"/>'+
-    '<text x="86" y="1040" fill="#f5ffff" font-size="27" font-family="Noto Sans" font-weight="700">'+escapeXml(brand.website)+'</text>'+
-    '<text x="995" y="1040" text-anchor="end" fill="'+brand.soft+'" font-size="23" font-family="Noto Sans">'+escapeXml(brand.label)+'</text>'+
+    '<defs><linearGradient id="back" x1="0" x2="1" y1="0" y2="1">'+
+    '<stop stop-color="'+brand.bg+'"/><stop offset="1" stop-color="'+brand.bg2+'"/></linearGradient>'+
+    '<radialGradient id="glow"><stop stop-color="'+brand.accent+'" stop-opacity=".54"/><stop offset="1" stop-color="'+brand.accent+'" stop-opacity="0"/></radialGradient></defs>'+
+    background+brandMark+
+    '<rect x="80" y="185" width="'+badgeWidth+'" height="63" rx="17" fill="'+brand.accent+'"/>'+
+    '<text x="107" y="226" font-family="Noto Sans" font-weight="700" font-size="'+minLabel+'" fill="'+brand.bg+'">'+escapeXml(semantic.tag)+'</text>'+
+    '<path d="M86 277 H641" stroke="'+brand.soft+'" stroke-width="7" stroke-linecap="round"/>'+
+    ink+supporting+
+    '<path d="M88 960 H990" stroke="'+brand.accent+'" stroke-width="6" opacity=".88"/>'+
+    '<text x="89" y="1019" fill="#f5faff" font-size="29" font-family="Noto Sans" font-weight="700">'+
+    escapeXml(brand.website)+'</text>'+
+    '<text x="990" y="1018" text-anchor="end" fill="'+brand.soft+'" font-size="24" font-family="Noto Sans">'+
+    escapeXml(cover?'CONTEÚDO PARA GESTORES':'PRÓXIMO PASSO →')+'</text>'+
     '</svg>'
 }
-
 
 // Original sunrise and horizon artwork for the weekly founder/restaurant
 // motivational series. Intentionally does not reproduce third-party quotes,
