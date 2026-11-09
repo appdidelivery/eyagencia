@@ -14,7 +14,7 @@ if(!fontFiles.every((file) => existsSync(file))) {
   throw new Error('Fonte Noto Sans não incluída no deployment social.')
 }
 
-export async function renderBrandArt(svg) {
+export async function renderBrandArt(svg,{backgroundBuffer=null}={}) {
   const painter = new Resvg(svg, {
     font: {fontFiles, loadSystemFonts: false, defaultFontFamily: 'Noto Sans'},
     textRendering: 2,
@@ -34,6 +34,15 @@ export async function renderBrandArt(svg) {
     if (data[p]>215 && data[p+1]>215 && data[p+2]>215) bright++
   }
   if (bright < 1400) throw new Error('Renderização reprovada: título ilegível ou fonte ausente.')
+  if(backgroundBuffer) {
+    // Photograph is generated/authorized without embedded text; all headings
+    // and the official brand mark are composited in a separate deterministic layer.
+    const {data:photoInfo}=await sharp(backgroundBuffer).metadata().then(data=>({data}))
+    if(!photoInfo?.width||!photoInfo?.height||photoInfo.width<500||photoInfo.height<500)
+      throw new Error('Background photo below minimum resolution')
+    return sharp(backgroundBuffer).rotate().resize(1080,1080,{fit:'cover',position:'attention'})
+      .composite([{input:png,top:0,left:0}]).png({compressionLevel:8}).toBuffer()
+  }
   return png
 }
 
