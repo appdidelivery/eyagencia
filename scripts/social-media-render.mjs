@@ -1,4 +1,4 @@
-const VERSION='social-media-v1'
+const VERSION='social-media-v2'
 const API='v2026-07-01'
 function settings(){
   const project=process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
@@ -45,59 +45,68 @@ function visualTheme(name) {
 function titleSvg(lines,x,y,size,color,lineHeight) {
   return lines.map((line,i)=>`<text x="${x}" y="${y+i*lineHeight}" fill="${color}" font-size="${size}" font-weight="800" font-family="Arial,DejaVu Sans,sans-serif">${xml(line)}</text>`).join('')
 }
-export function makeSocialSvg(pkg,frame,format,index,count){
-  const story=format==='story', width=1080, height=story?1920:1350
+export function makeSocialSvg(pkg,frame,format,index,count,usePhoto=false) {
+  const story=format==='story',width=1080,height=story?1920:1350
   const theme=visualTheme(pkg.title||'')
   const seed=hash(pkg.sourceSlug||pkg.title||'eyagencia')
+  const variant=(seed+index)%4
   const section=String(frame.kind||'insight').toLowerCase()
   const cover=['cover','hook'].includes(section)
   const cta=section==='cta'
-  const headline=str(frame.title||pkg.title||'Radar de Conteúdo',120)
+  const headline=str(frame.title||pkg.title||'Radar de Conteúdo',115)
   const content=str(frame.text||'',180)
-  const title=wrap(headline,story?20:22,cover?5:4)
-  const mainSize=title.length>=5?64:title.length>=4?70:cover?82:75
-  const y0=story?605:435
-  const detail=wrap(content,story?36:37,story?5:4)
-  const detailStart=y0+title.length*(mainSize+22)+(!cover?70:85)
+  const title=wrap(headline,story?20:21,cover?5:4)
+  const size=title.length>=5?64:title.length>=4?70:cover?84:78
+  const y0=story?610:420
+  const lineHeight=size+24
+  const detailStart=y0+title.length*lineHeight+54
   const detailSize=story?40:37
-  const countLabel=format==='story'?'STORY':'CARROSSEL'
-  const totalLabel=String(index+1).padStart(2,'0')+' / '+String(count).padStart(2,'0')
-  const decoX=story?590:645, decoY=story?1220:810
-  const angle=[-13,0,12][(seed+index)%3]
-  const corner=story?'1600':'1150'
-  const art=cover
-    ? `<circle cx="${decoX+120}" cy="${decoY+50}" r="230" stroke="${theme.accent}" stroke-width="12" fill="none" opacity=".24"/>
-       <circle cx="${decoX+120}" cy="${decoY+50}" r="142" stroke="${theme.accent}" stroke-width="19" fill="none" opacity=".5"/>
-       <path d="M${decoX+5} ${decoY+50} H${decoX+235} M${decoX+120} ${decoY-60} V${decoY+160}" stroke="${theme.accent}" stroke-width="13" opacity=".6"/>`
-    : `<rect x="${decoX-25}" y="${decoY-95}" width="330" height="270" rx="52" fill="${theme.accent}" opacity=".10" transform="rotate(${angle} ${decoX+145} ${decoY+50})"/>
-       <circle cx="${decoX+145}" cy="${decoY+45}" r="112" stroke="${theme.accent}" stroke-width="15" fill="none" opacity=".5"/>
-       <path d="M${decoX+93} ${decoY+38} L${decoX+133} ${decoY+78} L${decoX+210} ${decoY-25}" stroke="${theme.accent}" stroke-width="17" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`
-  const textDetail=!cta?titleSvg(detail,105,detailStart,detailSize,'#d9e7e4',detailSize+18):
-     `<text x="105" y="${detailStart}" fill="#d9e7e4" font-size="${story?40:36}" font-family="Arial,sans-serif">Artigo completo no blog da EyAgencia</text>`
-  const guidance=cta
-    ? `<text x="105" y="${story?1470:1110}" fill="${theme.accent}" font-size="37" font-weight="700" font-family="Arial,sans-serif">Link no perfil · eyagencia.com.br/blog</text>`
-    : ''
-  const safeBottom=story?1710:1218
+  const footer=story?1710:1210
+  const remaining=footer-detailStart-100
+  const detailLines=Math.max(1,Math.min(4,Math.floor(remaining/(detailSize+20))))
+  const detail=wrap(content,story?34:34,detailLines)
+  const artX=story?665:710,artY=story?1260:870
+  const decorative=[
+    `<circle cx="${artX+110}" cy="${artY}" r="195" stroke="${theme.accent}" stroke-width="15" fill="none" opacity=".57"/><circle cx="${artX+110}" cy="${artY}" r="125" stroke="#f1cfae" stroke-width="5" fill="none" opacity=".66"/>`,
+    `<path d="M${artX-105} ${artY+150} L${artX+180} ${artY-160} L${artX+310} ${artY-30}" stroke="${theme.accent}" stroke-width="24" stroke-linecap="round" fill="none" opacity=".53"/>`,
+    `<rect x="${artX-75}" y="${artY-155}" width="355" height="300" rx="54" transform="rotate(-11 ${artX+100} ${artY})" fill="none" stroke="${theme.accent}" stroke-width="12" opacity=".55"/>`,
+    `<path d="M${artX-80} ${artY+80} L${artX+45} ${artY-40} L${artX+115} ${artY+20} L${artX+280} ${artY-145}" fill="none" stroke="${theme.accent}" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>`,
+  ][variant]
+  const accent=variant===0?'#f2ab83':variant===1?'#78e1d2':variant===2?'#bce9dd':theme.accent
+  const titleColor=cover? '#ffffff':'#f7fffb'
+  const supporting=cta
+    ?`<text x="105" y="${Math.min(detailStart,footer-135)}" fill="#f9dfd0" font-size="${story?38:34}" font-family="Arial,sans-serif">Artigo completo no blog da EyAgencia</text>`
+    :titleSvg(detail,105,detailStart,detailSize,'#e4f2f0',detailSize+20)
+  const photoOverlay=usePhoto
+    ?`<rect width="${width}" height="${height}" fill="#051b24" opacity=".53"/>
+      <rect x="76" y="${story?420:310}" width="705" height="${story?905:775}" rx="47" fill="#06222a" opacity=".76"/>`
+    :`<rect width="${width}" height="${height}" fill="url(#bg)"/>
+      <circle cx="${870+variant*23}" cy="${story?1160:810}" r="490" fill="${theme.accent}" opacity=".1"/>
+      <path d="M680 ${height} L1080 ${story?1050:610} M770 ${height} L1080 ${story?1210:790}" stroke="${accent}" stroke-width="7" opacity=".23"/>
+      <rect x="76" y="${story?420:310}" width="705" height="${story?905:775}" rx="47" fill="#04232b" opacity=".52"/>
+      <g>${decorative}</g>`
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <defs><linearGradient id="bg" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="${theme.bg}"/><stop offset="1" stop-color="${theme.alt}"/></linearGradient></defs>
-    <rect width="${width}" height="${height}" fill="url(#bg)"/>
-    <circle cx="900" cy="${corner}" r="430" fill="${theme.accent}" opacity=".045"/>
-    <path d="M75 0 V${height}" stroke="${theme.accent}" stroke-width="6" opacity=".7"/>
-    <rect x="105" y="${story?320:142}" width="420" height="66" rx="33" fill="${theme.accent}"/>
-    <text x="131" y="${story?364:186}" fill="${theme.bg}" font-size="28" font-weight="800" font-family="Arial,sans-serif">${xml(theme.label)}</text>
-    <text x="105" y="${story?475:280}" fill="${theme.accent}" font-size="30" font-weight="700" font-family="Arial,sans-serif">EYAGENCIA · RADAR DE CONTEÚDO</text>
-    ${titleSvg(title,105,y0,mainSize,'#f7fffb',mainSize+22)}
-    ${textDetail}
-    <g>${art}</g>
-    ${guidance}
-    <path d="M105 ${safeBottom} H960" stroke="${theme.accent}" stroke-width="4" opacity=".7"/>
-    <text x="105" y="${safeBottom+60}" fill="#d8e9e2" font-size="27" font-weight="700" font-family="Arial,sans-serif">${countLabel} · ${xml(totalLabel)}</text>
-    <text x="955" y="${safeBottom+60}" text-anchor="end" fill="#e4f3ef" font-size="26" font-family="Arial,sans-serif">eyagencia.com.br</text>
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop stop-color="${theme.bg}"/><stop offset="1" stop-color="${theme.alt}"/>
+      </linearGradient>
+    </defs>
+    ${photoOverlay}
+    <path d="M76 0 V${height}" stroke="${accent}" stroke-width="8" opacity=".72"/>
+    <rect x="105" y="${story?332:132}" width="470" height="64" rx="17" fill="${accent}"/>
+    <text x="131" y="${story?374:175}" fill="#062b32" font-size="26" font-weight="800" font-family="Arial,sans-serif">${xml(theme.label)}</text>
+    <text x="105" y="${story?500:291}" fill="${accent}" font-size="31" font-weight="700" font-family="Arial,sans-serif">EYAGENCIA · INTELIGÊNCIA DIGITAL</text>
+    <path d="M104 ${story?528:322} H644" stroke="${theme.accent}" stroke-width="6" stroke-linecap="round"/>
+    ${titleSvg(title,105,y0,size,titleColor,lineHeight)}
+    ${supporting}
+    <path d="M105 ${footer} H965" stroke="${accent}" stroke-width="5" opacity=".8"/>
+    <text x="105" y="${footer+59}" fill="#f1fffb" font-size="28" font-weight="700" font-family="Arial,sans-serif">${xml(format==='story'?'STORY':'CARROSSEL')} · ${String(index+1).padStart(2,'0')} / ${String(count).padStart(2,'0')}</text>
+    <text x="957" y="${footer+59}" text-anchor="end" fill="#f1fffb" font-size="25" font-family="Arial,sans-serif">eyagencia.com.br</text>
   </svg>`
 }
 async function getPackages(cfg){
   const since=new Date(Date.now()-21*86400000).toISOString()
-  const groq='*[_type=="socialPackage" && defined(sourcePublishedAt) && sourcePublishedAt >= $since && state != "published" && (coalesce(mediaStatus,"") != "rendered" || count(carouselMedia) != 8 || count(storyMedia) != 4)] | order(sourcePublishedAt desc)[0...20]{_id,_rev,title,sourceSlug,sourcePostId,carousel,stories,mediaStatus,carouselMedia,storyMedia}'
+  const groq='*[_type=="socialPackage" && defined(sourcePublishedAt) && sourcePublishedAt >= $since && state != "published" && (coalesce(mediaStatus,"") != "rendered" || count(carouselMedia) != 8 || count(storyMedia) != 4)] | order(sourcePublishedAt desc)[0...20]{_id,_rev,title,sourceSlug,sourcePostId,carousel,stories,mediaStatus,carouselMedia,storyMedia,"heroImageUrl":*[_type=="post" && _id == ^.sourcePostId][0].mainImage.asset->url}'
   const url=new URL(cfg.root+'/data/query/'+encodeURIComponent(cfg.dataset))
   url.searchParams.set('query',groq)
   url.searchParams.set('$since',JSON.stringify(since))
