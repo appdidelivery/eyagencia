@@ -12,7 +12,7 @@ type Article = {url: string; title: string; publishedAt: string; score: number}
 type Result = {brand: BrandKey; status: string; sourceUrl?: string; instagramPostId?: string; facebookPostId?: string; reason?: string}
 type MetaResult = {id?: string; status_code?: string; error?: {code?: number; error_subcode?: number}}
 const GRAPH = 'https://graph.facebook.com/v26.0'
-const SOURCE_LIMIT = 6
+const SOURCE_LIMIT = 10
 // Multiple pre-approved primary sources. The official websites are read only;
 // the publication artwork and editorial commentary are fully original.
 const EXTRA_SOURCES:Record<BrandKey,Source[]> = {
@@ -64,11 +64,11 @@ async function relevantArticles(brand: BrandKey, source: Source): Promise<Articl
   const links=extractNewsLinks(indexHtml,source)
     .map(link=>({...link,score:rankHeadline(link.title,brand)}))
     .filter(link=>link.score>0).slice(0,SOURCE_LIMIT)
-  // Do not scrape entire sites or load source images; only check at most 6 article headers.
+  // Do not scrape entire sites or load source images; only check at most 10 article headers.
   const verified=await Promise.allSettled(links.map(async link=>{
     const html=await fetchHtml(link.url,source.host)
     const date=extractNewsDate(html)
-    if(!date || !isRecent(date,new Date(),7))return null
+    if(!date || !isRecent(date,new Date(),14))return null
     const title=articleHeadline(html)||link.title
     const score=rankHeadline(title,brand)
     if(score<=0)return null
