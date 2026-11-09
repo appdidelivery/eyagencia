@@ -226,6 +226,24 @@ async function publishInstagram(keys:{instagramId:string;token:string},jpeg:stri
   throw new Error('meta_media_not_ready')
 }
 
+// Read-only preview diagnostic: public metadata only, never loads assets or
+// executes a Meta request or writes to the CMS.
+export async function inspectIndustrySources() {
+  const results=[]
+  for(const brand of ['eyagencia','velo-delivery'] as BrandKey[]) {
+    const source=NEWS_SOURCES[brand] as Source
+    try{
+      const articles=await relevantArticles(brand,source)
+      results.push({brand,source:source.name,eligible:articles.length,
+        titles:articles.slice(0,3).map(article=>({title:article.title,publishedAt:article.publishedAt,url:article.url}))})
+    }catch(error){
+      results.push({brand,source:source.name,eligible:0,
+        error:error instanceof Error?error.message.slice(0,90):'unavailable'})
+    }
+  }
+  return results
+}
+
 export async function runIndustryNewsRadar() {
   // Replaces the manual repost queue with original source-based commentary.
   // Never tries to call Instagram's unsupported native Repost action.
