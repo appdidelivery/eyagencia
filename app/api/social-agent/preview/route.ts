@@ -21,13 +21,17 @@ export async function GET(request: NextRequest) {
   }
   try {
     const slug = brand as keyof typeof samples
+    const slide=request.nextUrl.searchParams.get('slide')==='2'?2:1
     const png = await renderBrandArt(makeBrandSocialSvg({
-      slug, topic:samples[slug], date:'2026-10-28',
+      slug, topic:samples[slug],
+      date:slide===1?'2026-11-09-cover':'2026-11-09-slide-2',
+      cover:slide===1,
     }))
     const headers = {'Cache-Control':'public, s-maxage=3600, stale-while-revalidate=86400'}
     if (request.nextUrl.searchParams.get('check') === '1') {
       return NextResponse.json({
-        ok:true,brand,dimensions:'1080x1080',bytes:png.length,
+        ok:true,brand,slide,officialLogo:brand==='velo-delivery'&&slide===1,
+        dimensions:'1080x1080',bytes:png.length,
         checksum:createHash('sha256').update(png).digest('hex').slice(0,20),
         font:'Noto Sans',renderGate:'passed',
         publishes:false,
