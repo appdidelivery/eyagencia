@@ -1,5 +1,5 @@
 import {NextRequest,NextResponse} from 'next/server'
-import {runNativeRepostRadar} from '../../social-agent/nativeRepostRadar'
+import {runIndustryNewsRadar} from '../../social-agent/newsRadar'
 
 export const runtime='nodejs'
 export const dynamic='force-dynamic'
@@ -10,8 +10,8 @@ export async function GET(request:NextRequest) {
     request.headers.get('authorization')!=='Bearer '+process.env.CRON_SECRET)
     return NextResponse.json({ok:false,error:'Não autorizado.'},{status:401})
   try {
-    const result=await runNativeRepostRadar()
-    console.info('[native-reposts-cron]',JSON.stringify({
+    const result=await runIndustryNewsRadar()
+    console.info('[source-editorial-cron]',JSON.stringify({
       enabled:result.enabled,day:'day' in result?result.day:null,
       results:result.results.map(item=>({brand:item.brand,status:item.status,
         source:item.source||null,reason:item.reason||null})),
@@ -20,6 +20,6 @@ export async function GET(request:NextRequest) {
   }catch(error){
     console.error('[native-reposts-cron] failed',
       error instanceof Error?error.message.slice(0,100):'unknown')
-    return NextResponse.json({ok:false,error:'Erro no radar de reposts.'},{status:500})
+    return NextResponse.json({ok:false,error:'Erro no radar editorial automático.'},{status:500})
   }
 }

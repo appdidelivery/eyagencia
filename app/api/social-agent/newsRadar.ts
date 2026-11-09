@@ -17,6 +17,22 @@ const SOURCE_LIMIT = 6
 function brazilDate(now = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now)
 }
+function editorialSlot(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US',{
+    timeZone:'America/Sao_Paulo',weekday:'short',hour:'2-digit',hourCycle:'h23',
+  }).formatToParts(now)
+  const weekday=parts.find(p=>p.type==='weekday')?.value
+  const hour=Number(parts.find(p=>p.type==='hour')?.value)
+  if ((weekday==='Wed'||weekday==='Sat') && hour>=9 && hour<=15) return 'morning'
+  if (weekday==='Sat' && hour>=17 && hour<=21) return 'evening'
+  return null
+}
+function brazilWeek(day:string) {
+  const date=new Date(day+'T12:00:00Z')
+  const offset=(date.getUTCDay()+6)%7
+  date.setUTCDate(date.getUTCDate()-offset)
+  return date.toISOString().slice(0,10)
+}
 async function fetchHtml(url: string, allowedHost: string) {
   const address = new URL(url)
   if(address.protocol !== 'https:' || address.hostname !== allowedHost) throw new Error('disallowed_source')
@@ -128,6 +144,76 @@ async function pageToken(keys:{pageId?:string;token:string}) {
   }
   return null
 }
+// Original visual analysis only: no imported publisher images or captions.
+// Every carousel has eight branded slides; it is NOT an Instagram native Repost.
+async function makeSourceCarousel(brand:BrandKey,source:Source,article:Article,day:string,slot:string) {
+  const title=article.title.slice(0,115)
+  const slides=[
+    title,
+    'Radar de mercado: notícia publicada por '+source.name,
+    angle(brand,title),
+    'Confira os fatos diretamente na matéria original antes de tomar decisões.',
+    brand==='eyagencia'
+      ? 'Compare essa novidade com a jornada de compra da sua loja.'
+      : 'Compare essa novidade com a rotina do seu restaurante.',
+    'Separe informações confirmadas de hipóteses para o seu negócio.',
+    'Defina o que acompanhar e registre o resultado na sua operação.',
+    'Crédito: '+source.name+'. Leia a matéria no link da legenda.',
+  ]
+  const images:string[]=[],assets:string[]=[]
+  for (const [index,headline] of slides.entries()) {
+    const svg=makeBrandSocialSvg({
+      slug:brand,topic:headline,concept:'Análise original de notícia setorial',
+      date:day+'-'+slot+'-fonte-'+(index+1),
+    })
+    const png=await renderBrandArt(svg)
+    const asset=await writeClient.assets.upload('image',png,{
+      filename:'radar-original-'+brand+'-'+day+'-'+slot+'-'+(index+1)+'.png',
+      contentType:'image/png',
+    })
+    images.push(imageJpeg(asset.url))
+    assets.push(asset._id)
+  }
+  if(images.length!==8)throw new Error('carousel_incomplete')
+  return {images,assets}
+}
+async function publishSourceCarousel(keys:{instagramId:string;token:string},images:string[],caption:string) {
+  if(images.length!==8)throw new Error('carousel_incomplete')
+  const children:string[]=[]
+  for(const image of images){
+    const child=await graph('POST',keys.instagramId+'/media',keys.token,{
+      image_url:image,is_carousel_item:'true',
+    })
+    for(let i=0;i<8;i++){
+      const state=await graph('GET',String(child.id),keys.token,{fields:'status_code'})
+      if(state.status_code==='FINISHED'){children.push(String(child.id));break}
+      if(state.status_code==='ERROR'||state.status_code==='EXPIRED')throw new Error('carousel_child_error')
+      if(i<7)await new Promise(resolve=>setTimeout(resolve,3500))
+    }
+    if(children.length===0 || children.length!==images.indexOf(image)+1)throw new Error('carousel_child_timeout')
+  }
+  const parent=await graph('POST',keys.instagramId+'/media',keys.token,{
+    media_type:'CAROUSEL',children:children.join(','),caption,
+  })
+  for(let i=0;i<8;i++){
+    const state=await graph('GET',String(parent.id),keys.token,{fields:'status_code'})
+    if(state.status_code==='FINISHED')return String(parent.id)
+    if(state.status_code==='ERROR'||state.status_code==='EXPIRED')throw new Error('carousel_parent_error')
+    if(i<7)await new Promise(resolve=>setTimeout(resolve,3500))
+  }
+  throw new Error('carousel_parent_timeout')
+}
+async function publishFacebookSourceCarousel(pageId:string,token:string,images:string[],caption:string){
+  const photos:string[]=[]
+  for(const url of images){
+    const photo=await graph('POST',pageId+'/photos',token,{url,published:'false'})
+    photos.push(String(photo.id))
+  }
+  const fields:Record<string,string>={message:caption}
+  photos.forEach((id,i)=>{fields['attached_media['+i+']']=JSON.stringify({media_fbid:id})})
+  return graph('POST',pageId+'/feed',token,fields)
+}
+
 async function publishInstagram(keys:{instagramId:string;token:string},jpeg:string,caption:string) {
   const container=await graph('POST',keys.instagramId+'/media',keys.token,{image_url:jpeg,caption})
   for(let i=0;i<7;i++){
@@ -141,18 +227,23 @@ async function publishInstagram(keys:{instagramId:string;token:string},jpeg:stri
 }
 
 export async function runIndustryNewsRadar() {
+  // Replaces the manual repost queue with original source-based commentary.
+  // Never tries to call Instagram's unsupported native Repost action.
   if(process.env.VERCEL_ENV!=='production' ||
-     process.env.SOCIAL_NEWS_RADAR_ENABLED!=='true')return {enabled:false,results:[] as Result[]}
+     process.env.NATIVE_REPOST_RADAR_ENABLED!=='true')return {enabled:false,results:[] as Result[]}
+  const slot=editorialSlot()
+  if(!slot)return {enabled:true,results:[] as Result[],status:'not_scheduled'}
   if(!process.env.SANITY_API_WRITE_TOKEN)return {enabled:true,results:[{brand:'eyagencia' as BrandKey,status:'sanity_missing'}]}
   const today=brazilDate()
+  const week=brazilWeek(today)
   const results:Result[]=[]
   for(const brand of ['eyagencia','velo-delivery'] as BrandKey[]) {
-    // Velo's feed is carousel-only. Do not let the independent news task
-    // publish a second, single-image post on that account.
-    if (brand === 'velo-delivery') {
-      results.push({brand, status:'carousel_feed_priority'})
-      continue
-    }
+    const weekCount=await writeClient.fetch<number>(
+      'count(*[_type=="socialNewsPost" && brand==$brand && day >= $week && '+
+      'status in ["reserved","generating","publishing","published","partial","verification_required"]])',
+      {brand,week},
+    )
+    if(weekCount>=3){results.push({brand,status:'weekly_limit_reached'});continue}
     const since = new Date(today + 'T03:00:00.000Z').toISOString()
     const until = new Date(Date.parse(since) + 86400000).toISOString()
     const alreadyInFeed = await writeClient.fetch<number>(
@@ -168,7 +259,7 @@ export async function runIndustryNewsRadar() {
     const source=NEWS_SOURCES[brand] as Source
     const keys=credentials(brand)
     if(!keys){results.push({brand,status:'credentials_missing'});continue}
-    const id='social-news-'+brand+'-'+today
+    const id='social-news-'+brand+'-'+today+'-'+slot
     const exists=await writeClient.fetch<{status?:string}|null>(
       '*[_id==$id][0]{status}',{id},
     )
@@ -205,18 +296,15 @@ export async function runIndustryNewsRadar() {
     let facebookPostId:string|undefined
     try{
       await writeClient.patch(id).set({status:'generating'}).commit()
-      const svg=makeBrandSocialSvg({
-        slug:brand,topic:article.title,concept:'Notícia de mercado: '+article.title,date:today,
-      })
-      const buffer=await renderBrandArt(svg)
-      const asset=await writeClient.assets.upload('image',buffer,{
-        filename:'industry-news-'+brand+'-'+today+'.png',contentType:'image/png',
-      })
-      const jpeg=imageJpeg(asset.url)
-      await writeClient.patch(id).set({imageAssetId:asset._id,imageUrl:jpeg,status:'publishing'}).commit()
+      const carousel=await makeSourceCarousel(brand,source,article,today,slot)
+      await writeClient.patch(id).set({
+        imageAssetId:carousel.assets[0],imageUrl:carousel.images[0],
+        carouselImages:carousel.images,carouselAssetIds:carousel.assets,
+        slideCount:8,format:'carousel',status:'publishing',
+      }).commit()
 
       try{
-        const container=await publishInstagram(keys,jpeg,text)
+        const container=await publishSourceCarousel(keys,carousel.images,text)
         instagramSubmitted=true
         const result=await graph('POST',keys.instagramId+'/media_publish',keys.token,{creation_id:container})
         instagramPostId=result.id
@@ -230,7 +318,7 @@ export async function runIndustryNewsRadar() {
           const token=await pageToken(keys)
           if(!token)throw new Error('page_access_missing')
           facebookSubmitted=true
-          const post=await graph('POST',keys.pageId+'/photos',token,{url:jpeg,message:text})
+          const post=await publishFacebookSourceCarousel(keys.pageId,token,carousel.images,text)
           facebookPostId=post.id
           await writeClient.patch(id).set({facebookPostId}).commit()
         }catch(error){errors.push('Facebook: '+(error instanceof Error?error.message:'unknown'))}
