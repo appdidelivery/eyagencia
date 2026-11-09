@@ -82,6 +82,37 @@ export function checkArticleQuality(article: Article, approvedFacts: Fact[]): st
   return issues
 }
 
+// Discard entire unsourced year-specific sentences, rather than rewriting a
+// projection as a verified fact. Remaining text must still pass every QA gate.
+// A year is allowed here only when a fact AND its literal evidence mention it.
+export function stripUnsupportedYearClaims(article: Article, approvedFacts: Fact[]): Article {
+  const yearSupported = approvedFacts.some(fact =>
+    /\b2026\b/.test(String(fact.claim || '')) &&
+    /\b2026\b/.test(String(fact.evidenceQuote || '')),
+  )
+  if (yearSupported) return article
+  const clean = (text: unknown) => String(text || '')
+    .split(/(?<=[.!?])\s+/u)
+    .filter(sentence => !/\b2026\b/.test(sentence))
+    .join(' ').replace(/\s+/g, ' ').trim()
+  return {
+    ...article,
+    excerpt: clean(article.excerpt),
+    seoDescription: clean(article.seoDescription),
+    sections: (Array.isArray(article.sections) ? article.sections : []).map((section: Article) => ({
+      ...section,
+      paragraphs: (Array.isArray(section.paragraphs) ? section.paragraphs : [])
+        .map(clean).filter(Boolean),
+      bullets: (Array.isArray(section.bullets) ? section.bullets : [])
+        .map(clean).filter(Boolean),
+    })),
+    faq: (Array.isArray(article.faq) ? article.faq : []).map((item: Article) => ({
+      ...item,
+      answer: clean(item.answer),
+    })),
+  }
+}
+
 export function testArticleQuality(): Array<{name: string; passed: boolean}> {
   const article = {
     title: 'Como avaliar IA no comércio eletrônico',
@@ -105,5 +136,11 @@ export function testArticleQuality(): Array<{name: string; passed: boolean}> {
     {name: 'Promessa garantida é bloqueada', passed: checkArticleQuality({...article, excerpt: 'A tecnologia garante lucro.'}, []).some((x) => x.includes('Promessa'))},
     {name: 'Dados não confirmados de 2026 são bloqueados', passed: checkArticleQuality({...article, excerpt: 'O mercado cresceu no Brasil em 2026.'}, []).some((x) => x.includes('2026'))},
     {name: 'Artigo curto é bloqueado', passed: checkArticleQuality({...article, sections: []}, []).some((x) => x.includes('superficial'))},
+    {name: 'Frase com previsão em 2026 sem lastro é excluída antes do QA',
+      passed: stripUnsupportedYearClaims({...article, sections:[{heading:'Etapa',paragraphs:['A IA impulsionará o crescimento em 2026. Registre resultados apenas após testar.'],bullets:[]}]}, [])
+        .sections[0].paragraphs[0] === 'Registre resultados apenas após testar.'},
+    {name: 'Ano com evidência literal aprovada é preservado para revisão independente',
+      passed: stripUnsupportedYearClaims({...article, excerpt:'Dados publicados em 2026.'},
+        [{claim:'Dados publicados em 2026.',evidenceQuote:'Dados publicados em 2026.'}]).excerpt === 'Dados publicados em 2026.'},
   ]
 }

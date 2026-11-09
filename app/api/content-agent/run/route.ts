@@ -1,5 +1,5 @@
 import {randomUUID} from 'crypto'
-import {checkArticleQuality, testArticleQuality} from '../quality'
+import {checkArticleQuality, stripUnsupportedYearClaims, testArticleQuality} from '../quality'
 import {createMethodologicalDraft} from '../editorialTemplate'
 import {testAutonomousPublishing} from '../publication'
 import {NextRequest, NextResponse} from 'next/server'
@@ -936,7 +936,7 @@ export async function POST(request: NextRequest) {
             '\\nFONTES CONSULTADAS:\\n' + JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))) +
             '\\nTÍTULOS E SLUGS PROIBIDOS:\\n' + JSON.stringify(avoidDuplicates),
         })
-        const candidate = parseJson(alternate.text, 'recuperação de duplicidade')
+        const candidate = stripUnsupportedYearClaims(parseJson(alternate.text, 'recuperação de duplicidade'), supportedFacts)
         const candidateSlug = slugify(String(candidate?.slug || candidate?.title || ''))
         if (candidateSlug && !knownSlugs.has(candidateSlug) &&
             typeof candidate?.title === 'string' && Array.isArray(candidate?.sections)) {
@@ -948,6 +948,9 @@ export async function POST(request: NextRequest) {
           error instanceof Error ? error.message : 'unexpected')
       }
     }
+    // Remove unsupported 2026 assertions without inventing replacement claims;
+    // the result must still pass independent structural, factual and model QA.
+    article = stripUnsupportedYearClaims(article, supportedFacts)
     let structuralIssues = checkArticleQuality(article, supportedFacts)
 
     const qa = await callAgent({
@@ -990,7 +993,7 @@ export async function POST(request: NextRequest) {
             '\n\nFONTES PERMITIDAS:\n' +
             JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))),
         })
-        const revisedArticle = parseJson(repair.text, 'revisão editorial')
+        const revisedArticle = stripUnsupportedYearClaims(parseJson(repair.text, 'revisão editorial'), supportedFacts)
         if (revisedArticle && typeof revisedArticle.title === 'string' && Array.isArray(revisedArticle.sections)) {
           article = revisedArticle
           revisionAttempted = true
@@ -1043,7 +1046,7 @@ export async function POST(request: NextRequest) {
             '\nLINKS INTERNOS: /ia-ecommerce, /ia-ecommerce/ferramentas, /ia-ecommerce/guias, ' +
             '/ia-ecommerce/metodologia, /blog, /clientes, /parceiros',
         })
-        const candidate = parseJson(focusedEditor.text, 'revisão direcionada do editor')
+        const candidate = stripUnsupportedYearClaims(parseJson(focusedEditor.text, 'revisão direcionada do editor'), supportedFacts)
         if (candidate && typeof candidate.title === 'string' &&
             Array.isArray(candidate.sections) && candidate.sections.length >= 3) {
           const candidateStructural = checkArticleQuality(candidate, supportedFacts)
