@@ -140,7 +140,7 @@ export function makeBrandSocialSvg({slug,topic,concept='',date='',cover=false,su
 // Original sunrise and horizon artwork for the weekly founder/restaurant
 // motivational series. Intentionally does not reproduce third-party quotes,
 // photographs, logos, or a viral post's design.
-export function makeBrandMotivationSvg({slug,topic,date='',closing=false}) {
+export function makeBrandMotivationSvg({slug,topic,date='',closing=false,cover=false}) {
   const brand=palettes[String(slug||'')]
   if(!brand)throw new Error('Brand identity unavailable')
   const title=clean(topic,155)
@@ -171,7 +171,8 @@ export function makeBrandMotivationSvg({slug,topic,date='',closing=false}) {
     '<path d="M0 775 L155 630 L340 797 L535 610 L790 860 L1080 610 V1080 H0Z" fill="'+brand.bg2+'" opacity=".74"/>'+
     '<path d="M0 890 L185 735 L409 915 L625 710 L884 932 L1080 790 V1080 H0Z" fill="'+brand.bg+'" opacity=".8"/>'+
     '<rect x="62" y="232" width="840" height="532" rx="42" fill="'+brand.bg+'" opacity=".63"/>'+
-    '<text x="92" y="105" font-family="Noto Sans" font-size="47" fill="#f8fcff" font-weight="700">'+escapeXml(brand.brand)+'</text>'+
+    (cover&&brand.kind==='velo'?officialLogoSvg({x:80,y:27,width:475,height:135}):
+      '<text x="92" y="105" font-family="Noto Sans" font-size="47" fill="#f8fcff" font-weight="700">'+escapeXml(brand.brand)+'</text>')+
     '<text x="94" y="196" font-family="Noto Sans" font-size="26" fill="'+brand.soft+'" font-weight="700">'+escapeXml(greeting)+'</text>'+
     text+
     '<path d="M92 836 H650" stroke="'+brand.accent+'" stroke-width="9" stroke-linecap="round"/>'+
