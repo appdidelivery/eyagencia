@@ -11,7 +11,7 @@ assert.equal(schedule['/api/cron/native-reposts'],'20 14 * * 3,6')
 assert.equal(schedule['/api/cron/social-assets'],'15 14,23 * * 0,2')
 assert.equal(schedule['/api/cron/eyagencia-carousel'],'45 14,23 * * 0,2')
 assert.equal(schedule['/api/cron/eyagencia-crosspost'],'15 0,16 * * *')
-assert.equal(schedule['/api/cron/social-news'],undefined)
+assert.equal(schedule['/api/cron/social-news'],'20 21 * * 6')
 assert.equal(cron.length,Object.keys(schedule).length,'All scheduled paths must be unique')
 for(const slug of ['eyagencia','velo-delivery']){
   const monday=makeBrandMotivationSvg({
@@ -27,4 +27,4 @@ for(const slug of ['eyagencia','velo-delivery']){
     assert.ok(art.includes('font-family="Noto Sans"'))
   }
 }
-console.info('[weekly-social-selftest] daily blogs unchanged; Mon/Thu/Fri authorial, Tue/Sun blog carousels, Wed/Sat native reposts passed')
+console.info('[weekly-social-selftest] daily blogs unchanged; Mon/Thu/Fri authorial, Tue/Sun blog carousels, Wed/Sat source-attributed original editorial posts passed')
