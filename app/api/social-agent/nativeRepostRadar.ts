@@ -121,7 +121,13 @@ async function choose(brand:Brand,day:string):Promise<Outcome> {
                    (a.score+(usedSources.has(a.source.handle)?0:8))) ||
                    (b.media.timestamp||'').localeCompare(a.media.timestamp||''))
   const pick=ranked[0]
-  if(!pick)return {brand,status:'no_eligible_instagram_posts',reason:failures.join('; ').slice(0,230)}
+  if(!pick){
+    // Meta error 10 is a permission/access failure, not evidence that publishers
+    // have no suitable posts. Do not silently misreport it as empty discovery.
+    const accessDenied = failures.length>0 && failures.every(item=>item.includes('meta_discovery_http_400_code_10'))
+    return {brand,status:accessDenied?'meta_permission_required':'no_eligible_instagram_posts',
+      reason:failures.join('; ').slice(0,230)}
+  }
   const permalink=pick.media.permalink!
   // Store permalink and an editorial suggestion only. NEVER resubmit media to
   // Meta: the native Instagram Repost action is not exposed by this API.

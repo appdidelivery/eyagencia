@@ -112,7 +112,7 @@ let nextEditorialCallAt = 0
 async function throttleEditorialCall() {
   const now = Date.now()
   const delay = Math.max(0, nextEditorialCallAt - now)
-  nextEditorialCallAt = Math.max(now, nextEditorialCallAt) + 13500
+  nextEditorialCallAt = Math.max(now, nextEditorialCallAt) + 16000
   if (delay) await new Promise<void>((resolve) => setTimeout(resolve, delay))
 }
 
@@ -191,7 +191,7 @@ async function callAgent(args: {
     const detail = await response.text().catch(() => '')
     const hintedSeconds = Number(detail.match(/retry after (\d+)s/i)?.[1] || '0')
     const seconds = response.status === 429
-      ? Math.min(35, Math.max(14, header || hintedSeconds || 14))
+      ? Math.min(62, Math.max(60, header || hintedSeconds || 60))
       : Math.min(20, Math.max(5, header || (attempt + 1) * 7))
     console.warn('[content-agent] provider transient failure; retry scheduled', {
       status:response.status, attempt:attempt + 1, seconds,

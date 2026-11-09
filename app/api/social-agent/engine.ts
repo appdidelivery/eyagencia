@@ -720,7 +720,7 @@ function saneArticle(post:VeloBlogSource) {
   }catch{return false}
 }
 async function veloBlogCandidates():Promise<VeloBlogSource[]> {
-  const response=await fetch('https://velodelivery.com.br/api/social-blog-source',{
+  const response=await fetch('https://www.velodelivery.com.br/api/social-blog-source',{
     cache:'no-store',redirect:'error',signal:AbortSignal.timeout(18000),
     headers:{Accept:'application/json'},
   })
