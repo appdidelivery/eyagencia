@@ -30,7 +30,7 @@
       "schedule": "0 16,23 * * 0,2"
     },
     {
-      "path": "/api/cron/native-reposts",
+      "path": "/api/cron/social-news",
       "schedule": "20 21 * * 6"
     }
   ]
