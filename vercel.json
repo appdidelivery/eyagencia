@@ -32,6 +32,10 @@
     {
       "path": "/api/cron/social-news",
       "schedule": "20 21 * * 6"
+    },
+    {
+      "path": "/api/cron/weekly-stories",
+      "schedule": "0 16,23 * * 1,5"
     }
   ]
 }

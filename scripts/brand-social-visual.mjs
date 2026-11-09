@@ -165,3 +165,27 @@ export function makeBrandMotivationSvg({slug,topic,date='',closing=false}) {
     '<text x="92" y="1027" font-family="Noto Sans" font-size="28" fill="#ffffff" font-weight="700">'+escapeXml(brand.website)+'</text>'+
     '</svg>'
 }
+
+// Story-sized companion to the original weekly feed post. The square source
+// remains intact within a 9:16 canvas; it is never cropped to fit Stories.
+export function makeBrandMotivationStorySvg({slug,topic,date='',closing=false}) {
+  const brand=palettes[String(slug||'')]
+  if(!brand)throw new Error('Brand story unavailable')
+  const original=makeBrandMotivationSvg({slug,topic,date,closing})
+    .replace(/^<svg\b[^>]*>/,
+      '<svg x="0" y="390" width="1080" height="1080" viewBox="0 0 1080 1080">')
+  const heading=closing?'SEXTA-FEIRA · GRATIDÃO':'SEGUNDA-FEIRA · PROPÓSITO'
+  const prompt=closing?'QUAL CONQUISTA VOCÊ CELEBRA HOJE?':'QUAL HÁBITO VOCÊ VAI CULTIVAR?'
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">'+
+    '<rect width="1080" height="1920" fill="'+brand.bg+'"/>'+
+    '<rect x="0" y="0" width="1080" height="350" fill="'+brand.bg2+'" opacity=".7"/>'+
+    '<path d="M83 338 H998" stroke="'+brand.accent+'" stroke-width="9" stroke-linecap="round"/>'+
+    '<text x="88" y="143" font-family="Noto Sans" font-size="56" font-weight="700" fill="#ffffff">'+escapeXml(brand.brand)+'</text>'+
+    '<text x="88" y="265" font-family="Noto Sans" font-size="40" font-weight="700" fill="'+brand.soft+'">'+escapeXml(heading)+'</text>'+
+    original+
+    '<path d="M85 1533 H995" stroke="'+brand.accent+'" stroke-width="8" stroke-linecap="round"/>'+
+    '<text x="87" y="1625" font-family="Noto Sans" font-size="37" font-weight="700" fill="#ffffff">'+escapeXml(prompt)+'</text>'+
+    '<text x="87" y="1745" font-family="Noto Sans" font-size="37" fill="'+brand.soft+'">Veja o post completo no perfil.</text>'+
+    '<text x="87" y="1855" font-family="Noto Sans" font-size="30" fill="#ffffff">'+escapeXml(brand.website)+'</text>'+
+    '</svg>'
+}

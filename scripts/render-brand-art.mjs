@@ -36,3 +36,23 @@ export async function renderBrandArt(svg) {
   if (bright < 1400) throw new Error('Renderização reprovada: título ilegível ou fonte ausente.')
   return png
 }
+
+// Same bundled font and glyph gate as the feed renderer; 1080x1920 Stories.
+export async function renderBrandStoryArt(svg) {
+  const image=new Resvg(svg,{
+    font:{fontFiles,loadSystemFonts:false,defaultFontFamily:'Noto Sans'},
+    textRendering:2,
+  }).render()
+  if(image.width!==1080||image.height!==1920)
+    throw new Error('Story: invalid 1080x1920 dimensions')
+  const png=image.asPng()
+  const {data,info}=await sharp(png).extract({
+    left:95,top:725,width:580,height:480,
+  }).removeAlpha().raw().toBuffer({resolveWithObject:true})
+  let bright=0
+  for(let p=0;p<data.length;p+=info.channels){
+    if(data[p]>215&&data[p+1]>215&&data[p+2]>215)bright++
+  }
+  if(bright<1100)throw new Error('Story: missing or unreadable headline glyphs')
+  return png
+}
