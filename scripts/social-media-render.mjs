@@ -130,6 +130,35 @@ async function save(cfg,mutations){
   if(!response.ok)throw Error('Social media write HTTP '+response.status)
   return response.json()
 }
+async function approvedBlogPhoto(url) {
+  if(typeof url!=='string'||!/^https:\/\/cdn\.sanity\.io\/images\//.test(url))return null
+  try {
+    const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(12000)})
+    if(!response.ok||!String(response.headers.get('content-type')||'').startsWith('image/'))
+      throw new Error('photo_http_or_type')
+    const bytes=Buffer.from(await response.arrayBuffer())
+    if(bytes.length<8000||bytes.length>12*1024*1024)throw new Error('photo_size')
+    return bytes
+  }catch(error){
+    console.warn('[social-art] source photo unavailable; using illustrated cover',
+      error instanceof Error?error.message:'unknown')
+    return null
+  }
+}
+async function verifySocialVisual(png,kind){
+  const sharp=(await import('sharp')).default
+  const expectedHeight=kind==='story'?1920:1350
+  const meta=await sharp(png).metadata()
+  if(meta.width!==1080||meta.height!==expectedHeight)throw Error('Social visual dimensions failed QA')
+  const {data,info}=await sharp(png).extract({
+    left:110,top:kind==='story'?540:350,width:540,height:kind==='story'?535:570,
+  }).removeAlpha().raw().toBuffer({resolveWithObject:true})
+  let glyphs=0
+  for(let i=0;i<data.length;i+=info.channels) {
+    if(data[i]>220&&data[i+1]>220&&data[i+2]>220)glyphs++
+  }
+  if(glyphs<1000)throw Error('Social visual failed headline contrast/glyph QA')
+}
 export async function renderPendingSocialMedia({maxPackages=1}={}){
   const cfg=settings()
   const sharp= (await import('sharp')).default
@@ -142,6 +171,9 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       continue
     }
     try {
+      // Article hero is a licensed first-party Sanity asset. Use only on
+      // the carousel cover, never on every frame or on unrelated topics.
+      const hero=await approvedBlogPhoto(pkg.heroImageUrl)
       // Prevent concurrent mutable edits and preserve existing art if someone has already rendered.
       const imageRecords=[]
       const frames=[...carousel.map((frame,index)=>({frame,index,kind:'carousel',total:carousel.length})),
@@ -150,9 +182,15 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       for(let i=0;i<frames.length;i+=3){
         const batch=frames.slice(i,i+3)
         const media=await Promise.all(batch.map(async ({frame,index,kind,total})=>{
-          const svg=makeSocialSvg(pkg,frame,kind,index,total)
+          const withPhoto=Boolean(hero&&kind==='carousel'&&index===0)
+          const svg=makeSocialSvg(pkg,frame,kind,index,total,withPhoto)
           const size=kind==='story'?[1080,1920]:[1080,1350]
-          const png=await sharp(Buffer.from(svg)).resize(size[0],size[1]).png({compressionLevel:8}).toBuffer()
+          const overlay=await sharp(Buffer.from(svg)).resize(size[0],size[1]).png({compressionLevel:8}).toBuffer()
+          await verifySocialVisual(overlay,kind)
+          const png=withPhoto
+            ?await sharp(hero).rotate().resize(size[0],size[1],{fit:'cover',position:'attention'})
+              .composite([{input:overlay,top:0,left:0}]).png({compressionLevel:8}).toBuffer()
+            :overlay
           const name='eyagencia-social-'+String(pkg.sourceSlug||'blog').replace(/[^a-z0-9-]/g,'').slice(0,50)+'-'+kind+'-'+String(index+1)+'.png'
           const asset=await upload(cfg,png,name)
           return {
