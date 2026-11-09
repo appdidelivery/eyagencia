@@ -143,58 +143,71 @@ async function createImage(brand: Brand, concept: string, day: string, topic: st
   const pictures = (brand.approvedImages || [])
     .map((img) => img.asset?.url)
     .filter((url): url is string => Boolean(url && url.startsWith('https://cdn.sanity.io/images/')))
-  if (process.env.SOCIAL_AGENT_IMAGES_ENABLED !== 'true' && pictures.length) {
-    const index = Number(day.replace(/-/g, '')) % pictures.length
-    return {url: pictures[index], assetId: null as string | null}
-  }
-  if (process.env.SOCIAL_AGENT_IMAGES_ENABLED !== 'true') {
-    // Brand-matched, topic-specific artwork: no third-party image and zero
-    // inference cost. The sample graphics are direction, not image assets.
-    if (!supportedBrandSlug(brand.slug)) {
-      throw new Error('Sem imagem oficial: marca ainda sem identidade visual automática.')
-    }
-    const svg = makeBrandSocialSvg({slug: brand.slug, topic, concept, date: day})
-    const buffer = await renderBrandArt(svg)
-    const asset = await writeClient.assets.upload('image', buffer, {
-      filename: 'social-editorial-' + brand.slug + '-' + day + '.png',
-      contentType: 'image/png',
+
+  async function saveComposed(background: Buffer|null,source:'approved'|'generated'|'illustrated') {
+    const svg=makeBrandSocialSvg({
+      slug:brand.slug,topic,concept,date:day,cover:true,photographic:Boolean(background),
     })
-    return {url: asset.url, assetId: asset._id}
+    const buffer=await renderBrandArt(svg,background?{backgroundBuffer:background}:{})
+    const asset=await writeClient.assets.upload('image',buffer,{
+      filename:'social-art-v2-'+brand.slug+'-'+day+'-'+source+'.png',
+      contentType:'image/png',
+    })
+    return {url:asset.url,assetId:asset._id}
   }
-  const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN
-  if (!apiKey) throw new Error('Credencial para geração de imagem ausente.')
-  if (!(await modelAllowed(IMAGE_MODEL, true))) {
+
+  // Official photos take priority and are transformed into complete editorial
+  // artwork. The user's original image is never sent to a text generation model.
+  if(pictures.length) {
+    const picture=pictures[Number(day.replace(/-/g,''))%pictures.length]
+    try {
+      const response=await fetch(picture,{cache:'no-store',signal:AbortSignal.timeout(12000)})
+      if(!response.ok||!String(response.headers.get('content-type')||'').startsWith('image/'))
+        throw new Error('approved_image_unavailable')
+      const bytes=Buffer.from(await response.arrayBuffer())
+      if(bytes.length<8000||bytes.length>12*1024*1024)throw new Error('approved_image_size')
+      return await saveComposed(bytes,'approved')
+    }catch(error) {
+      console.warn('[social-art] approved photo unavailable; drawing topic-specific vector instead',
+        error instanceof Error?error.message:'unknown')
+    }
+  }
+
+  if(process.env.SOCIAL_AGENT_IMAGES_ENABLED!=='true' || !supportedBrandSlug(brand.slug))
+    return saveComposed(null,'illustrated')
+
+  const apiKey=process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN
+  if(!apiKey)throw new Error('Credencial para geração de imagem ausente.')
+  if(!(await modelAllowed(IMAGE_MODEL,true)))
     throw new Error('Preço de imagem não validado dentro do teto US$ 0,01.')
-  }
-  const prompt = [
-    'Create a premium square 1:1 social media editorial image for an authentic Brazilian brand.',
-    'Brand name: ' + brand.name,
-    'Brand guidelines: ' + brand.brandGuide.slice(0, 900),
-    'Illustrate this verified marketing topic without making up product-specific features: ' + concept,
-    'Elegant professional photo or visual composition, crisp lighting, high quality.',
-    'No written words, no letters, no logos, no watermarks, no invented packaging labels.',
-  ].join('\n')
-  const res = await fetch('https://ai-gateway.vercel.sh/v1/images/generations', {
-    method: 'POST',
-    headers: {Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json'},
-    body: JSON.stringify({model: IMAGE_MODEL, prompt, n: 1, response_format: 'b64_json'}),
-    cache: 'no-store', signal: AbortSignal.timeout(120000),
+
+  // Realistic backgrounds ONLY. The separate SVG layer supplies typography,
+  // logo, contrast, alignment and protected margins; prompts never request text.
+  const prompt=[
+    'Premium cinematic advertising photograph for a Brazilian digital delivery brand, square 1:1.',
+    'Editorial subject: '+concept,
+    'Visual truth: do not invent software features, metrics, promotions, prices or customers.',
+    brand.slug==='velo-delivery'
+      ? 'A real, professional restaurant or pizzeria, appetizing food or organized service team, dramatic warm rim lighting, subtle cyan and violet ambience, premium commercial photography.'
+      : 'A real entrepreneur in a modern Brazilian workspace, marketing strategy or e-commerce operations, sophisticated editorial photography, teal and coral accents.',
+    'Art direction: authentic human environment, clear focal subject on the RIGHT HALF and in the lower-right, leave the LEFT 70 percent dark, simple and uncluttered for a large editorial text overlay.',
+    'Depth of field, realistic materials and textures, tasteful contrast, no exaggerated CGI.',
+    'Do NOT render any letters, typography, logos, watermarks, fake dashboard text, icons or labels.',
+  ].join(' ')
+  const response=await fetch('https://ai-gateway.vercel.sh/v1/images/generations',{
+    method:'POST',
+    headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
+    body:JSON.stringify({model:IMAGE_MODEL,prompt,n:1,response_format:'b64_json'}),
+    cache:'no-store',signal:AbortSignal.timeout(120000),
   })
-  if (!res.ok) throw new Error('Falha na geração da imagem (HTTP ' + res.status + ').')
-  const json = await res.json()
-  const base64 = json?.data?.[0]?.b64_json
-  if (typeof base64 !== 'string') throw new Error('Imagem não retornada.')
-  const buffer = Buffer.from(base64, 'base64')
-  if (buffer.length < 8000 || buffer.length > 12 * 1024 * 1024) throw new Error('Tamanho de imagem inválido.')
-  const jpg = buffer[0] === 0xff && buffer[1] === 0xd8
-  const webp = buffer.toString('ascii', 8, 12) === 'WEBP'
-  const contentType = jpg ? 'image/jpeg' : webp ? 'image/webp' : 'image/png'
-  const ext = jpg ? 'jpg' : webp ? 'webp' : 'png'
-  const asset = await writeClient.assets.upload('image', buffer, {
-    filename: 'social-' + brand.slug + '-' + day + '.' + ext,
-    contentType,
-  })
-  return {url: asset.url, assetId: asset._id}
+  if(!response.ok)throw new Error('Falha na geração da fotografia (HTTP '+response.status+').')
+  const result=await response.json()
+  const base64=result?.data?.[0]?.b64_json
+  if(typeof base64!=='string')throw new Error('Fotografia não retornada pelo modelo.')
+  const buffer=Buffer.from(base64,'base64')
+  if(buffer.length<8000||buffer.length>12*1024*1024)
+    throw new Error('Tamanho da fotografia fora dos limites.')
+  return saveComposed(buffer,'generated')
 }
 
 function publicJpeg(url: string) {
@@ -319,7 +332,7 @@ async function buildVeloCarousel(brand: Brand, day: string, topic: string,
   const assetIds: string[] = []
   for (const [index, title] of titles.entries()) {
     const svg = makeBrandSocialSvg({
-      slug: brand.slug, topic: title, concept: topic + ' ' + concept,
+      slug: brand.slug, topic: title, concept: topic + ' ' + concept, cover:false,
       date: day + '-slide-' + (index + 2),
     })
     const buffer = await renderBrandArt(svg)
@@ -476,7 +489,7 @@ function weeklyMotivation(slug:string, day:string, weekday:number) {
 }
 async function createMotivationImage(brand:Brand,day:string,title:string,closing:boolean) {
   const buffer=await renderBrandArt(makeBrandMotivationSvg({
-    slug:brand.slug,topic:title,date:day,closing,
+    slug:brand.slug,topic:title,date:day,closing,cover:true,
   }))
   const asset=await writeClient.assets.upload('image',buffer,{
     filename:'weekly-motivation-'+brand.slug+'-'+day+'.png',contentType:'image/png',
@@ -795,8 +808,12 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
   if(slides.length!==8)throw new Error('Velo: blog carousel incomplete')
   const images:string[]=[],assetIds:string[]=[]
   for(const [i,title] of slides.entries()){
+    const divider=i===0?-1:title.indexOf(': ')
+    const heading=divider>0?title.slice(0,divider):title
+    const detail=divider>0?title.slice(divider+2):''
     const image=makeBrandSocialSvg({
-      slug:'velo-delivery',topic:title.slice(0,125),
+      slug:'velo-delivery',topic:heading.slice(0,120),
+      subtitle:detail.slice(0,150),cover:i===0,
       concept:'Conteúdo do blog Velo Delivery: '+(post.title||''),
       date:day+'-blog-'+(i+1),
     })
