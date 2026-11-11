@@ -1,7 +1,9 @@
 import type {BookEntry} from './BookCatalog'
 
-// Obras identificadas nas fotografias compartilhadas por Diego em novembro de 2026.
-// As resenhas foram aprovadas expressamente por Diego e são textos em primeira pessoa.
+// Obras identificadas nas fotografias compartilhadas por Diego em novembro de 2026,
+// além de títulos adicionais solicitados para a bio pessoal.
+// As resenhas pessoais já aprovadas mantêm seus textos originais; novos títulos
+// sem avaliação pessoal confirmada ficam sinalizados como resenha em preparação.
 // Quando um registro completo for publicado pelo CMS Sanity com o mesmo slug,
 // ele substitui a versão editorial inicial deste arquivo.
 export const photographedBooks:BookEntry[]=[
@@ -1353,5 +1355,46 @@ export const photographedBooks:BookEntry[]=[
     "imageAlt": null,
     "reviewDraft": true,
     "seedOrder": 80
+  },
+  // Livros adicionais solicitados pelo titular em 11/11/2026; resenhas pessoais ainda não fornecidas.
+  {
+    "id": "bio-pai-rico-pai-pobre",
+    "slug": "pai-rico-pai-pobre",
+    "title": "Pai Rico, Pai Pobre",
+    "author": "Robert T. Kiyosaki",
+    "category": "Finanças",
+    "about": "Apresenta conceitos de educação financeira por meio do contraste entre duas formas de lidar com dinheiro, renda, patrimônio e construção de ativos.",
+    "review": "",
+    "lessons": null,
+    "recommendFor": "Quem busca uma introdução a educação financeira, ativos e decisões sobre dinheiro.",
+    "readYear": null,
+    "rating": null,
+    "affiliateUrl": null,
+    "amazonAffiliateUrl": null,
+    "shopeeAffiliateUrl": null,
+    "imageUrl": "https://down-br.img.susercontent.com/file/br-11134207-820m8-mnahx13xcohw66",
+    "imageAlt": "Capa do livro Pai Rico, Pai Pobre — Robert T. Kiyosaki",
+    "reviewDraft": true,
+    "seedOrder": 81
+  },
+  {
+    "id": "bio-os-segredos-da-mente-milionaria",
+    "slug": "os-segredos-da-mente-milionaria",
+    "title": "Os Segredos da Mente Milionária",
+    "author": "T. Harv Eker",
+    "category": "Finanças",
+    "about": "Explora a influência de crenças e hábitos na relação com o dinheiro, propondo princípios de organização financeira e mudanças de comportamento.",
+    "review": "",
+    "lessons": null,
+    "recommendFor": "Pessoas interessadas em hábitos financeiros, mentalidade e desenvolvimento pessoal.",
+    "readYear": null,
+    "rating": null,
+    "affiliateUrl": null,
+    "amazonAffiliateUrl": null,
+    "shopeeAffiliateUrl": null,
+    "imageUrl": "https://down-br.img.susercontent.com/file/900bd8728cc1c8a1745577a7519453fb",
+    "imageAlt": "Capa do livro Os Segredos da Mente Milionária — T. Harv Eker",
+    "reviewDraft": true,
+    "seedOrder": 82
   }
 ]
