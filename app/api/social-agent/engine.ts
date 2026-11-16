@@ -1,6 +1,7 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
 import {makeBrandSocialSvg, makeBrandMotivationSvg, supportedBrandSlug} from '../../../scripts/brand-social-visual.mjs'
 import {renderBrandArt} from '../../../scripts/render-brand-art.mjs'
+import {visualBriefForBrand} from '../../../scripts/premium-social-scene.mjs'
 
 type Brand = {
   _id: string
@@ -139,18 +140,20 @@ async function createCaption(brand: Brand, topic: string, day: string) {
   return {caption, concept, slides}
 }
 
-async function createImage(brand: Brand, concept: string, day: string, topic: string) {
+async function createImage(brand: Brand, concept: string, day: string, topic: string, mode: 'social'|'motivation'='social') {
   const pictures = (brand.approvedImages || [])
     .map((img) => img.asset?.url)
     .filter((url): url is string => Boolean(url && url.startsWith('https://cdn.sanity.io/images/')))
 
   async function saveComposed(background: Buffer|null,source:'approved'|'generated'|'illustrated') {
-    const svg=makeBrandSocialSvg({
-      slug:brand.slug,topic,concept,date:day,cover:true,photographic:Boolean(background),
-    })
+    const svg=mode==='motivation'
+      ? makeBrandMotivationSvg({slug:brand.slug,topic,date:day,cover:true,photographic:Boolean(background)})
+      : makeBrandSocialSvg({
+          slug:brand.slug,topic,concept,date:day,cover:true,photographic:Boolean(background),
+        })
     const buffer=await renderBrandArt(svg,background?{backgroundBuffer:background}:{})
     const asset=await writeClient.assets.upload('image',buffer,{
-      filename:'social-art-v2-'+brand.slug+'-'+day+'-'+source+'.png',
+      filename:'premium-social-v3-'+mode+'-'+brand.slug+'-'+day+'-'+source+'.png',
       contentType:'image/png',
     })
     return {url:asset.url,assetId:asset._id}
@@ -184,15 +187,13 @@ async function createImage(brand: Brand, concept: string, day: string, topic: st
   // Realistic backgrounds ONLY. The separate SVG layer supplies typography,
   // logo, contrast, alignment and protected margins; prompts never request text.
   const prompt=[
-    'Premium cinematic advertising photograph for a Brazilian digital delivery brand, square 1:1.',
-    'Editorial subject: '+concept,
-    'Visual truth: do not invent software features, metrics, promotions, prices or customers.',
-    brand.slug==='velo-delivery'
-      ? 'A real, professional restaurant or pizzeria, appetizing food or organized service team, dramatic warm rim lighting, subtle cyan and violet ambience, premium commercial photography.'
-      : 'A real entrepreneur in a modern Brazilian workspace, marketing strategy or e-commerce operations, sophisticated editorial photography, teal and coral accents.',
-    'Art direction: authentic human environment, clear focal subject on the RIGHT HALF and in the lower-right, leave the LEFT 70 percent dark, simple and uncluttered for a large editorial text overlay.',
-    'Depth of field, realistic materials and textures, tasteful contrast, no exaggerated CGI.',
-    'Do NOT render any letters, typography, logos, watermarks, fake dashboard text, icons or labels.',
+    'Premium editorial advertising photograph in square 1:1 for a Brazilian business.',
+    visualBriefForBrand(brand.slug,topic,mode),
+    'Creative direction: '+concept.slice(0,250),
+    'Make it believable and visually memorable, with one hero object or a real human work scene.',
+    'Good depth of field, realistic textures, tasteful warm/cool color grading.',
+    'Place any main physical subject mostly on RIGHT THIRD, leave LEFT TWO THIRDS uncluttered and dark for deterministic typography.',
+    'No letters, words, typography, badges, posters with text, charts with numbers, fake logos, false product interfaces, watermarks.',
   ].join(' ')
   const response=await fetch('https://ai-gateway.vercel.sh/v1/images/generations',{
     method:'POST',
@@ -488,11 +489,22 @@ function weeklyMotivation(slug:string, day:string, weekday:number) {
   }
 }
 async function createMotivationImage(brand:Brand,day:string,title:string,closing:boolean) {
+  const hasPhoto=Boolean((brand.approvedImages||[]).length)
+  if(hasPhoto || process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true') {
+    try {
+      // This reuses the existing cost-gated image workflow. It never activates
+      // a paid model when the image toggle is disabled.
+      return await createImage(brand,title,day,title,'motivation')
+    } catch(error) {
+      console.warn('[social-art-v3] motivational photo unavailable; using premium composed fallback',
+        error instanceof Error ? error.message.slice(0,140) : 'unknown')
+    }
+  }
   const buffer=await renderBrandArt(makeBrandMotivationSvg({
     slug:brand.slug,topic:title,date:day,closing,cover:true,
   }))
   const asset=await writeClient.assets.upload('image',buffer,{
-    filename:'weekly-motivation-'+brand.slug+'-'+day+'.png',contentType:'image/png',
+    filename:'premium-motivation-v3-'+brand.slug+'-'+day+'.png',contentType:'image/png',
   })
   return {url:asset.url,assetId:asset._id}
 }
