@@ -94,6 +94,9 @@ async function createCaption(brand: Brand, topic: string, day: string) {
     'Não invente URLs. Não repita frases genéricas e não use termos como garantia de sucesso.',
     'Não diga que aumenta vendas, ticket médio, faturamento, lucro ou conversão sem evidências verificadas; não afirme que o cliente já possui filtros, fotos, integração ou funcionalidades sem fatos verificados.',
     'Evite frases sensacionalistas como máquina de vendas, resultados garantidos, venda mais, descubra o segredo, comprovadamente, imperdível.',
+    'O conceito visual é obrigatório e deve servir como briefing de fotografia editorial: 1 objeto ou cena protagonista, localização do sujeito no terço direito, iluminação, profundidade e atmosfera coerentes com a marca.',
+    'Não descreva posts com fundo geométrico genérico, ícone aleatório, tipografia embutida na foto ou grande caixa de texto. Tipografia e logotipo são aplicados separadamente pelo compositor.',
+    'Adapte Velo Delivery a cenas autênticas de operação, cozinha, atendimento e gestão; adapte EYAGENCIA a estratégia, e-commerce e metáforas visuais elegantes, sem clichês de cérebro holográfico.',
     'O texto deve ser publicável diretamente, sem revisão humana, ou você deve retornar JSON {"caption":"","visualConcept":""}.',
   ].join('\n')
   const input = JSON.stringify({
@@ -140,14 +143,14 @@ async function createCaption(brand: Brand, topic: string, day: string) {
   return {caption, concept, slides}
 }
 
-async function createImage(brand: Brand, concept: string, day: string, topic: string, mode: 'social'|'motivation'='social') {
+async function createImage(brand: Brand, concept: string, day: string, topic: string, mode: 'social'|'motivation'='social', closing=false) {
   const pictures = (brand.approvedImages || [])
     .map((img) => img.asset?.url)
     .filter((url): url is string => Boolean(url && url.startsWith('https://cdn.sanity.io/images/')))
 
   async function saveComposed(background: Buffer|null,source:'approved'|'generated'|'illustrated') {
     const svg=mode==='motivation'
-      ? makeBrandMotivationSvg({slug:brand.slug,topic,date:day,cover:true,photographic:Boolean(background)})
+      ? makeBrandMotivationSvg({slug:brand.slug,topic,date:day,closing,cover:true,photographic:Boolean(background)})
       : makeBrandSocialSvg({
           slug:brand.slug,topic,concept,date:day,cover:true,photographic:Boolean(background),
         })
@@ -494,7 +497,7 @@ async function createMotivationImage(brand:Brand,day:string,title:string,closing
     try {
       // This reuses the existing cost-gated image workflow. It never activates
       // a paid model when the image toggle is disabled.
-      return await createImage(brand,title,day,title,'motivation')
+      return await createImage(brand,title,day,title,'motivation',closing)
     } catch(error) {
       console.warn('[social-art-v3] motivational photo unavailable; using premium composed fallback',
         error instanceof Error ? error.message.slice(0,140) : 'unknown')
