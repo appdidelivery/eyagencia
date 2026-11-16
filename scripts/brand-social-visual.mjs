@@ -1,4 +1,5 @@
 import {officialLogoSvg} from './official-velo-logo.mjs'
+import {premiumComposition} from './premium-social-scene.mjs'
 // Deterministic, brand-specific artwork for social feed posts.
 // Inspired by the supplied visual directions, not a reproduction of reference images.
 // No third-party photos, copyrighted quotes or fabricated logos are used.
@@ -109,21 +110,12 @@ export function makeBrandSocialSvg({slug,topic,concept='',date='',cover=false,su
     '<rect x="750" y="575" width="285" height="355" rx="64" stroke="'+brand.soft+'" stroke-width="6" opacity=".27" fill="none" transform="rotate(8 900 750)"/>',
   ][variant]
   const motif='<g transform="translate(754 524) scale(.72)" color="'+(variant%2?brand.soft:brand.accent)+'" opacity=".88">'+art(semantic.motif)+'</g>'
-  const background=photographic
-    ?'<rect width="1080" height="1080" fill="'+brand.bg+'" opacity=".61"/>'+
-      '<rect x="59" y="254" width="720" height="626" rx="45" fill="'+brand.bg+'" opacity=".79"/>'
-    :'<rect width="1080" height="1080" fill="url(#back)"/>'+
-      '<circle cx="'+(810+variant*49)+'" cy="'+(440+variant*90)+'" r="410" fill="url(#glow)" opacity=".66"/>'+
-      '<path d="M0 980 Q480 920 1080 740 L1080 1080 H0 Z" fill="'+brand.highlight+'" opacity=".17"/>'+
-      '<path d="M0 1050 Q510 970 1080 830" fill="none" stroke="'+brand.soft+'" stroke-width="5" opacity=".28"/>'+
-      ornament+motif+
-      '<rect x="62" y="255" width="722" height="625" rx="44" fill="'+brand.bg+'" opacity=".74"/>'
+  const background=premiumComposition({
+    slug:String(slug||''),topic:title,date,cover,photographic,motif:semantic.motif,
+  })
   const minLabel=semantic.tag.length>24?22:25
   const badgeWidth=Math.min(710,semantic.tag.length*17+65)
   return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">'+
-    '<defs><linearGradient id="back" x1="0" x2="1" y1="0" y2="1">'+
-    '<stop stop-color="'+brand.bg+'"/><stop offset="1" stop-color="'+brand.bg2+'"/></linearGradient>'+
-    '<radialGradient id="glow"><stop stop-color="'+brand.accent+'" stop-opacity=".54"/><stop offset="1" stop-color="'+brand.accent+'" stop-opacity="0"/></radialGradient></defs>'+
     background+brandMark+
     '<rect x="80" y="185" width="'+badgeWidth+'" height="63" rx="17" fill="'+brand.accent+'"/>'+
     '<text x="107" y="226" font-family="Noto Sans" font-weight="700" font-size="'+minLabel+'" fill="'+brand.bg+'">'+escapeXml(semantic.tag)+'</text>'+
@@ -140,7 +132,7 @@ export function makeBrandSocialSvg({slug,topic,concept='',date='',cover=false,su
 // Original sunrise and horizon artwork for the weekly founder/restaurant
 // motivational series. Intentionally does not reproduce third-party quotes,
 // photographs, logos, or a viral post's design.
-export function makeBrandMotivationSvg({slug,topic,date='',closing=false,cover=false}) {
+export function makeBrandMotivationSvg({slug,topic,date='',closing=false,cover=false,photographic=false}) {
   const brand=palettes[String(slug||'')]
   if(!brand)throw new Error('Brand identity unavailable')
   const title=clean(topic,155)
@@ -151,30 +143,19 @@ export function makeBrandMotivationSvg({slug,topic,date='',closing=false,cover=f
   const text=rows.map((row,index)=>
     '<text x="94" y="'+(offset+index*lineHeight)+'" fill="#f8fcff" font-family="Noto Sans" font-size="'+fontSize+'" font-weight="700">'+escapeXml(row)+'</text>'
   ).join('')
-  const rays=Array.from({length:11},(_,i)=>{
-    const angle=i*Math.PI/10
-    const x=855+Math.cos(angle)*590
-    const y=380-Math.sin(angle)*590
-    return '<path d="M855 380 L'+x.toFixed(0)+' '+y.toFixed(0)+'" stroke="'+brand.soft+'" stroke-width="3" opacity=".12"/>'
-  }).join('')
-  const greeting=closing?'UMA BOA SEMANA MERECE UM BOM ENCERRAMENTO':'BOM DIA, QUEM FAZ ACONTECER'
+  const greeting=closing?'FECHAMENTO DA SEMANA':'COMECE COM PROPÓSITO'
   const label=brand.kind==='velo'?'GESTÃO, CORAGEM E DELIVERY':'EMPREENDEDORISMO E PROPÓSITO'
+  const premiumBackground=premiumComposition({
+    slug:String(slug||''),topic:title,date,cover,photographic,mode:'motivation',
+  })
+  const quoteGlyph='<text x="91" y="269" fill="'+brand.accent+'" font-size="110" font-family="Noto Sans" font-weight="700" opacity=".8">“</text>'
   return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">'+
-    '<defs><linearGradient id="sky" x1="0" x2=".8" y1="0" y2="1">'+
-    '<stop stop-color="'+brand.bg+'"/><stop offset=".56" stop-color="'+brand.bg2+'"/>'+
-    '<stop offset="1" stop-color="'+brand.accent+'"/></linearGradient>'+
-    '<radialGradient id="sun"><stop stop-color="#fff3c7" stop-opacity=".8"/>'+
-    '<stop offset="1" stop-color="'+brand.highlight+'" stop-opacity=".1"/></radialGradient></defs>'+
-    '<rect width="1080" height="1080" fill="url(#sky)"/>'+rays+
-    '<circle cx="855" cy="380" r="235" fill="url(#sun)" opacity=".65"/>'+
-    '<circle cx="855" cy="380" r="115" fill="#ffdf9c" opacity=".27"/>'+
-    '<path d="M0 775 L155 630 L340 797 L535 610 L790 860 L1080 610 V1080 H0Z" fill="'+brand.bg2+'" opacity=".74"/>'+
-    '<path d="M0 890 L185 735 L409 915 L625 710 L884 932 L1080 790 V1080 H0Z" fill="'+brand.bg+'" opacity=".8"/>'+
-    '<rect x="62" y="232" width="840" height="532" rx="42" fill="'+brand.bg+'" opacity=".63"/>'+
+    premiumBackground+
+    '<path d="M88 783 H685" stroke="'+brand.accent+'" stroke-width="7" stroke-linecap="round" opacity=".86"/>'+
     (cover&&brand.kind==='velo'?officialLogoSvg({x:80,y:27,width:475,height:135}):
       '<text x="92" y="105" font-family="Noto Sans" font-size="47" fill="#f8fcff" font-weight="700">'+escapeXml(brand.brand)+'</text>')+
-    '<text x="94" y="196" font-family="Noto Sans" font-size="26" fill="'+brand.soft+'" font-weight="700">'+escapeXml(greeting)+'</text>'+
-    text+
+    '<text x="94" y="194" font-family="Noto Sans" font-size="28" fill="'+brand.soft+'" font-weight="700">'+escapeXml(greeting)+'</text>'+
+    quoteGlyph+text+
     '<path d="M92 836 H650" stroke="'+brand.accent+'" stroke-width="9" stroke-linecap="round"/>'+
     '<text x="92" y="906" font-family="Noto Sans" font-size="28" fill="#ffffff">'+escapeXml(label)+'</text>'+
     '<text x="92" y="1027" font-family="Noto Sans" font-size="28" fill="#ffffff" font-weight="700">'+escapeXml(brand.website)+'</text>'+
