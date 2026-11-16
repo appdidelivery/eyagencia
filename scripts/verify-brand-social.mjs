@@ -1,4 +1,5 @@
 import {makeBrandSocialSvg,makeBrandMotivationSvg,supportedBrandSlug} from './brand-social-visual.mjs'
+import {ART_DIRECTION_VERSION,BRAND_ART_DIRECTION,premiumComposition} from './premium-social-scene.mjs'
 import sharp from 'sharp'
 import {renderBrandArt} from './render-brand-art.mjs'
 const subjects=[
@@ -45,3 +46,24 @@ const photoCover=await renderBrandArt(makeBrandSocialSvg({
 }),{backgroundBuffer:photography})
 if((await sharp(photoCover).metadata()).width!==1080)throw Error('Photographic composition invalid')
 console.log('[brand-social-art-v2] cover-only official logo, photography composite and glyph QA passed')
+
+
+if(ART_DIRECTION_VERSION!=='premium-social-v3') throw Error('Art direction version mismatch')
+if(!BRAND_ART_DIRECTION['velo-delivery'] || !BRAND_ART_DIRECTION.eyagencia)
+  throw Error('Both branded creative playbooks required')
+for(const slug of ['velo-delivery','eyagencia']){
+  const svg=makeBrandSocialSvg({slug,topic:'Como construir confiança e relacionamento',date:'2026-11-16',cover:true})
+  if(!svg.includes('premiumBg') || !svg.includes('premiumShadow'))
+    throw Error('Premium editorial scene missing '+slug)
+  const motivation=makeBrandMotivationSvg({slug,topic:'Comece com disciplina e propósito.',cover:true,date:'2026-11-16'})
+  if(!motivation.includes('premiumBg') || motivation.includes('id="sky"'))
+    throw Error('Generic sunrise layout still active '+slug)
+  const photo=makeBrandSocialSvg({slug,topic:'Organize os pedidos e o atendimento',date:'2026-11-16',cover:true,photographic:true})
+  if(!photo.includes('premiumBlend') || photo.includes('<rect x="62" y="255"'))
+    throw Error('Photographic overlay should be editorial and keep the focal scene '+slug)
+}
+const uniqueScenes=new Set(Array.from({length:5},(_,i)=>premiumComposition({
+  slug:'eyagencia',topic:'SEO para pequenos negócios',date:'2026-11-'+String(i+12),mode:'blog',
+})))
+if(uniqueScenes.size<3) throw Error('Insufficient creative variation')
+console.log('[art-direction-v3] brand playbooks, photo treatments and layout variety passed')
