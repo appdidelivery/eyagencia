@@ -27,3 +27,13 @@ const samplePhoto=await sharp({create:{width:1080,height:1350,channels:3,
 const composed=await sharp(samplePhoto).composite([{input:layerPng}]).png().toBuffer()
 if((await sharp(composed).metadata()).height!==1350)throw Error('Photo overlay failed')
 console.info('[social-art-v2] four variants and photo/text separation passed without network or Meta')
+
+
+const premiumEy=makeSocialSvg(pkg,{kind:'cover',title:'Como transformar dados em decisões reais?'},'carousel',0,8,false)
+if(!premiumEy.includes('premiumBg') || premiumEy.includes('width="705" height="775"'))
+  throw Error('EYAGENCIA blog is still using generic opaque text cards')
+if(!premiumEy.includes('premiumShadow'))throw Error('Editorial focal object missing')
+const premiumPhoto=makeSocialSvg(pkg,{kind:'cover',title:'Uma estratégia para cada desafio'},'carousel',0,8,true)
+if(!premiumPhoto.includes('premiumPhotoTint') || premiumPhoto.includes('fill="#06222a" opacity=".76"'))
+  throw Error('Photographic cover still has oversized text overlay card')
+console.info('[art-direction-v3] EYAGENCIA carousel art and photo treatment passed')
