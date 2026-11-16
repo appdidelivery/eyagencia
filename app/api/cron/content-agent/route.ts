@@ -4,6 +4,7 @@ import {POST as createDraft} from '../../content-agent/run/route'
 import {attemptAutonomousPublish} from '../../content-agent/publication'
 import {repairLegacyBlogCovers} from '../../content-agent/repairLegacyCovers'
 import {syncBlogSocialPackages} from '../../social-agent/blogPackage'
+import {isTopicEligible, PUBLISHED_TOPIC_COOLDOWN_DAYS, REJECTED_TOPIC_COOLDOWN_DAYS} from './topicCooldown'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -121,15 +122,15 @@ export async function GET(request: NextRequest) {
   // daily attempts, the 32-topic pool otherwise runs dry in just 16 days.
   // Published topics retain their 30-day exclusivity. Failed attempts cool
   // down for seven days and still undergo full editorial QA when retried.
-  const publishedCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
-  const attemptCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const publishedCutoff = new Date(now.getTime() - PUBLISHED_TOPIC_COOLDOWN_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  const attemptCutoff = new Date(now.getTime() - REJECTED_TOPIC_COOLDOWN_DAYS * 24 * 60 * 60 * 1000).toISOString()
   const start = Math.floor(now.getTime() / 86400000) % TOPICS.length
   let selected: (typeof TOPICS)[number] | undefined
   let unavailable = 0
   for (let i = 0; i < TOPICS.length; i++) {
     const topic = TOPICS[(start + i) % TOPICS.length]
-    // Evening recovery must use a different topic than the first attempt.
-    if (recovery && topic[0] === existing?.topic) continue
+    const recoverySameTopic = Boolean(recovery && topic[0] === existing?.topic)
+    if (recoverySameTopic) continue
     const [recentlyPublished, recentlyAttempted] = await Promise.all([
       writeClient.fetch<number>(
         'count(*[_type == "aiContentJob" && topic == $topic && createdAt > $cutoff && status in ["auto_published", "published_after_revision"]])',
@@ -140,13 +141,13 @@ export async function GET(request: NextRequest) {
         {topic: topic[0], cutoff: attemptCutoff},
       ),
     ])
-    if (!recentlyPublished && !recentlyAttempted) {selected = topic; break}
+    if (isTopicEligible({recentlyPublished, recentlyAttempted, recoverySameTopic})) {selected = topic; break}
     unavailable++
   }
   if (!selected) {
     console.warn('[content-agent-cron] no_eligible_topic', JSON.stringify({
       day, recovery, topicPool: TOPICS.length, unavailable,
-      publishedCooldownDays: 30, rejectedCooldownDays: 7,
+      publishedCooldownDays: PUBLISHED_TOPIC_COOLDOWN_DAYS, rejectedCooldownDays: REJECTED_TOPIC_COOLDOWN_DAYS,
     }))
     return NextResponse.json({
       ok: true, skipped: 'Nenhuma pauta elegível no ciclo atual.', day,
