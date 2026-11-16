@@ -71,9 +71,18 @@ export async function GET(request: NextRequest) {
   if (process.env.VERCEL_ENV !== 'production' ||
       process.env.CONTENT_AGENT_AUTO_DRAFTS_ENABLED !== 'true' ||
       process.env.CONTENT_AGENT_AI_ENABLED !== 'true') {
+    console.warn('[content-agent-cron] disabled', JSON.stringify({
+      production: process.env.VERCEL_ENV === 'production',
+      draftsEnabled: process.env.CONTENT_AGENT_AUTO_DRAFTS_ENABLED === 'true',
+      aiEnabled: process.env.CONTENT_AGENT_AI_ENABLED === 'true',
+    }))
     return NextResponse.json({ok: true, skipped: 'Autonomia desativada.'})
   }
   if (!process.env.CONTENT_AGENT_SECRET || !process.env.SANITY_API_WRITE_TOKEN) {
+    console.error('[content-agent-cron] missing_credentials', JSON.stringify({
+      agentSecret: Boolean(process.env.CONTENT_AGENT_SECRET),
+      sanityWriteToken: Boolean(process.env.SANITY_API_WRITE_TOKEN),
+    }))
     return NextResponse.json({ok: false, error: 'Credenciais de execução ausentes.'}, {status: 503})
   }
 
@@ -108,20 +117,42 @@ export async function GET(request: NextRequest) {
   }
   const activeLockId = recovery ? lockId + '-recovery' : lockId
 
-  const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  // An editorial rejection must NOT reserve a topic for 30 days: with two
+  // daily attempts, the 32-topic pool otherwise runs dry in just 16 days.
+  // Published topics retain their 30-day exclusivity. Failed attempts cool
+  // down for seven days and still undergo full editorial QA when retried.
+  const publishedCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const attemptCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const start = Math.floor(now.getTime() / 86400000) % TOPICS.length
   let selected: (typeof TOPICS)[number] | undefined
+  let unavailable = 0
   for (let i = 0; i < TOPICS.length; i++) {
     const topic = TOPICS[(start + i) % TOPICS.length]
-    // A recovery must not generate the same failed morning topic again.
+    // Evening recovery must use a different topic than the first attempt.
     if (recovery && topic[0] === existing?.topic) continue
-    const previous = await writeClient.fetch<number>(
-      'count(*[_type == "aiContentJob" && topic == $topic && createdAt > $cutoff])',
-      {topic: topic[0], cutoff},
-    )
-    if (!previous) {selected = topic; break}
+    const [recentlyPublished, recentlyAttempted] = await Promise.all([
+      writeClient.fetch<number>(
+        'count(*[_type == "aiContentJob" && topic == $topic && createdAt > $cutoff && status in ["auto_published", "published_after_revision"]])',
+        {topic: topic[0], cutoff: publishedCutoff},
+      ),
+      writeClient.fetch<number>(
+        'count(*[_type == "aiContentJob" && topic == $topic && createdAt > $cutoff])',
+        {topic: topic[0], cutoff: attemptCutoff},
+      ),
+    ])
+    if (!recentlyPublished && !recentlyAttempted) {selected = topic; break}
+    unavailable++
   }
-  if (!selected) return NextResponse.json({ok: true, skipped: 'Pautas já processadas nos últimos 30 dias.', day})
+  if (!selected) {
+    console.warn('[content-agent-cron] no_eligible_topic', JSON.stringify({
+      day, recovery, topicPool: TOPICS.length, unavailable,
+      publishedCooldownDays: 30, rejectedCooldownDays: 7,
+    }))
+    return NextResponse.json({
+      ok: true, skipped: 'Nenhuma pauta elegível no ciclo atual.', day,
+      reason: 'topic_cooldown', topicPool: TOPICS.length,
+    }, {headers: {'Cache-Control': 'no-store'}})
+  }
 
   try {
     await writeClient.create({
@@ -129,6 +160,7 @@ export async function GET(request: NextRequest) {
       status: 'running', createdAt: now.toISOString(), topic: selected[0],
     })
   } catch {
+    console.info('[content-agent-cron] duplicate_execution', JSON.stringify({day, recovery}))
     return NextResponse.json({ok: true, skipped: 'Execução já reservada por outra chamada.', day})
   }
 
@@ -213,7 +245,10 @@ export async function GET(request: NextRequest) {
       httpStatus: response.status,
       // Never reveal an internal auth token or raw model response.
     }, {status: created ? 200 : 502})
-  } catch {
+  } catch (error) {
+    console.error('[content-agent-cron] execution_interrupted', JSON.stringify({
+      day, recovery, errorType: error instanceof Error ? error.name : 'unknown',
+    }))
     await writeClient.patch(activeLockId).set({status: 'error', finishedAt: new Date().toISOString()}).commit().catch(() => {})
     return NextResponse.json({ok: false, error: 'A execução foi interrompida; sem nova tentativa automática hoje.'}, {status: 500})
   }
