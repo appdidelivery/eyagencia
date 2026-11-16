@@ -1,4 +1,5 @@
-const VERSION='social-media-v2'
+import {premiumComposition,ART_DIRECTION_VERSION} from './premium-social-scene.mjs'
+const VERSION=ART_DIRECTION_VERSION
 const API='v2026-07-01'
 function settings(){
   const project=process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
@@ -42,8 +43,8 @@ function visualTheme(name) {
   if(/indicador|metrica|avaliar|conversao|performance/.test(t))return {bg:'#0e2937',alt:'#295b6d',accent:'#f2ab83',label:'ANÁLISE E RESULTADOS'}
   return {bg:'#0b2b2b',alt:'#28615b',accent:'#a2e8d4',label:'ESTRATÉGIA DIGITAL'}
 }
-function titleSvg(lines,x,y,size,color,lineHeight) {
-  return lines.map((line,i)=>`<text x="${x}" y="${y+i*lineHeight}" fill="${color}" font-size="${size}" font-weight="800" font-family="Arial,DejaVu Sans,sans-serif">${xml(line)}</text>`).join('')
+function titleSvg(lines,x,y,size,color,lineHeight,lastAccent='') {
+  return lines.map((line,i)=>`<text x="${x}" y="${y+i*lineHeight}" fill="${lastAccent&&i===lines.length-1?lastAccent:color}" font-size="${size}" font-weight="800" font-family="Arial,DejaVu Sans,sans-serif">${xml(line)}</text>`).join('')
 }
 export function makeSocialSvg(pkg,frame,format,index,count,usePhoto=false) {
   const story=format==='story',width=1080,height=story?1920:1350
@@ -78,13 +79,18 @@ export function makeSocialSvg(pkg,frame,format,index,count,usePhoto=false) {
     ?`<text x="105" y="${Math.min(detailStart,footer-135)}" fill="#f9dfd0" font-size="${story?38:34}" font-family="Arial,sans-serif">Artigo completo no blog da EyAgencia</text>`
     :titleSvg(detail,105,detailStart,detailSize,'#e4f2f0',detailSize+20)
   const photoOverlay=usePhoto
-    ?`<rect width="${width}" height="${height}" fill="#051b24" opacity=".53"/>
-      <rect x="76" y="${story?420:310}" width="705" height="${story?905:775}" rx="47" fill="#06222a" opacity=".76"/>`
+    ?`<defs><linearGradient id="premiumPhotoTint">
+        <stop stop-color="#031e22" stop-opacity=".97"/>
+        <stop offset=".62" stop-color="#052c31" stop-opacity=".88"/>
+        <stop offset="1" stop-color="#062b2d" stop-opacity=".16"/>
+      </linearGradient></defs>
+      <rect width="${width}" height="${height}" fill="url(#premiumPhotoTint)"/>
+      <path d="M0 ${height-140} Q570 ${height-260} 1080 ${height-150}" stroke="${accent}" stroke-width="7" fill="none" opacity=".42"/>`
     :`<rect width="${width}" height="${height}" fill="url(#bg)"/>
-      <circle cx="${870+variant*23}" cy="${story?1160:810}" r="490" fill="${theme.accent}" opacity=".1"/>
-      <path d="M680 ${height} L1080 ${story?1050:610} M770 ${height} L1080 ${story?1210:790}" stroke="${accent}" stroke-width="7" opacity=".23"/>
-      <rect x="76" y="${story?420:310}" width="705" height="${story?905:775}" rx="47" fill="#04232b" opacity=".52"/>
-      <g>${decorative}</g>`
+      <svg x="0" y="${story?395:185}" width="1080" height="1080" viewBox="0 0 1080 1080">
+        ${premiumComposition({slug:'eyagencia',topic:headline,date:String(index)+'|'+pkg.sourceSlug,mode:'blog',motif:section})}
+      </svg>
+      <rect width="${width}" height="${height}" fill="url(#bg)" opacity=".06"/>`
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -97,7 +103,7 @@ export function makeSocialSvg(pkg,frame,format,index,count,usePhoto=false) {
     <text x="131" y="${story?374:175}" fill="#062b32" font-size="26" font-weight="800" font-family="Arial,sans-serif">${xml(theme.label)}</text>
     <text x="105" y="${story?500:291}" fill="${accent}" font-size="31" font-weight="700" font-family="Arial,sans-serif">EYAGENCIA · INTELIGÊNCIA DIGITAL</text>
     <path d="M104 ${story?528:322} H644" stroke="${theme.accent}" stroke-width="6" stroke-linecap="round"/>
-    ${titleSvg(title,105,y0,size,titleColor,lineHeight)}
+    ${titleSvg(title,105,y0,size,titleColor,lineHeight,cover?accent:'')}
     ${supporting}
     <path d="M105 ${footer} H965" stroke="${accent}" stroke-width="5" opacity=".8"/>
     <text x="105" y="${footer+59}" fill="#f1fffb" font-size="28" font-weight="700" font-family="Arial,sans-serif">${xml(format==='story'?'STORY':'CARROSSEL')} · ${String(index+1).padStart(2,'0')} / ${String(count).padStart(2,'0')}</text>
