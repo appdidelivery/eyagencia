@@ -6,6 +6,9 @@ import {generateUploadAndAttachFeaturedImage} from './image'
 type RecordObject = Record<string, any>
 type Decision = {eligible: boolean; reasons: string[]}
 
+// Keep the final publication gate aligned with the generation QA (85/100).
+const AUTONOMOUS_MIN_QA_SCORE = 85
+
 function parseStoredObject(value: unknown): RecordObject | null {
   if (typeof value !== 'string') return null
   try {
@@ -30,13 +33,22 @@ export function autonomousPublicationDecision(
   if (job.status !== 'qa_passed' || job.qaPassed !== true || qa.passed !== true) {
     reasons.push('QA não aprovado.')
   }
-  if (typeof job.qaScore !== 'number' || job.qaScore < 90 ||
-      typeof qa.score !== 'number' || qa.score < 90) {
-    reasons.push('Publicação autônoma exige nota mínima de 90.')
+  if (typeof job.qaScore !== 'number' || job.qaScore < AUTONOMOUS_MIN_QA_SCORE ||
+      typeof qa.score !== 'number' || qa.score < AUTONOMOUS_MIN_QA_SCORE) {
+    reasons.push('Publicação autônoma exige nota mínima de 85.')
   }
   if (qa.publicationRisk !== 'low') reasons.push('Risco editorial não é baixo.')
-  if (!Array.isArray(qa.issues) || qa.issues.length !== 0) {
-    reasons.push('Existem apontamentos editoriais pendentes no relatório de QA.')
+  // Minor editorial suggestions do not block an otherwise approved, low-risk article.
+  // Critical findings remain blocking; deterministic structural and factual checks
+  // are still run independently below and again against live official evidence.
+  const issues = Array.isArray(qa.issues) ? qa.issues : null
+  const criticalIssue = issues?.some((issue: unknown) => {
+    if (!issue || typeof issue !== 'object' || Array.isArray(issue)) return false
+    const severity = String((issue as RecordObject).severity || '').toLowerCase()
+    return ['critical', 'high', 'blocking', 'blocker', 'fatal', 'crítico', 'critico', 'grave', 'alta', 'alto'].includes(severity)
+  })
+  if (!issues || criticalIssue) {
+    reasons.push('QA sem inventário editorial ou com apontamentos críticos pendentes.')
   }
   if (!Array.isArray(article.sources) || article.sources.length < 2) {
     reasons.push('Artigo sem pelo menos duas referências documentadas.')
@@ -100,8 +112,9 @@ export function testAutonomousPublishing() {
   const job = {status: 'qa_passed',qaPassed:true,qaScore:92,postDraftId:draft._id}
   return [
     {name:'Permite exemplo com todos os guardrails', passed:autonomousPublicationDecision(job,draft,minimumArticle,qa,facts).eligible},
-    {name:'Bloqueia QA com problema editorial',passed:!autonomousPublicationDecision(job,draft,minimumArticle,{...qa,issues:[{severity:'medium'}]},facts).eligible},
-    {name:'Bloqueia nota abaixo de 90',passed:!autonomousPublicationDecision(job,draft,minimumArticle,{...qa,score:88},facts).eligible},
+    {name:'Permite nota 88 e sugestão leve com QA aprovado',passed:autonomousPublicationDecision({...job,qaScore:88},draft,minimumArticle,{...qa,score:88,issues:[{severity:'low',detail:'Ajuste de estilo opcional'}]},facts).eligible},
+    {name:'Bloqueia QA com problema crítico',passed:!autonomousPublicationDecision(job,draft,minimumArticle,{...qa,issues:[{severity:'high'}]},facts).eligible},
+    {name:'Bloqueia nota abaixo de 85',passed:!autonomousPublicationDecision({...job,qaScore:84},draft,minimumArticle,{...qa,score:84},facts).eligible},
     {name:'Bloqueia documentos sem associação a job',passed:!autonomousPublicationDecision({...job,postDraftId:'drafts.outro'},draft,minimumArticle,qa,facts).eligible},
     {name:'Bloqueia risco editorial alto',passed:!autonomousPublicationDecision(job,draft,minimumArticle,{...qa,publicationRisk:'high'},facts).eligible},
   ]

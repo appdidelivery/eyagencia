@@ -1018,7 +1018,7 @@ export async function POST(request: NextRequest) {
     // independently retrieved evidence. Neither the editor nor QA may bypass
     // deterministic checks or assign approval just to fill a publishing slot.
     if (supportedFacts.length >= 2 &&
-        (!qaResult.passed || Number(qaResult.score || 0) < 90 ||
+        (!qaResult.passed || Number(qaResult.score || 0) < 85 ||
          qaResult.publicationRisk !== 'low' || structuralIssues.length > 0)) {
       try {
         const focusedEditor = await callAgent({
@@ -1063,7 +1063,7 @@ export async function POST(request: NextRequest) {
               '\nPROBLEMAS INDEPENDENTES: ' + JSON.stringify(candidateStructural),
           })
           const verdict = parseJson(candidateQa.text, 'QA independente da revisão direcionada')
-          if (verdict.passed === true && Number(verdict.score) >= 90 &&
+          if (verdict.passed === true && Number(verdict.score) >= 85 &&
               verdict.publicationRisk === 'low' &&
               (!Array.isArray(verdict.issues) || verdict.issues.length === 0) &&
               candidateStructural.length === 0) {

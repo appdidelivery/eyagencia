@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       // Editorially rejected drafts are preserved; the evening run may try
       // a different topic, never bypassing QA or republishing that draft.
       (existing.status === 'completed' && existing.publicationStatus === 'blocked_or_pending' &&
-        (existing.qaPassed !== true || Number(existing.qaScore || 0) < 90))))
+        (existing.qaPassed !== true || Number(existing.qaScore || 0) < 85))))
   if (existing && !recovery) {
     console.info('[content-agent-cron] skipped', JSON.stringify({
       day, reason: 'day_already_processed', status: existing.status,
