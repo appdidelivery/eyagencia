@@ -105,10 +105,10 @@ export async function GET(request: NextRequest) {
   const recovery = Boolean(retryWindow && existing &&
     (existing.status === 'error' ||
       (existing.status === 'running' && olderThanTwoHours) ||
-      // Editorially rejected drafts are preserved; the evening run may try
-      // a different topic, never bypassing QA or republishing that draft.
-      (existing.status === 'completed' && existing.publicationStatus === 'blocked_or_pending' &&
-        (existing.qaPassed !== true || Number(existing.qaScore || 0) < 85))))
+      // Any unpublished editorial result deserves one evening recovery attempt.
+      // The first draft remains preserved; a different topic is freshly checked
+      // against all the same QA and evidence gates, without duplicate posting.
+      (existing.status === 'completed' && existing.publicationStatus === 'blocked_or_pending')))
   if (existing && !recovery) {
     console.info('[content-agent-cron] skipped', JSON.stringify({
       day, reason: 'day_already_processed', status: existing.status,
