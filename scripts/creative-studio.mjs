@@ -21,9 +21,14 @@ export function creativeBrief({brandSlug,topic,concept='',date='',mode='social',
   const refs=approvedCreativeReferences(references)
   const brand=brandSlug==='velo-delivery'?'VELO DELIVERY':'EYAGENCIA'
   const visualNotes=refs.map(x=>x.title+': '+x.visualNotes).filter(Boolean).join(' | ')
+  // Art directions distilled from the client's own manual premium covers.
+  const visualBenchmark=brandSlug==='velo-delivery'
+    ?'Photorealistic working restaurant kitchen and hands preparing actual orders; sophisticated navy and graphite, tasteful cyan/violet light, restrained orange accents, cinematic textures, prominent product or team scene; absolutely no gigantic badges or neon icons.'
+    :'Sophisticated ecommerce editorial still-life or human collaboration, deep teal/green, restrained peach and coral accents, luminous realistic objects, studio light and ample uncluttered space, not generic digital brains or flat abstract geometry.'
   return [
     'One PREMIUM high-end editorial commercial PHOTOGRAPH, square 1:1, for '+brand+'.',
     visualBriefForBrand(brandSlug,topic,mode),
+    visualBenchmark,
     'Specific article/post topic: '+String(topic).slice(0,180)+'.',
     'Creative concept: '+String(concept).slice(0,330)+'.',
     visualNotes?'Creative references approved by the brand art director (STYLE only, do not copy existing artwork): '+visualNotes+'.':'',

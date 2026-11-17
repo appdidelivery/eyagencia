@@ -180,7 +180,17 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
     try {
       // Article hero is a licensed first-party Sanity asset. Use only on
       // the carousel cover, never on every frame or on unrelated topics.
-      const hero=await approvedBlogPhoto(pkg.heroImageUrl)
+      let hero=await approvedBlogPhoto(pkg.heroImageUrl)
+      if(!hero&&process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
+        // No source image: create a premium cover instead of substituting
+        // a generic vector when photograph-first mode is enabled.
+        const cover=await generateEditorialPhoto({
+          brandSlug:'eyagencia',topic:String(pkg.title||'E-commerce'),
+          concept:'Foto de capa editorial com objeto principal a direita e grande espaco para tipografia',
+          date:String(pkg.sourceSlug||'')+'-cover',mode:'blog',
+        })
+        hero=cover.buffer
+      }
       // One additional, visually reviewed editorial photograph varies the
       // interior of original EYAGENCIA blog carousels. Never used in reposts.
       let innerPhoto=null

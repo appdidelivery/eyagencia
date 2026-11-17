@@ -469,8 +469,11 @@ async function createMotivationImage(brand:Brand,day:string,title:string,closing
       // a paid model when the image toggle is disabled.
       return await createImage(brand,title,day,title,'motivation',closing)
     } catch(error) {
-      console.warn('[social-art-v3] motivational photo unavailable; using premium composed fallback',
+      console.warn('[social-art-v3] premium motivation image rejected',
         error instanceof Error ? error.message.slice(0,140) : 'unknown')
+      // Quality first: never publish a generic vector substitute when paid
+      // photographic generation was requested and failed safety/visual QA.
+      if(process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true')throw error
     }
   }
   const buffer=await renderBrandArt(makeBrandMotivationSvg({
@@ -808,7 +811,9 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
       }catch(error){
         console.warn('[social-studio] Velo blog photo unavailable',index,
           error instanceof Error?error.message.slice(0,105):'unknown')
-        // Keep the known-good 8-slide editorial layout when gateway is unavailable.
+        // Never submit a new carousel with an unreviewed illustrated cover.
+        if(index===0)throw error
+        // Interior photographic details can be omitted when cover passes QA.
       }
     }
   }
