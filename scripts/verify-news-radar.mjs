@@ -28,3 +28,12 @@ assert.ok(rankHeadline('IA transforma o checkout do e-commerce','eyagencia')>0)
 assert.ok(rankHeadline('Delivery ganha novos canais para bares e restaurantes','velo-delivery')>0)
 assert.equal(rankHeadline('Discussões eleitorais dividem empresários no setor','velo-delivery'),-1)
 console.info('[industry-news-selftest] source whitelist, date, relevance and originality safeguards passed')
+
+// Source captions must mention the actual verified social publisher.
+import {sourceInstagramHandle} from './news-source-parser.mjs'
+for(const [host,handle] of Object.entries({
+  'www.ecommercebrasil.com.br':'ecommercebrasil',
+  'abrasel.com.br':'abrasel',
+  'www.nuvemshop.com.br':'nuvemshop',
+  'tray.com.br':'traycommerce',
+}))if(sourceInstagramHandle(host)!==handle)throw Error('Source handle mismatch '+host)

@@ -1,5 +1,17 @@
 // Bounded extraction of links from approved industry news sources.
 // Do not duplicate article bodies, copy images, or visit other domains.
+// Verified source handles: keep the original posts and the current news/repost flow.
+export function sourceInstagramHandle(host) {
+  const handles={
+    'www.ecommercebrasil.com.br':'ecommercebrasil',
+    'abrasel.com.br':'abrasel',
+    'www.nuvemshop.com.br':'nuvemshop',
+    'tray.com.br':'traycommerce',
+  }
+  const value=handles[String(host||'').toLowerCase()]
+  if(!value)throw Error('Unknown publisher Instagram handle: '+String(host).slice(0,90))
+  return value
+}
 export const NEWS_SOURCES = Object.freeze({
   eyagencia: {
     name: 'E-Commerce Brasil',

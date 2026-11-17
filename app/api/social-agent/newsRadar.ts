@@ -2,7 +2,7 @@ import {writeClient} from '../../../sanity/lib/writeClient'
 import {makeBrandSocialSvg} from '../../../scripts/brand-social-visual.mjs'
 import {renderBrandArt} from '../../../scripts/render-brand-art.mjs'
 import {
-  NEWS_SOURCES, extractNewsLinks, extractNewsDate, articleHeadline,
+  NEWS_SOURCES, sourceInstagramHandle, extractNewsLinks, extractNewsDate, articleHeadline,
   isRecent, rankHeadline,
 } from '../../../scripts/news-source-parser.mjs'
 
@@ -103,7 +103,7 @@ function angle(brand: BrandKey,title: string) {
 function captionFor(brand: BrandKey,source: Source,article: Article) {
   const opening=brand==='eyagencia'?'📰 Radar do E-commerce | EYAGENCIA':'📰 Radar do Foodservice | Velo Delivery'
   const intro='O portal '+source.name+' publicou uma notícia sobre: '+article.title+'.'
-  const credit='Fonte: '+source.name+' (veículo original).'
+  const credit='Fonte: '+source.name+' (@'+sourceInstagramHandle(source.host)+') · perfil de origem.'
   const url='Matéria completa: '+article.url
   const message=[opening,'',intro,'',angle(brand,article.title),'',credit,url].join('\n')
   if(message.length>2050)throw new Error('caption_too_long')

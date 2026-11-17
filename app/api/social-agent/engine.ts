@@ -2,6 +2,7 @@ import {writeClient} from '../../../sanity/lib/writeClient'
 import {makeBrandSocialSvg, makeBrandMotivationSvg, supportedBrandSlug} from '../../../scripts/brand-social-visual.mjs'
 import {renderBrandArt} from '../../../scripts/render-brand-art.mjs'
 import {visualBriefForBrand} from '../../../scripts/premium-social-scene.mjs'
+import {generateEditorialPhoto} from '../../../scripts/creative-studio.mjs'
 
 type Brand = {
   _id: string
@@ -16,13 +17,13 @@ type Brand = {
   instagramEnabled?: boolean
   facebookEnabled?: boolean
   approvedImages?: {asset?: {url?: string}}[]
+  creativeReferences?: {approved?: boolean;title?: string;visualNotes?: string;url?: string}[]
 }
 type Result = {brand: string; status: string; detail?: string}
 type GraphJson = {id?: string; status_code?: string; error?: {code?: number; message?: string}}
 
 const TIMEZONE = 'America/Sao_Paulo'
 const MODEL = 'nvidia/nemotron-3.5-lightning-free'
-const IMAGE_MODEL = 'bfl/flux-3-image-klein'
 const GRAPH_VERSION = 'v26.0'
 const GRAPH_URL = 'https://graph.facebook.com/' + GRAPH_VERSION
 
@@ -52,8 +53,8 @@ function credentials(brand: Brand) {
   return {pageId, pageToken: pageToken || '', instagramId}
 }
 
-async function modelAllowed(model: string, image = false) {
-  if (image ? model !== IMAGE_MODEL : !model.endsWith('-free')) return false
+async function modelAllowed(model: string) {
+  if (!model.endsWith('-free')) return false
   const res = await fetch('https://ai-gateway.vercel.sh/v1/models', {
     cache: 'no-store', signal: AbortSignal.timeout(12000),
   })
@@ -63,18 +64,10 @@ async function modelAllowed(model: string, image = false) {
     ? catalog.data.find((item: {id?: string}) => item.id === model)
     : null
   if (!entry) return false
-  if (!image) {
-    return entry.type === 'language' &&
-      Number(entry.pricing?.input) === 0 &&
-      Number(entry.pricing?.output) === 0 &&
-      entry.pricing?.varies_by_provider !== true
-  }
-  const pricing = entry.pricing || {}
-  const prices = [pricing.image, pricing.output_image, pricing.per_image]
-    .filter((price: unknown) => price !== undefined && price !== null)
-    .map(Number).filter(Number.isFinite)
-  // Do not assume a price if the live catalog does not report an image unit cost.
-  return prices.length > 0 && Math.max(...prices) <= 0.01
+  return entry.type === 'language' &&
+    Number(entry.pricing?.input) === 0 &&
+    Number(entry.pricing?.output) === 0 &&
+    entry.pricing?.varies_by_provider !== true
 }
 
 async function createCaption(brand: Brand, topic: string, day: string) {
@@ -182,36 +175,13 @@ async function createImage(brand: Brand, concept: string, day: string, topic: st
   if(process.env.SOCIAL_AGENT_IMAGES_ENABLED!=='true' || !supportedBrandSlug(brand.slug))
     return saveComposed(null,'illustrated')
 
-  const apiKey=process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN
-  if(!apiKey)throw new Error('Credencial para geração de imagem ausente.')
-  if(!(await modelAllowed(IMAGE_MODEL,true)))
-    throw new Error('Preço de imagem não validado dentro do teto US$ 0,01.')
-
-  // Realistic backgrounds ONLY. The separate SVG layer supplies typography,
-  // logo, contrast, alignment and protected margins; prompts never request text.
-  const prompt=[
-    'Premium editorial advertising photograph in square 1:1 for a Brazilian business.',
-    visualBriefForBrand(brand.slug,topic,mode),
-    'Creative direction: '+concept.slice(0,250),
-    'Make it believable and visually memorable, with one hero object or a real human work scene.',
-    'Good depth of field, realistic textures, tasteful warm/cool color grading.',
-    'Place any main physical subject mostly on RIGHT THIRD, leave LEFT TWO THIRDS uncluttered and dark for deterministic typography.',
-    'No letters, words, typography, badges, posters with text, charts with numbers, fake logos, false product interfaces, watermarks.',
-  ].join(' ')
-  const response=await fetch('https://ai-gateway.vercel.sh/v1/images/generations',{
-    method:'POST',
-    headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
-    body:JSON.stringify({model:IMAGE_MODEL,prompt,n:1,response_format:'b64_json'}),
-    cache:'no-store',signal:AbortSignal.timeout(120000),
+  // A strict two-proposal limit and a vision-based critic run before posting.
+  // The compositing layer still owns every character and official logo.
+  const creative=await generateEditorialPhoto({
+    brandSlug:brand.slug,topic,concept,date:day,mode,
+    references:brand.creativeReferences||[],
   })
-  if(!response.ok)throw new Error('Falha na geração da fotografia (HTTP '+response.status+').')
-  const result=await response.json()
-  const base64=result?.data?.[0]?.b64_json
-  if(typeof base64!=='string')throw new Error('Fotografia não retornada pelo modelo.')
-  const buffer=Buffer.from(base64,'base64')
-  if(buffer.length<8000||buffer.length>12*1024*1024)
-    throw new Error('Tamanho da fotografia fora dos limites.')
-  return saveComposed(buffer,'generated')
+  return saveComposed(creative.buffer,'generated')
 }
 
 function publicJpeg(url: string) {
@@ -605,7 +575,8 @@ async function buildPracticalCarousel(brand:Brand,day:string,coverUrl:string,mes
 
 async function processBrand(brand: Brand, day: string, weekday: number): Promise<Result> {
   const slug = brand.slug
-  if (![1,4,5].includes(weekday)) return {brand: brand.name, status: 'not-scheduled'}
+  if (![1,4,5].includes(weekday) || brand.slug==='velo-delivery')
+    return {brand:brand.name,status:'not-scheduled'}
   const keys = credentials(brand)
   if (!keys) return {brand: brand.name, status: 'credentials-missing'}
   const publicationId = 'social-' + slug + '-' + day
@@ -767,7 +738,7 @@ export async function runSocialPublishing() {
   await ensureInitialBrand()
   await ensureEyagenciaBrand()
   const brands = await writeClient.fetch<Brand[]>(
-    '*[_type == "socialBrand" && enabled == true]{_id,name,"slug":slug.current,brandGuide,audience,verifiedFacts,topics,days,website,instagramEnabled,facebookEnabled,approvedImages[]{asset->{url}}}'
+    '*[_type == "socialBrand" && enabled == true]{_id,name,"slug":slug.current,brandGuide,audience,verifiedFacts,topics,days,website,instagramEnabled,facebookEnabled,approvedImages[]{asset->{url}},creativeReferences[]{approved,title,visualNotes,"url":image.asset->url}}'
   )
   const results:Result[]=[]
   // One scheduled authorial publication per brand; other agents do not post
@@ -822,6 +793,25 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
   ]
   if(slides.length!==8)throw new Error('Velo: blog carousel incomplete')
   const images:string[]=[],assetIds:string[]=[]
+  // Two distinct photographic scenes instead of a repeated vector-only template.
+  const photos=new Map<number,Buffer>()
+  if(process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
+    for(const index of [0,4]){
+      try{
+        const shot=await generateEditorialPhoto({
+          brandSlug:'velo-delivery',
+          topic:index===0?post.title:String(slides[index]).slice(0,160),
+          concept:'Cena distinta de operacao de restaurante real, luz cinematografica, composicao premium',
+          date:day+'-blog-'+index,mode:'social',
+        })
+        photos.set(index,shot.buffer)
+      }catch(error){
+        console.warn('[social-studio] Velo blog photo unavailable',index,
+          error instanceof Error?error.message.slice(0,105):'unknown')
+        // Keep the known-good 8-slide editorial layout when gateway is unavailable.
+      }
+    }
+  }
   for(const [i,title] of slides.entries()){
     const divider=i===0?-1:title.indexOf(': ')
     const heading=divider>0?title.slice(0,divider):title
@@ -830,9 +820,9 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
       slug:'velo-delivery',topic:heading.slice(0,120),
       subtitle:detail.slice(0,150),cover:i===0,
       concept:'Conteúdo do blog Velo Delivery: '+(post.title||''),
-      date:day+'-blog-'+(i+1),
+      date:day+'-blog-'+(i+1),photographic:photos.has(i),
     })
-    const png=await renderBrandArt(image)
+    const png=await renderBrandArt(image,photos.has(i)?{backgroundBuffer:photos.get(i)}:{})
     const asset=await writeClient.assets.upload('image',png,{
       filename:'velo-blog-carousel-'+day+'-'+(i+1)+'.png',
       contentType:'image/png',

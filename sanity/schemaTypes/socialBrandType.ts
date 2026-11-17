@@ -12,6 +12,14 @@ export const socialBrandType = defineType({
     defineField({name: 'audience', title: 'Público-alvo', type: 'string'}),
     defineField({name: 'verifiedFacts', title: 'Produtos, serviços e fatos confirmados (não inventar)', type: 'array', of: [{type: 'string'}]}),
     defineField({name: 'approvedImages', title: 'Fotos oficiais autorizadas (sem custo de geração)', type: 'array', of: [{type: 'image'}]}),
+    defineField({name:'creativeReferences',title:'Biblioteca de criativos manuais aprovados (referencias para IA)',type:'array',
+      description:'Cadastre apenas artes proprias ou devidamente autorizadas. A IA extrai direcao criativa e compara o estilo; nao copia nem republica a imagem.',
+      of:[{type:'object',name:'creativeReference',fields:[
+        defineField({name:'title',title:'Nome da referencia',type:'string',validation:Rule=>Rule.required()}),
+        defineField({name:'image',title:'Criativo/manual aprovado',type:'image',validation:Rule=>Rule.required()}),
+        defineField({name:'visualNotes',title:'O que repetir do estilo (luz, foto, espacos, cores)',type:'text',rows:3}),
+        defineField({name:'approved',title:'Referencia aprovada para uso pelo agente',type:'boolean',initialValue:false}),
+      ]}]}),
     defineField({name: 'topics', title: 'Pautas autorizadas', type: 'array', of: [{type: 'string'}], validation: (Rule) => Rule.required().min(3)}),
     defineField({name: 'days', title: 'Dias de postagem (horário Brasília, 10h)', type: 'array', of: [{type: 'string', options: {list: [
       {title: 'Domingo', value: '0'}, {title: 'Segunda', value: '1'},

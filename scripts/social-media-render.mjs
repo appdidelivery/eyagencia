@@ -1,4 +1,5 @@
 import {premiumComposition,ART_DIRECTION_VERSION} from './premium-social-scene.mjs'
+import {generateEditorialPhoto} from './creative-studio.mjs'
 const VERSION=ART_DIRECTION_VERSION
 const API='v2026-07-01'
 function settings(){
@@ -180,6 +181,22 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       // Article hero is a licensed first-party Sanity asset. Use only on
       // the carousel cover, never on every frame or on unrelated topics.
       const hero=await approvedBlogPhoto(pkg.heroImageUrl)
+      // One additional, visually reviewed editorial photograph varies the
+      // interior of original EYAGENCIA blog carousels. Never used in reposts.
+      let innerPhoto=null
+      if(process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
+        try{
+          const shot=await generateEditorialPhoto({
+            brandSlug:'eyagencia',topic:String(pkg.title||'E-commerce'),
+            concept:'Fotografia de detalhe editorial para slide central, nao repetir a capa',
+            date:String(pkg.sourceSlug||'')+'-interior',mode:'blog',
+          })
+          innerPhoto=shot.buffer
+        }catch(error){
+          console.warn('[social-studio] optional inner photo unavailable',
+            error instanceof Error?error.message.slice(0,110):'unknown')
+        }
+      }
       // Prevent concurrent mutable edits and preserve existing art if someone has already rendered.
       const imageRecords=[]
       const frames=[...carousel.map((frame,index)=>({frame,index,kind:'carousel',total:carousel.length})),
@@ -188,13 +205,15 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       for(let i=0;i<frames.length;i+=3){
         const batch=frames.slice(i,i+3)
         const media=await Promise.all(batch.map(async ({frame,index,kind,total})=>{
-          const withPhoto=Boolean(hero&&kind==='carousel'&&index===0)
+          const picture=kind==='carousel'&&index===0?hero:
+            kind==='carousel'&&index===4?innerPhoto:null
+          const withPhoto=Boolean(picture)
           const svg=makeSocialSvg(pkg,frame,kind,index,total,withPhoto)
           const size=kind==='story'?[1080,1920]:[1080,1350]
           const overlay=await sharp(Buffer.from(svg)).resize(size[0],size[1]).png({compressionLevel:8}).toBuffer()
           await verifySocialVisual(overlay,kind)
           const png=withPhoto
-            ?await sharp(hero).rotate().resize(size[0],size[1],{fit:'cover',position:'attention'})
+            ?await sharp(picture).rotate().resize(size[0],size[1],{fit:'cover',position:'attention'})
               .composite([{input:overlay,top:0,left:0}]).png({compressionLevel:8}).toBuffer()
             :overlay
           const name='eyagencia-social-'+String(pkg.sourceSlug||'blog').replace(/[^a-z0-9-]/g,'').slice(0,50)+'-'+kind+'-'+String(index+1)+'.png'
