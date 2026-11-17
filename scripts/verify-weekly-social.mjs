@@ -14,6 +14,11 @@ assert.equal(schedule['/api/cron/eyagencia-crosspost'],'15 0,16 * * *')
 assert.equal(schedule['/api/cron/social-news'],'20 21 * * 6')
 assert.equal(schedule['/api/cron/weekly-stories'],'0 16,23 * * 1,5')
 assert.equal(cron.length,Object.keys(schedule).length,'All scheduled paths must be unique')
+// Only the Velo blog agent owns the two original feed days; Wednesday/Saturday
+// remain the existing, unchanged original-source editorial reposts.
+const engine=readFileSync(new URL('../app/api/social-agent/engine.ts',import.meta.url),'utf8')
+assert.match(engine,/brand\.slug==='velo-delivery'/)
+assert.match(engine,/!\[0,2\]\.includes\(weekday\)/)
 for(const slug of ['eyagencia','velo-delivery']){
   const monday=makeBrandMotivationSvg({
     slug,topic:'Bom dia. Uma nova semana começa com escolhas conscientes.',date:'2026-11-09',
@@ -35,4 +40,4 @@ for(const slug of ['eyagencia','velo-delivery']){
     assert.ok(art.includes('Veja o post completo no perfil.'))
   }
 }
-console.info('[weekly-social-selftest] daily blogs unchanged; Mon/Thu/Fri authorial, Tue/Sun blog carousels, Wed/Sat source-attributed original editorial posts passed')
+console.info('[weekly-social-selftest] EYAGENCIA authorial Mon/Thu/Fri; Velo original blog Tue/Sun; existing source-editorial Wed/Sat kept unchanged')

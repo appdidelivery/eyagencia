@@ -202,6 +202,9 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
             date:String(pkg.sourceSlug||'')+'-interior',mode:'blog',
           })
           innerPhoto=shot.buffer
+          console.info('[social-studio] eyagencia_inner_approved',JSON.stringify({
+            score:shot.score,attempts:shot.attempts,maxImageCostUsd:shot.maximumEstimatedImageCostUsd,
+          }))
         }catch(error){
           console.warn('[social-studio] optional inner photo unavailable',
             error instanceof Error?error.message.slice(0,110):'unknown')

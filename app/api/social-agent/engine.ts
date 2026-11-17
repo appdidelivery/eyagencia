@@ -181,6 +181,10 @@ async function createImage(brand: Brand, concept: string, day: string, topic: st
     brandSlug:brand.slug,topic,concept,date:day,mode,
     references:brand.creativeReferences||[],
   })
+  console.info('[social-studio] creative_approved',JSON.stringify({
+    brand:brand.slug,mode,model:creative.model,score:creative.score,
+    attempts:creative.attempts,maxImageCostUsd:creative.maximumEstimatedImageCostUsd,
+  }))
   return saveComposed(creative.buffer,'generated')
 }
 
