@@ -4,16 +4,12 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-## Deployment policy — prevent duplicate Vercel builds
+## EYAGENCIA — Política Global de Deploy v2.0 (24/11/2026)
 
-This repository (`appdidelivery/eyagencia`) is already connected to the Vercel project `velo-delivery/eyagencia` via Git integration. This integration deploys pushes to the production branch `main` automatically.
-
-**One commit SHA, one production deployment.** After pushing `main`, inspect the deployment created by Vercel's Git integration and confirm it becomes READY. Do not also run `vercel --prod`, `vercel deploy --prod`, a Vercel create-deployment API call, a deploy hook, or a redeploy of that same commit. An explicit extra deployment is allowed only if the automated Git deployment is confirmed unavailable/failed, or if the user expressly requests a redeploy after diagnosis.
-
-Before any manual deployment, check the project's existing deployments for the same commit SHA and environment. When a matching production deployment is READY, reuse its URL and report that result; do not rebuild. When it is BUILDING or QUEUED, inspect its progress instead of launching another. Do not promote unrelated preview builds in place of the existing Git production deployment.
-
-**Avoid unnecessary preview builds.** Develop and test locally as changes are made, batch related work into coherent commits, and push a development branch after its changes and basic validations are ready. Avoid rapid sequences of tiny branch pushes that automatically create or cancel Vercel previews. Preserve preview environments for meaningful acceptance testing. Do not disable the Git integration, production deployment, required CI checks, or project protection without explicit user authorization.
-
-**CMS and scheduled content are not code deploys.** Publishing or changing posts, assets, images, or scheduled content through Sanity or another CMS must not trigger a Vercel redeploy unless application code or build-time configuration actually changed.
-
-At handoff, report the Git commit, the *single existing* Vercel production deployment ID/URL, its actual READY status, and any tests performed. Do not claim deployment success without checking Vercel.
+- Horário: America/Sao_Paulo. Janelas de publicação: 11h30 e 14h30 em dias úteis; 14h30 é o último horário programado. Preferir apenas um deploy de produção por projeto/dia; um segundo somente se necessário, justificado e validado. Após a última janela, aguardar o próximo dia útil, salvo incidente crítico autorizado (vendas, pagamentos, fiscal, segurança ou indisponibilidade).
+- Desenvolver em branches de trabalho, acumular alterações e versionar no GitHub; testar localmente/CI antes de consolidar. Não publicar cada commit. Git auto-deploy foi desativado em vercel.json; preservar essa configuração e não reativá-la sem autorização.
+- Antes de qualquer publicação, verificar escopo, branch, SHA aprovado, testes de build/lint/funcionais, visual mobile/desktop quando aplicável, integração e possibilidade de rollback. Não publicar se não houver mudanças ou se houver testes pendentes/falhos.
+- Consultar Vercel antes de publicar: se o mesmo SHA/ambiente já está READY, reutilizar; se estiver QUEUED/BUILDING, não duplicar. Publicação manual controlada apenas do commit consolidado, em janela aprovada; preview somente quando necessário para aceitação.
+- Validar produção e logs durante ao menos 90 minutos após o deploy, com rollback ou correção emergencial se necessário. Não publicar no fim do expediente (17h).
+- CMS, posts, preços, produtos, automações e dados dinâmicos continuam operando sem redeploy quando não houver mudança de código. Não desligar cron jobs, integrações ou produção para economizar builds.
+- Registrar SHA, URL/ID, status real, testes e pendências de cada release; não afirmar que houve publicação sem verificação.
