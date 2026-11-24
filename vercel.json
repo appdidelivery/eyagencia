@@ -37,5 +37,8 @@
       "path": "/api/cron/weekly-stories",
       "schedule": "0 16,23 * * 1,5"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
 }
