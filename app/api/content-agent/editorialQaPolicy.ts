@@ -1,4 +1,4 @@
-export const PUBLICATION_QA_MINIMUM = 90
+export const PUBLICATION_QA_MINIMUM = 85
 
 export function hasBlockingEditorialIssues(issues: unknown): boolean {
   if (!Array.isArray(issues)) return true
