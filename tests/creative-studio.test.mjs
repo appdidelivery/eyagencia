@@ -46,3 +46,10 @@ test('cost estimates include text and reject changed or unverified pricing',()=>
   assert.ok(estimatedGptImageCost({...gpt2,id:flare.model,pricing:{...gpt2.pricing,
     image_dimension_quality_pricing:[{size:flare.size,quality:flare.quality,cost:'0.025'}]}},flare,'test')<flare.maxUsd)
 })
+
+test('blog cover requires horizontal photographic composition',()=>{
+ const prompt=creativeBrief({brandSlug:'eyagencia',topic:'Operação de e-commerce',mode:'blog-cover'})
+ assert.match(prompt,/horizontal 3:2/)
+ assert.match(prompt,/no illustration, vector or CGI/)
+ assert.doesNotMatch(prompt,/LEFT 60%/)
+})
