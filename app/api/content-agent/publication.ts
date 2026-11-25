@@ -36,7 +36,7 @@ export function autonomousPublicationDecision(
   }
   if (typeof job.qaScore !== 'number' || !Number.isFinite(job.qaScore) || job.qaScore > 100 || job.qaScore < AUTONOMOUS_MIN_QA_SCORE ||
       typeof qa.score !== 'number' || !Number.isFinite(qa.score) || qa.score > 100 || qa.score < AUTONOMOUS_MIN_QA_SCORE) {
-    reasons.push('Publicação autônoma exige nota mínima de 90.')
+    reasons.push('Publicação autônoma exige nota mínima de ' + AUTONOMOUS_MIN_QA_SCORE + '.')
   }
   if (qa.publicationRisk !== 'low') reasons.push('Risco editorial não é baixo.')
   if (hasBlockingEditorialIssues(qa.issues)) {
@@ -104,9 +104,10 @@ export function testAutonomousPublishing() {
   const job = {status: 'qa_passed',qaPassed:true,qaScore:92,postDraftId:draft._id}
   return [
     {name:'Permite exemplo com todos os guardrails', passed:autonomousPublicationDecision(job,draft,minimumArticle,qa,facts).eligible},
+    {name:'Permite nota 88 com QA limpo',passed:autonomousPublicationDecision({...job,qaScore:88},draft,minimumArticle,{...qa,score:88},facts).eligible},
     {name:'Bloqueia nota 88 e sugestão pendente mesmo com QA aprovado',passed:!autonomousPublicationDecision({...job,qaScore:88},draft,minimumArticle,{...qa,score:88,issues:[{severity:'low',detail:'Ajuste de estilo opcional'}]},facts).eligible},
     {name:'Bloqueia QA com problema crítico',passed:!autonomousPublicationDecision(job,draft,minimumArticle,{...qa,issues:[{severity:'high'}]},facts).eligible},
-    {name:'Bloqueia nota abaixo de 90',passed:!autonomousPublicationDecision({...job,qaScore:84},draft,minimumArticle,{...qa,score:84},facts).eligible},
+    {name:'Bloqueia nota abaixo de 85',passed:!autonomousPublicationDecision({...job,qaScore:84},draft,minimumArticle,{...qa,score:84},facts).eligible},
     {name:'Bloqueia documentos sem associação a job',passed:!autonomousPublicationDecision({...job,postDraftId:'drafts.outro'},draft,minimumArticle,qa,facts).eligible},
     {name:'Bloqueia risco editorial alto',passed:!autonomousPublicationDecision(job,draft,minimumArticle,{...qa,publicationRisk:'high'},facts).eligible},
   ]
@@ -159,8 +160,7 @@ export async function attemptAutonomousPublish(jobId: string, draftId: string) {
   const {_id, _rev, _createdAt, _updatedAt, ...fields} = draft!
 
   // Generate the cover only after every factual/editorial publication gate passed.
-  // Image failure never forces a factual article to fail publishing; the frontend
-  // has a branded fallback and the job records the error for later retry.
+  // A generated photorealistic GPT cover is required; retain the draft on failure.
   const imageResult = await generateUploadAndAttachFeaturedImage({
     postId: draftId,
     article: article!,
@@ -170,7 +170,7 @@ export async function attemptAutonomousPublish(jobId: string, draftId: string) {
     fields.mainImage = imageResult.mainImage
     fields.imageStatus = 'generated'
   } else {
-    fields.imageStatus = imageResult.status === 'disabled' ? 'pending' : 'failed'
+    return {published: false, reasons: ['Capa fotográfica GPT Image não disponível; rascunho preservado.']}
   }
 
   const body = [...draft!.body]
