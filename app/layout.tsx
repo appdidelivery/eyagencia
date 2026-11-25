@@ -92,6 +92,7 @@ export default function RootLayout({
           id="gtm-interaction"
           dangerouslySetInnerHTML={{
             __html: `
+              if (location.pathname !== '/admin' && !location.pathname.startsWith('/admin/')) {
               let gtmLoaded = false;
               function loadGTM() {
                 if (gtmLoaded) return;
@@ -105,6 +106,7 @@ export default function RootLayout({
               }
               ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(e) { window.addEventListener(e, loadGTM, {once: true, passive: true}); });
               setTimeout(loadGTM, 7000); // Fallback de segurança para usuários muito lentos
+              }
             `,
           }}
         />
