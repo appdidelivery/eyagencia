@@ -35,6 +35,8 @@ export default function Crm() {
   const [editId,setEditId]=useState<string|null>(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
+  const [notice,setNotice]=useState("");
+  const [dataFailed,setDataFailed]=useState(false);
   const [filter,setFilter]=useState("");
   useEffect(()=>{
     let active=true;
@@ -47,7 +49,8 @@ export default function Crm() {
         if(!active)return;
         if(response.status===401||response.status===403){if(code)setError(errors[code]||"Não foi possível concluir o login.");return;}
         const payload=await response.json();
-        if(!response.ok)throw new Error(payload.error||"Não foi possível abrir o CRM.");
+        if(!response.ok){setDataFailed(true);throw new Error(payload.error||"Não foi possível abrir o CRM.");}
+        setNotice(payload.notice||"");
         setRows(payload.rows);setVersion(payload.version);setAuthorized(true);setLoaded(true);setError("");
       }catch(err){if(active)setError(err instanceof Error?err.message:"Falha ao consultar CRM.");}
       finally{if(active)setReady(true);}
@@ -63,7 +66,7 @@ export default function Crm() {
   const changeKind=(k:Kind|"overview")=>{setView(k);if(k!=="overview"){setKind(k);setForm(empty(k));}setEditId(null);setFilter("");setStatusFilter("");setSearch("");setDrawer(false);setMobile(false);};
   function openNew(k:Kind){changeKind(k);setDrawer(true);}
   function edit(r:Row){setKind(r.kind);setForm({kind:r.kind,title:r.title,clientId:r.clientId,unit:r.unit,status:r.status,amountCents:r.amountCents,date:r.date,notes:r.notes,url:r.url});setEditId(r.id);setDrawer(true);}
-  async function refresh(){setBusy(true);setError("");try{const r=await fetch("/api/admin/crm",{cache:"no-store",credentials:"same-origin"});const p=await r.json();if(!r.ok)throw new Error(p.error||"Falha ao atualizar.");setRows(p.rows);setVersion(p.version);}catch(e){setError(e instanceof Error?e.message:"Falha ao atualizar.");}finally{setBusy(false);}}
+  async function refresh(){setBusy(true);setError("");try{const r=await fetch("/api/admin/crm",{cache:"no-store",credentials:"same-origin"});const p=await r.json();if(!r.ok)throw new Error(p.error||"Falha ao atualizar.");setRows(p.rows);setVersion(p.version);setNotice(p.notice||"");}catch(e){setError(e instanceof Error?e.message:"Falha ao atualizar.");}finally{setBusy(false);}}
 
   const change=(k:keyof RecordData,v:string|number)=>setForm(f=>({...f,[k]:v}));
   function login(){window.location.assign("https://eyagencia.com.br/api/admin/auth");}
@@ -82,12 +85,12 @@ export default function Crm() {
     try{
       const response=await fetch("/api/admin/crm",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({item,id:editId,version}),cache:"no-store"});
       const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Falha ao salvar.");
-      setRows(payload.rows);setVersion(payload.version);setForm(empty(kind));setEditId(null);setDrawer(false);
+      setRows(payload.rows);setVersion(payload.version);setNotice(payload.notice||"");setForm(empty(kind));setEditId(null);setDrawer(false);
     }catch(err){setError(err instanceof Error?err.message:"Não foi possível salvar.");}
     finally{setBusy(false);}
   }
   if(!ready)return <main className="min-h-screen p-8">Validando acesso...</main>;
-  if(!authorized)return <main className="min-h-screen grid place-items-center bg-slate-100 text-slate-900"><section className="w-full max-w-md rounded-2xl bg-white p-8 shadow"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p className="my-4">Acesso exclusivo a administradores autorizados. Entre com a conta Google da agência.</p>{error&&<p role="alert" className="text-red-700">{error}</p>}<button className={button} onClick={login}>Entrar com Google</button></section></main>;
+  if(!authorized)return <main className="min-h-screen grid place-items-center bg-slate-100 text-slate-900"><section className="w-full max-w-md rounded-2xl bg-white p-8 shadow"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p className="my-4">Acesso exclusivo a administradores autorizados. Entre com a conta Google da agência.</p>{error&&<p role="alert" className="text-red-700">{error}</p>}{dataFailed?<><p className="my-3 text-sm text-slate-600">Sua sessão foi reconhecida, mas a base não pôde ser carregada.</p><button className={button} onClick={()=>window.location.reload()}>Recarregar dados</button><button className="ml-3 underline" onClick={()=>void logout()}>Sair</button></>:<button className={button} onClick={login}>Entrar com Google</button>}</section></main>;
   const monthly=rows.filter(r=>r.kind==="monthly"&&r.status!=="cancelada");
   const payments=rows.filter(r=>r.kind==="payment");
   const deliveries=rows.filter(r=>r.kind==="delivery");
@@ -122,6 +125,7 @@ export default function Crm() {
       <header className="ey-topbar"><div className="ey-crumb">Workspace <span> / </span> {nav.find(n=>n.key===view)?.label}</div><div className="ey-actions"><button className="ey-secondary" disabled={busy} onClick={()=>void refresh()}>↻ Atualizar</button><button className="ey-primary" onClick={()=>openNew(view==="overview"?"client":kind)}>+ Novo registro</button></div></header>
       <div className="ey-main"><div className="ey-pagehead"><div><div className="ey-eyebrow">EYAGENCIA · CENTRAL DE GESTÃO</div><h1>{view==="overview"?"Visão geral":modules[kind].title}</h1><p>{view==="overview"?"Acompanhe clientes, receita, contratos e operação em um só lugar.":"Organize, filtre e acompanhe seus registros."}</p></div><span className="ey-live"><i/> Dados do CRM</span></div>
       {error&&<div className="ey-error" role="alert">{error}</div>}
+      {notice&&<div className="ey-error" role="status">{notice}</div>}
       {!loaded?<p>Carregando registros autorizados...</p>:view==="overview"?<>
       <div className="ey-kpis">{kpis.map(k=><button className="ey-kpi" key={k.key} onClick={()=>changeKind(k.key)}><span>{k.label}</span><strong>{k.value}</strong><small>{k.detail}</small></button>)}</div>
       <div className="ey-charts"><section className="ey-panel"><div className="ey-panel-head"><div><h2>Receita por cliente</h2><p>Mensalidades de referência · BRL</p></div><button className="ey-link" onClick={()=>changeKind("monthly")}>Ver mensalidades →</button></div><div className="ey-bars">{bars.length?bars.map(([id,value])=><div key={id} className="ey-bar-row"><div><span>{clientName(id)||"Cliente"}</span><strong>{currency(value)}</strong></div><div className="ey-track"><i style={{width:(100*value/max)+"%"}}/></div></div>):<p>Sem mensalidades cadastradas.</p>}</div></section>

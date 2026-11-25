@@ -34,9 +34,9 @@ function blobConfig(){
  if(!token||!storeId||!/^[A-Za-z0-9]+$/.test(storeId))throw new CrmError("Armazenamento privado não configurado.",503);
  return {token,storeId};
 }
-async function readBlob():Promise<{rows:RecordData[];version:string}|null>{
+async function readBlob(path=pathname):Promise<{rows:RecordData[];version:string}|null>{
  const {token,storeId}=blobConfig();
- const r=await fetch("https://"+storeId+".private.blob.vercel-storage.com/"+pathname+"?cache=0",{
+ const r=await fetch("https://"+storeId+".private.blob.vercel-storage.com/"+path+"?cache=0",{
   headers:{Authorization:"Bearer "+token},cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)
  });
  if(r.status===404)return null;
@@ -45,29 +45,58 @@ async function readBlob():Promise<{rows:RecordData[];version:string}|null>{
  const rows=await r.json();if(!Array.isArray(rows)||rows.length>10000)throw new CrmError("Base de registros inválida.",503);
  return {rows,version};
 }
-async function writeBlob(rows:RecordData[],version?:string){
+async function writeBlob(rows:RecordData[],version?:string,path=pathname){
  const {token,storeId}=blobConfig();const body=JSON.stringify(rows);
  if(Buffer.byteLength(body)>3500000)throw new CrmError("Limite de armazenamento desta versão atingido.",413);
  const h:Record<string,string>={Authorization:"Bearer "+token,"x-vercel-blob-store-id":storeId,"x-api-version":"13","x-vercel-blob-access":"private","x-content-type":"application/json","x-add-random-suffix":"0","x-allow-overwrite":version?"1":"0","x-cache-control-max-age":"60","Content-Type":"application/json"};
- if(version)h["x-if-match"]=version;
- const r=await fetch("https://vercel.com/api/blob/?"+new URLSearchParams({pathname}),{method:"PUT",headers:h,body,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)});
- if(!r.ok){if(r.status===409||r.status===412||r.status===400)throw new CrmError("Não foi possível gravar esta versão. Atualize o painel e tente novamente.",409);throw new CrmError("Falha ao gravar no armazenamento privado.",503);}
+ if(version)h["x-if-match"]=version.startsWith('"')?version:'"'+version.replace(/^W\\//,"").replace(/^"|"$/g,"")+'"';
+ h["x-api-blob-request-id"]=randomUUID();h["x-api-blob-request-attempt"]="0";h["x-content-length"]=String(Buffer.byteLength(body));
+ const r=await fetch("https://vercel.com/api/blob/?"+new URLSearchParams({pathname:path}),{method:"PUT",headers:h,body,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)});
+ if(!r.ok){
+  let code="unknown";try{const result=await r.json();const candidate=result?.error?.code??result?.code;if(typeof candidate==="string"&&/^[a-zA-Z0-9_-]{1,80}$/.test(candidate))code=candidate;}catch{}
+  console.warn("[crm-blob-write]",{status:r.status,code,conditional:Boolean(version),archive:path!==pathname});
+  if(r.status===409||r.status===412)throw new CrmError("Outra gravação alterou a base. Atualize o painel.",409);
+  throw new CrmError("Armazenamento recusou a gravação ("+r.status+"). Nenhum dado anterior foi substituído.",503);
+ }
 }
-async function load(){
- const existing=await readBlob();if(existing)return mergeContractImport(existing);
+const archivePath="ey-crm/contract-import-v1.json";
+type Snapshot={rows:RecordData[];version:string;notice?:string};
+function mergeRows(original:RecordData[],imported:RecordData[]){
+ const rows=[...original];
+ for(const item of imported){
+  if(rows.some(r=>r.id===item.id||(item.url&&r.url===item.url)))continue;
+  if(item.kind!=="client"&&!rows.some(r=>r.id===item.clientId&&r.kind==="client"))continue;
+  rows.push(item);
+ }
+ return rows;
+}
+// Keep the existing editable snapshot untouched. Import is an independent,
+// create-only private archive and cannot block a successful authenticated read.
+async function withArchive(current:Snapshot):Promise<Snapshot>{
+ let imported:RecordData[]=[];
+ const raw=process.env.EY_CRM_CONTRACT_IMPORT_V1;
+ try{
+  if(raw){const parsed=JSON.parse(raw);if(Array.isArray(parsed))imported=parsed;}
+ }catch{console.warn("[crm-archive] invalid configuration");}
+ let notice:string|undefined;
+ try{
+  const stored=await readBlob(archivePath);
+  if(stored)imported=stored.rows;
+  else if(imported.length){
+   try{await writeBlob(imported,undefined,archivePath);}
+   catch{const raced=await readBlob(archivePath);if(raced)imported=raced.rows;else throw Error("archive not stored");}
+   const verified=await readBlob(archivePath);if(!verified)throw Error("archive not verified");imported=verified.rows;
+  }
+ }catch{notice="A biblioteca de contratos está disponível pela configuração privada; a cópia no armazenamento ainda não foi confirmada.";console.warn("[crm-archive] persistence not confirmed");}
+ return {rows:mergeRows(current.rows,imported),version:current.version,notice};
+}
+async function load():Promise<Snapshot>{
+ const existing=await readBlob();if(existing)return withArchive(existing);
  const initial=process.env.EY_CRM_INITIAL_DATA;
  if(!initial)throw new CrmError("Importação inicial não configurada.",503);
  const rows=JSON.parse(initial);if(!Array.isArray(rows)||!rows.length)throw new CrmError("Importação inicial inválida.",503);
- try{await writeBlob(rows);}catch(err){const raced=await readBlob();if(raced)return raced;throw err;}
- const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a importação inicial.",503);return mergeContractImport(saved);
-}
-async function mergeContractImport(current:{rows:RecordData[];version:string}){
- const raw=process.env.EY_CRM_CONTRACT_IMPORT_V1;if(!raw)return current;
- const imported=JSON.parse(raw) as RecordData[];if(!Array.isArray(imported))throw new CrmError("Importação contratual inválida.",503);
- const rows=[...current.rows];for(const item of imported){if(rows.some(r=>r.id===item.id || (item.url&&r.url===item.url)))continue;if(item.kind!=="client"&&!rows.some(r=>r.id===item.clientId&&r.kind==="client"))continue;rows.push(item);}
- if(rows.length===current.rows.length)return current;
- try{await writeBlob(rows,current.version);}catch(err){const fresh=await readBlob();if(fresh&&imported.every(item=>fresh.rows.some(r=>r.id===item.id||(item.url&&r.url===item.url))))return fresh;throw err;}
- const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar importação contratual.",503);return saved;
+ try{await writeBlob(rows);}catch(err){const raced=await readBlob();if(raced)return withArchive(raced);throw err;}
+ const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a importação inicial.",503);return withArchive(saved);
 }
 function validate(input:unknown,rows:RecordData[]):Omit<RecordData,"id">{
  if(!input||typeof input!=="object")throw new CrmError("Registro inválido.",400);
@@ -102,6 +131,6 @@ export async function POST(request:Request){
   const record={...item,id,updatedAt:new Date().toISOString(),updatedBy:uid};
   const rows=[...current.rows];if(index>=0)rows[index]=record;else rows.push(record);
   await writeBlob(rows,current.version);
-  const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a gravação.",503);return json(saved);
+  const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a gravação.",503);return json(await withArchive(saved));
  }catch(err){return errorResponse(err);}
 }
