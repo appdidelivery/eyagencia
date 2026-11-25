@@ -141,13 +141,13 @@ async function approvedBlogPhoto(url) {
   if(typeof url!=='string'||!/^https:\/\/cdn\.sanity\.io\/images\//.test(url))return null
   try {
     const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(12000)})
-    if(!response.ok||!String(response.headers.get('content-type')||'').startsWith('image/'))
+    if(!response.ok||!/^image\/(png|jpeg|webp)(;|$)/i.test(String(response.headers.get('content-type')||'')))
       throw new Error('photo_http_or_type')
     const bytes=Buffer.from(await response.arrayBuffer())
     if(bytes.length<8000||bytes.length>12*1024*1024)throw new Error('photo_size')
     return bytes
   }catch(error){
-    console.warn('[social-art] source photo unavailable; using illustrated cover',
+    console.warn('[social-art] source photo unavailable; GPT cover required',
       error instanceof Error?error.message:'unknown')
     return null
   }
@@ -191,6 +191,7 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
         })
         hero=cover.buffer
       }
+      if(!hero)throw Error('Capa fotografica indisponivel; pacote preservado')
       // One additional, visually reviewed editorial photograph varies the
       // interior of original EYAGENCIA blog carousels. Never used in reposts.
       let innerPhoto=null
@@ -218,8 +219,7 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       for(let i=0;i<frames.length;i+=3){
         const batch=frames.slice(i,i+3)
         const media=await Promise.all(batch.map(async ({frame,index,kind,total})=>{
-          const picture=kind==='carousel'&&index===0?hero:
-            kind==='carousel'&&index===4?innerPhoto:null
+          const picture=index%2===0?hero:(innerPhoto||hero)
           const withPhoto=Boolean(picture)
           const svg=makeSocialSvg(pkg,frame,kind,index,total,withPhoto)
           const size=kind==='story'?[1080,1920]:[1080,1350]
