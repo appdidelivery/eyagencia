@@ -1,6 +1,7 @@
 import {randomUUID} from 'crypto'
 import {checkArticleQuality, stripUnsupportedYearClaims, testArticleQuality} from '../quality'
 import {createMethodologicalDraft} from '../editorialTemplate'
+import {editorialQaApproved, repairSeoMetadata} from '../editorialQaPolicy'
 import {testAutonomousPublishing} from '../publication'
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
@@ -950,7 +951,7 @@ export async function POST(request: NextRequest) {
     }
     // Remove unsupported 2026 assertions without inventing replacement claims;
     // the result must still pass independent structural, factual and model QA.
-    article = stripUnsupportedYearClaims(article, supportedFacts)
+    article = repairSeoMetadata(stripUnsupportedYearClaims(article, supportedFacts))
     let structuralIssues = checkArticleQuality(article, supportedFacts)
 
     const qa = await callAgent({
@@ -969,7 +970,7 @@ export async function POST(request: NextRequest) {
         '\n\nArtigo:\n' +
         JSON.stringify(article) +
         '\n\nPROBLEMAS ESTRUTURAIS (validação independente):\n' + JSON.stringify(structuralIssues) +
-        '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 85 e sem problema factual crítico.',
+        '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 90, risco baixo e issues como lista vazia. Se detectar qualquer problema real, registre-o em issues e reprove; nunca omita problemas para permitir publicação.',
     })
     let qaResult = parseJson(qa.text, 'qa')
     let revisionAttempted = false
@@ -978,7 +979,7 @@ export async function POST(request: NextRequest) {
     if (
       Array.isArray(safeFactCheck.approvedFacts) &&
       safeFactCheck.approvedFacts.length >= 2 &&
-      (!qaResult.passed || Number(qaResult.score || 0) < 85 || qaResult.publicationRisk !== 'low' || structuralIssues.length > 0)
+      (!editorialQaApproved(qaResult) || structuralIssues.length > 0)
     ) {
       try {
         const repair = await callAgent({
@@ -993,22 +994,25 @@ export async function POST(request: NextRequest) {
             '\n\nFONTES PERMITIDAS:\n' +
             JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))),
         })
-        const revisedArticle = stripUnsupportedYearClaims(parseJson(repair.text, 'revisão editorial'), supportedFacts)
+        const revisedArticle = repairSeoMetadata(stripUnsupportedYearClaims(parseJson(repair.text, 'revisão editorial'), supportedFacts))
         if (revisedArticle && typeof revisedArticle.title === 'string' && Array.isArray(revisedArticle.sections)) {
-          article = revisedArticle
           revisionAttempted = true
-          structuralIssues = checkArticleQuality(article, supportedFacts)
+          const revisedIssues = checkArticleQuality(revisedArticle, supportedFacts)
           const finalQa = await callAgent({
             maxOutputTokens: 3000,
             instructions:
-              'Você é o QA editorial final. Audite o artigo revisado contra o fact-check documental; não invente evidências ou auditoria jurídica. Bloqueie projeções como fatos, causalidade não demonstrada, dados jurídicos sem texto oficial, repetição, SEO/GEO ruim e fontes inexistentes. Retorne JSON válido com passed, score (0-100), issues, fixes, publicationRisk (low|medium|high).',
+              'Você é o QA editorial final. Audite o artigo revisado contra o fact-check documental; não invente evidências ou auditoria jurídica. Bloqueie projeções como fatos, causalidade não demonstrada, dados jurídicos sem texto oficial, repetição, SEO/GEO ruim e fontes inexistentes. Retorne JSON válido com passed, score (0-100), issues, fixes, publicationRisk (low|medium|high). Aprovação exige nota >=90, risco baixo e nenhuma pendência editorial; relate honestamente todos os problemas.',
             input:
               'FACT-CHECK:\n' + JSON.stringify(safeFactCheck) +
-              '\n\nARTIGO REVISADO:\n' + JSON.stringify(article) +
+              '\n\nARTIGO REVISADO:\n' + JSON.stringify(revisedArticle) +
               '\n\nFALHAS DOCUMENTAIS DE RASCUNHOS ANTERIORES (já descartadas):\n' + JSON.stringify(factEvidenceIssues) +
-              '\n\nFALHAS INDEPENDENTES NA VERSÃO REVISADA:\n' + JSON.stringify(structuralIssues),
+              '\n\nFALHAS INDEPENDENTES NA VERSÃO REVISADA:\n' + JSON.stringify(revisedIssues),
           })
-          qaResult = parseJson(finalQa.text, 'QA pós-revisão')
+          const revisedVerdict = parseJson(finalQa.text, 'QA pós-revisão')
+          // Commit the candidate and its verdict together only after QA returned.
+          article = revisedArticle
+          structuralIssues = revisedIssues
+          qaResult = revisedVerdict
         }
       } catch (repairError) {
         console.warn('[content-agent] Uma revisão automática não foi concluída:', repairError instanceof Error ? repairError.message : 'erro')
@@ -1018,8 +1022,7 @@ export async function POST(request: NextRequest) {
     // independently retrieved evidence. Neither the editor nor QA may bypass
     // deterministic checks or assign approval just to fill a publishing slot.
     if (supportedFacts.length >= 2 &&
-        (!qaResult.passed || Number(qaResult.score || 0) < 85 ||
-         qaResult.publicationRisk !== 'low' || structuralIssues.length > 0)) {
+        (!editorialQaApproved(qaResult) || structuralIssues.length > 0)) {
       try {
         const focusedEditor = await callAgent({
           maxOutputTokens: 7500,
@@ -1046,7 +1049,7 @@ export async function POST(request: NextRequest) {
             '\nLINKS INTERNOS: /ia-ecommerce, /ia-ecommerce/ferramentas, /ia-ecommerce/guias, ' +
             '/ia-ecommerce/metodologia, /blog, /clientes, /parceiros',
         })
-        const candidate = stripUnsupportedYearClaims(parseJson(focusedEditor.text, 'revisão direcionada do editor'), supportedFacts)
+        const candidate = repairSeoMetadata(stripUnsupportedYearClaims(parseJson(focusedEditor.text, 'revisão direcionada do editor'), supportedFacts))
         if (candidate && typeof candidate.title === 'string' &&
             Array.isArray(candidate.sections) && candidate.sections.length >= 3) {
           const candidateStructural = checkArticleQuality(candidate, supportedFacts)
@@ -1063,10 +1066,7 @@ export async function POST(request: NextRequest) {
               '\nPROBLEMAS INDEPENDENTES: ' + JSON.stringify(candidateStructural),
           })
           const verdict = parseJson(candidateQa.text, 'QA independente da revisão direcionada')
-          if (verdict.passed === true && Number(verdict.score) >= 85 &&
-              verdict.publicationRisk === 'low' &&
-              (!Array.isArray(verdict.issues) || verdict.issues.length === 0) &&
-              candidateStructural.length === 0) {
+          if (editorialQaApproved(verdict) && candidateStructural.length === 0) {
             article = candidate
             structuralIssues = candidateStructural
             qaResult = verdict
@@ -1091,8 +1091,7 @@ export async function POST(request: NextRequest) {
     const eligibleTopic = /e[\s-]?commerce|com[eé]rcio eletr[oô]nico/i.test(topic) &&
       /intelig[eê]ncia artificial|\bIA\b/i.test(topic)
     if (eligibleTopic &&
-        (!qaResult.passed || Number(qaResult.score || 0) < 85 ||
-         qaResult.publicationRisk !== 'low' || structuralIssues.length > 0)) {
+        (!editorialQaApproved(qaResult) || structuralIssues.length > 0)) {
       const guide = createMethodologicalDraft(
         evidenceBundle.sources.map(({title, url}) => ({title, url})),
       )
@@ -1121,8 +1120,7 @@ export async function POST(request: NextRequest) {
               '\n\nFATOS COM EVIDÊNCIA:\n' + JSON.stringify(supportedFacts),
           })
           const checked = parseJson(audit.text, 'QA do guia metodológico')
-          if (checked.passed === true && Number(checked.score) >= 85 &&
-              checked.publicationRisk === 'low') {
+          if (editorialQaApproved(checked)) {
             article = guide
             qaResult = checked
             structuralIssues = guideIssues
@@ -1141,9 +1139,7 @@ export async function POST(request: NextRequest) {
     ]
     // The model cannot override deterministic factual checks or medium/high risk.
     const qaPassed =
-      Boolean(qaResult.passed) &&
-      Number(qaResult.score || 0) >= 85 &&
-      qaResult.publicationRisk === 'low' &&
+      editorialQaApproved(qaResult) &&
       deterministicIssues.length === 0
     const editorialReview = {
       ...qaResult,
