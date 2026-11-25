@@ -6,12 +6,12 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const statuses = {
- client:["lead","negociação","ativo","inativo"],
- contract:["minuta","aguardando assinatura","assinado","encerrado"],
+ client:["lead","negociação","ativo","inativo","a conferir"],
+ contract:["minuta","aguardando assinatura","assinado","encerrado","a conferir"],
  monthly:["prevista","cobrada","cancelada"],
  payment:["pendente","recebido","cancelado"],
  delivery:["pendente","em andamento","concluída"],
- document:["minuta","validado","arquivado"],
+ document:["minuta","validado","arquivado","a conferir"],
 } as const;
 type Kind = keyof typeof statuses;
 type RecordData = {id:string;kind:Kind;title:string;clientId:string;unit:string;status:string;amountCents:number;date:string;notes:string;url:string;updatedAt?:string;updatedBy?:string};
@@ -54,12 +54,20 @@ async function writeBlob(rows:RecordData[],version?:string){
  if(!r.ok){if(r.status===409||r.status===412||r.status===400)throw new CrmError("Não foi possível gravar esta versão. Atualize o painel e tente novamente.",409);throw new CrmError("Falha ao gravar no armazenamento privado.",503);}
 }
 async function load(){
- const existing=await readBlob();if(existing)return existing;
+ const existing=await readBlob();if(existing)return mergeContractImport(existing);
  const initial=process.env.EY_CRM_INITIAL_DATA;
  if(!initial)throw new CrmError("Importação inicial não configurada.",503);
  const rows=JSON.parse(initial);if(!Array.isArray(rows)||!rows.length)throw new CrmError("Importação inicial inválida.",503);
  try{await writeBlob(rows);}catch(err){const raced=await readBlob();if(raced)return raced;throw err;}
- const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a importação inicial.",503);return saved;
+ const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a importação inicial.",503);return mergeContractImport(saved);
+}
+async function mergeContractImport(current:{rows:RecordData[];version:string}){
+ const raw=process.env.EY_CRM_CONTRACT_IMPORT_V1;if(!raw)return current;
+ const imported=JSON.parse(raw) as RecordData[];if(!Array.isArray(imported))throw new CrmError("Importação contratual inválida.",503);
+ const rows=[...current.rows];for(const item of imported){if(rows.some(r=>r.id===item.id || (item.url&&r.url===item.url)))continue;if(item.kind!=="client"&&!rows.some(r=>r.id===item.clientId&&r.kind==="client"))continue;rows.push(item);}
+ if(rows.length===current.rows.length)return current;
+ try{await writeBlob(rows,current.version);}catch(err){const fresh=await readBlob();if(fresh&&imported.every(item=>fresh.rows.some(r=>r.id===item.id||(item.url&&r.url===item.url))))return fresh;throw err;}
+ const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar importação contratual.",503);return saved;
 }
 function validate(input:unknown,rows:RecordData[]):Omit<RecordData,"id">{
  if(!input||typeof input!=="object")throw new CrmError("Registro inválido.",400);
