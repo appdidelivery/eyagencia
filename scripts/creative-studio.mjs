@@ -3,8 +3,9 @@
 import sharp from 'sharp'
 import {visualBriefForBrand} from './premium-social-scene.mjs'
 
-export const PREMIUM_IMAGE_MODEL='bfl/flux-3-image'
-export const ECONOMY_IMAGE_MODEL='bfl/flux-3-image-klein'
+export const PREMIUM_IMAGE_MODEL='openai/gpt-image-2'
+export const ECONOMY_IMAGE_MODEL='openai/gpt-image-2'
+const OPTIONAL_IMAGE_MODELS=new Set(['openai/gpt-image-2.5-flare','openai/gpt-image-2.6-flare'])
 export const VISUAL_REVIEW_MODEL='google/gemini-3.1-flash-lite'
 const GATEWAY='https://ai-gateway.vercel.sh/v1'
 const MAX_UNIT_USD=0.055
@@ -26,7 +27,7 @@ export function creativeBrief({brandSlug,topic,concept='',date='',mode='social',
     ?'Photorealistic working restaurant kitchen and hands preparing actual orders; sophisticated navy and graphite, tasteful cyan/violet light, restrained orange accents, cinematic textures, prominent product or team scene; absolutely no gigantic badges or neon icons.'
     :'Sophisticated ecommerce editorial still-life or human collaboration, deep teal/green, restrained peach and coral accents, luminous realistic objects, studio light and ample uncluttered space, not generic digital brains or flat abstract geometry.'
   return [
-    'One PREMIUM high-end editorial commercial PHOTOGRAPH, square 1:1, for '+brand+'.',
+    'One PREMIUM high-end editorial commercial PHOTOGRAPH for '+brand+'. Compose for a portrait or square crop, keeping the focal subject inside the central safe area.',
     visualBriefForBrand(brandSlug,topic,mode),
     visualBenchmark,
     'Specific article/post topic: '+String(topic).slice(0,180)+'.',
@@ -49,6 +50,49 @@ export function verifiedUnitImagePrice(entry){
   const sizePrice=Array.isArray(tiers)?tiers.find(x=>x.size==='1024x1024')?.cost:null
   const cost=Math.max(...prices,...(sizePrice!==null&&sizePrice!==undefined?[Number(sizePrice)]:[]))
   return Number.isFinite(cost)&&cost>=0?cost:null
+}
+// OpenAI publishes the following GPT Image 2 output estimates for these fixed
+// sizes and qualities. The live catalog is checked for token rate changes.
+// https://developers.openai.com/api/docs/guides/image-generation#historical-output-costs
+// Estimates are not provider-enforced caps; the Gateway team budget is separate.
+const GPT2_OUTPUT_USD={
+  '1024x1024':{low:0.006,medium:0.053},
+  '1024x1536':{low:0.005,medium:0.041},
+  '1536x1024':{low:0.005,medium:0.041},
+}
+export function imageRequestConfig(env=process.env){
+  const model=env.SOCIAL_AGENT_IMAGE_MODEL||PREMIUM_IMAGE_MODEL
+  if(model!==PREMIUM_IMAGE_MODEL&&!OPTIONAL_IMAGE_MODELS.has(model))
+    throw Error('Modelo de imagem nao aprovado')
+  const quality=env.SOCIAL_AGENT_IMAGE_QUALITY||(env.SOCIAL_AGENT_IMAGE_TIER==='economy'?'low':'medium')
+  const size=env.SOCIAL_AGENT_IMAGE_SIZE||'1024x1536'
+  if(!Object.hasOwn(GPT2_OUTPUT_USD,size)||!['low','medium'].includes(quality))
+    throw Error('Resolucao ou qualidade de imagem sem estimativa aprovada')
+  const configured=Number(env.SOCIAL_AGENT_IMAGE_MAX_USD??MAX_UNIT_USD)
+  if(!Number.isFinite(configured)||configured<=0||configured>MAX_UNIT_USD)
+    throw Error('Teto de imagem invalido ou acima do aprovado')
+  return {model,quality,size,maxUsd:configured}
+}
+export function estimatedGptImageCost(entry,config,prompt){
+  if(entry?.id!==config.model||entry?.type!=='image'||entry?.pricing?.varies_by_provider===true)return null
+  const input=Number(entry?.pricing?.input),output=Number(entry?.pricing?.output)
+  if(!Number.isFinite(input)||input<=0||!Number.isFinite(output)||output<=0)return null
+  // UTF-8 bytes are a deliberately conservative text-token proxy; no image inputs.
+  const textCost=(Buffer.byteLength(prompt,'utf8')+64)*input
+  if(config.model===PREMIUM_IMAGE_MODEL){
+    if(input>0.000005||output>0.00003)return null
+    const estimate=GPT2_OUTPUT_USD[config.size]?.[config.quality]
+    return typeof estimate==='number'?estimate+textCost:null
+  }
+  // Flare token counts differ; require a verified size AND quality-specific
+  // quote in the live catalog. Do not reuse GPT Image 2 output estimates.
+  const rows=entry.pricing.image_dimension_quality_pricing
+  const quote=Array.isArray(rows)?rows.find(x=>x.size===config.size&&x.quality===config.quality):null
+  const price=Number(quote?.cost)
+  return quote&&Number.isFinite(price)&&price>0?price+textCost:null
+}
+export function gptImageRequest(config,prompt){
+  return {model:config.model,prompt,n:1,size:config.size,quality:config.quality,output_format:'png'}
 }
 async function models(){
   const res=await fetch(GATEWAY+'/models',{cache:'no-store',signal:AbortSignal.timeout(12000)})
@@ -100,26 +144,28 @@ export async function generateEditorialPhoto({brandSlug,topic,concept='',date=''
   if(process.env.SOCIAL_AGENT_IMAGES_ENABLED!=='true')throw Error('Geracao de imagens desabilitada')
   const apiKey=process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN
   if(!apiKey)throw Error('Gateway de imagens sem autenticacao')
-  const imageModel=process.env.SOCIAL_AGENT_IMAGE_TIER==='economy'
-    ?ECONOMY_IMAGE_MODEL:PREMIUM_IMAGE_MODEL
+  const config=imageRequestConfig()
+  const imageModel=config.model
   const catalog=await models()
   const entry=catalog.find(x=>x.id===imageModel)
-  const unitPrice=verifiedUnitImagePrice(entry)
-  if(unitPrice===null||unitPrice>MAX_UNIT_USD)
-    throw Error('Tarifa de imagem acima do teto aprovado de US$ 0,055 por tentativa')
   const review=catalog.find(x=>x.id===VISUAL_REVIEW_MODEL)
   if(review?.type!=='language'||!review.modalities?.input?.includes('image'))
     throw Error('Modelo de revisao visual indisponivel')
-  let feedback='',lastScore=0
+  let feedback='',lastScore=0,estimatedTotal=0
   for(let attempt=1;attempt<=MAX_ATTEMPTS;attempt++){
     const prompt=creativeBrief({brandSlug,topic,concept,date,mode,references,attempt,feedback})
+    const unitPrice=estimatedGptImageCost(entry,config,prompt)
+    if(unitPrice===null||unitPrice>config.maxUsd)
+      throw Error('Tarifa de imagem sem estimativa valida ou acima do teto aprovado')
+    estimatedTotal+=unitPrice
     const response=await fetch(GATEWAY+'/images/generations',{
       method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
-      body:JSON.stringify({model:imageModel,prompt,n:1,size:'1024x1024',response_format:'b64_json'}),
+      body:JSON.stringify(gptImageRequest(config,prompt)),
       cache:'no-store',signal:AbortSignal.timeout(110000),
     })
-    if(!response.ok)throw Error('Geracao premium HTTP '+response.status)
+    if(!response.ok)throw Error('Geracao GPT Image HTTP '+response.status+([401,402,403].includes(response.status)?' — confira acesso e saldo do Gateway':''))
     const data=await response.json()
+    console.info('[social-studio] gpt-image usage',JSON.stringify({model:imageModel,quality:config.quality,size:config.size,estimatedCostUsd:unitPrice,inputTokens:data?.usage?.input_tokens??null,outputTokens:data?.usage?.output_tokens??null}))
     const base64=data?.data?.[0]?.b64_json
     if(typeof base64!=='string')throw Error('Imagem nao devolvida pelo modelo')
     const buffer=Buffer.from(base64,'base64')
@@ -127,7 +173,7 @@ export async function generateEditorialPhoto({brandSlug,topic,concept='',date=''
     const verdict=await visualReview(apiKey,buffer,topic,brandSlug,references)
     lastScore=verdict.score
     if(verdict.approved)return {buffer,model:imageModel,score:verdict.score,
-      attempts:attempt,maximumEstimatedImageCostUsd:Number((unitPrice*attempt).toFixed(3))}
+      attempts:attempt,maximumEstimatedImageCostUsd:Number(estimatedTotal.toFixed(3))}
     feedback=verdict.issues.join('; ')||'insufficient photographic composition'
   }
   throw Error('Revisao visual reprovou as '+MAX_ATTEMPTS+' propostas; ultima nota '+lastScore)
