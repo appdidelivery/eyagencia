@@ -27,14 +27,14 @@ export function creativeBrief({brandSlug,topic,concept='',date='',mode='social',
     ?'Photorealistic working restaurant kitchen and hands preparing actual orders; sophisticated navy and graphite, tasteful cyan/violet light, restrained orange accents, cinematic textures, prominent product or team scene; absolutely no gigantic badges or neon icons.'
     :'Sophisticated ecommerce editorial still-life or human collaboration, deep teal/green, restrained peach and coral accents, luminous realistic objects, studio light and ample uncluttered space, not generic digital brains or flat abstract geometry.'
   return [
-    'One PREMIUM high-end editorial commercial PHOTOGRAPH for '+brand+'. Compose for a portrait or square crop, keeping the focal subject inside the central safe area.',
+    'One PREMIUM high-end editorial commercial PHOTOGRAPH for '+brand+'. '+(mode==='blog-cover'?'Compose a horizontal 3:2 editorial hero, subject safely inside the central 16:9 crop.':'Compose for a portrait or square crop, keeping the focal subject inside the central safe area.'),
     visualBriefForBrand(brandSlug,topic,mode),
     visualBenchmark,
     'Specific article/post topic: '+String(topic).slice(0,180)+'.',
     'Creative concept: '+String(concept).slice(0,330)+'.',
     visualNotes?'Creative references approved by the brand art director (STYLE only, do not copy existing artwork): '+visualNotes+'.':'',
     'A believable physical scene, premium authentic photographic lighting and coherent materials.',
-    'One distinct focal subject placed in the RIGHT THIRD of the frame; LEFT 60% quiet and DARK for large overlaid typography.',
+    mode==='blog-cover'?'A distinct physical focal subject, naturally framed with balanced visual space; no title overlay. Photographic realism only, absolutely no illustration, vector or CGI.':'One distinct focal subject placed in the RIGHT THIRD of the frame; LEFT 60% quiet and DARK for large overlaid typography.',
     'No words, letters, text, logos, labels, UI screen text, watermarks, fake metrics or numbers.',
     'Avoid flat gradients, huge geometric shapes, generic stock-style icons, repetitive compositions.',
     'Composition seed: '+String(date).slice(0,30)+'; concept variation '+attempt+'.',
@@ -100,14 +100,14 @@ async function models(){
   const list=await res.json()
   return Array.isArray(list?.data)?list.data:[]
 }
-async function visualReview(apiKey,buffer,topic,brandSlug,references){
-  const preview=await sharp(buffer).rotate().resize(520,520,{fit:'cover'}).jpeg({quality:72}).toBuffer()
+async function visualReview(apiKey,buffer,topic,brandSlug,references,mode){
+  const preview=await sharp(buffer).rotate().resize(mode==='blog-cover'?780:520,520,{fit:'cover'}).jpeg({quality:72}).toBuffer()
   const parts=[
     {type:'text',text:[
       'Você é diretor de arte publicitário. Avalie a FOTO 1 (nova proposta) para a marca '+brandSlug,
       'e tema '+String(topic).slice(0,180)+'. Se existir FOTO 2, ela é referência de ESTILO, não arte para copiar.',
-      'Critérios: cena realista, coerência temática, refinamento fotográfico, protagonista à DIREITA,',
-      '60% à esquerda escuro e livre para título; sem texto, números, marcas, logos, watermarks ou interfaces falsas.',
+      'Critérios: cena realista, coerência temática, refinamento fotográfico; reprove ilustração, vetor e CGI.',
+      mode==='blog-cover'?'Enquadramento editorial horizontal equilibrado, sem texto, marcas ou interfaces falsas.':'Protagonista à DIREITA, 60% à esquerda escuro e livre para título; sem texto, números, marcas, logos, watermarks ou interfaces falsas.',
       'Reprove colagens de objetos deformados e visual genérico.',
       'Retorne SOMENTE JSON: {"approved":boolean,"score":numero_de_0_a_100,"issues":["problema concreto"]}.',
       'Aprovar somente com nota >= 78 e sem violação de posicionamento, texto indevido ou falsa marca.',
@@ -141,10 +141,10 @@ async function technicalPhotoReview(buffer){
   if(stats.channels.slice(0,3).every(x=>x.stdev<10))throw Error('Fotografia sem detalhes')
 }
 export async function generateEditorialPhoto({brandSlug,topic,concept='',date='',mode='social',references=[]}){
-  if(process.env.SOCIAL_AGENT_IMAGES_ENABLED!=='true')throw Error('Geracao de imagens desabilitada')
+  if((mode==='blog-cover'?process.env.CONTENT_AGENT_IMAGE_ENABLED:process.env.SOCIAL_AGENT_IMAGES_ENABLED)!=='true')throw Error('Geracao de imagens desabilitada')
   const apiKey=process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN
   if(!apiKey)throw Error('Gateway de imagens sem autenticacao')
-  const config=imageRequestConfig()
+  const config=imageRequestConfig(mode==='blog-cover'?{SOCIAL_AGENT_IMAGE_MODEL:PREMIUM_IMAGE_MODEL,SOCIAL_AGENT_IMAGE_SIZE:'1536x1024',SOCIAL_AGENT_IMAGE_QUALITY:'medium',SOCIAL_AGENT_IMAGE_MAX_USD:process.env.SOCIAL_AGENT_IMAGE_MAX_USD}:process.env)
   const imageModel=config.model
   const catalog=await models()
   const entry=catalog.find(x=>x.id===imageModel)
@@ -170,9 +170,9 @@ export async function generateEditorialPhoto({brandSlug,topic,concept='',date=''
     if(typeof base64!=='string')throw Error('Imagem nao devolvida pelo modelo')
     const buffer=Buffer.from(base64,'base64')
     await technicalPhotoReview(buffer)
-    const verdict=await visualReview(apiKey,buffer,topic,brandSlug,references)
+    const verdict=await visualReview(apiKey,buffer,topic,brandSlug,references,mode)
     lastScore=verdict.score
-    if(verdict.approved)return {buffer,model:imageModel,score:verdict.score,
+    if(verdict.approved)return {buffer,model:imageModel,prompt,score:verdict.score,
       attempts:attempt,maximumEstimatedImageCostUsd:Number(estimatedTotal.toFixed(3))}
     feedback=verdict.issues.join('; ')||'insufficient photographic composition'
   }
