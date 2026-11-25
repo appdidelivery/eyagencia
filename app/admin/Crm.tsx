@@ -2,15 +2,15 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, setPersistence, browserSessionPersistence, type Auth } from "firebase/auth";
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, type Firestore } from "firebase/firestore";
+import type { User } from "firebase/auth";
 
 const config = {
-  apiKey: process.env.NEXT_PUBLIC_EY_CRM_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_EY_CRM_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_EY_CRM_FIREBASE_PROJECT_ID,
-  appId: process.env.NEXT_PUBLIC_EY_CRM_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
-const enabled = process.env.NEXT_PUBLIC_EY_CRM_ENABLED === "true";
+const enabled = Boolean(config.apiKey && config.authDomain && config.projectId && config.appId);
 const modules = {
   client: { title: "Clientes e leads", statuses: ["lead", "negociação", "ativo", "inativo"] },
   contract: { title: "Contratos", statuses: ["minuta", "aguardando assinatura", "assinado", "encerrado"] },
@@ -30,7 +30,8 @@ function safeUrl(s: string) { try { return new URL(s).protocol === "https:"; } c
 
 export default function Crm() {
   const [auth,setAuth]=useState<Auth|null>(null);
-  const [db,setDb]=useState<Firestore|null>(null);
+  const [user,setUser]=useState<User|null>(null);
+  const [version,setVersion]=useState("");
   const [authorized,setAuthorized]=useState(false);
   const [ready,setReady]=useState(false);
   const [rows,setRows]=useState<Row[]>([]);
@@ -42,33 +43,26 @@ export default function Crm() {
   const [error,setError]=useState("");
   const [filter,setFilter]=useState("");
   useEffect(()=>{
-    if(!enabled || !Object.values(config).every(Boolean)){setReady(true);return;}
+    if(!enabled){setReady(true);return;}
     try {
       const app=getApps().find(a=>a.name==="ey-private-crm") || initializeApp(config,"ey-private-crm");
-      const a=getAuth(app); const d=getFirestore(app); setAuth(a);setDb(d);
+      const a=getAuth(app); setAuth(a);
       let active=true;
-      const stop=onAuthStateChanged(a,async user=>{
-        setAuthorized(false);setRows([]);setLoaded(false);
+      const stop=onAuthStateChanged(a,async current=>{
+        setAuthorized(false);setRows([]);setLoaded(false);setVersion("");setUser(null);
+        if(!current){if(active)setReady(true);return;}
         try {
-          if(user){
-            const token=await user.getIdTokenResult(true);
-            if(active && a.currentUser?.uid===user.uid){
-              if(token.claims.ey_crm_admin===true && user.emailVerified) {setAuthorized(true);setError("");}
-              else setError("Conta sem autorização administrativa.");
-            }
-          }
-        } catch { if(active)setError("Não foi possível validar a autorização."); }
+          const response=await fetch("/api/admin/crm",{headers:{Authorization:"Bearer "+await current.getIdToken()},cache:"no-store"});
+          const payload=await response.json();
+          if(!response.ok)throw new Error(payload.error||"Acesso não autorizado.");
+          if(active&&a.currentUser?.uid===current.uid){setUser(current);setRows(payload.rows);setVersion(payload.version);setAuthorized(true);setLoaded(true);setError("");}
+        }catch(err){if(active)setError(err instanceof Error?err.message:"Não foi possível validar o acesso.");}
         finally {if(active)setReady(true);}
       });
       return ()=>{active=false;stop();};
     } catch {setReady(true);setError("Configuração do CRM indisponível.");}
   },[]);
-  useEffect(()=>{
-    if(!authorized||!db)return;
-    return onSnapshot(collection(db,"eyCrmRecords"), snap=>{
-      setRows(snap.docs.map(d=>({...d.data(),id:d.id} as Row)));setLoaded(true);setError("");
-    },()=>{setRows([]);setLoaded(false);setError("Acesso aos registros indisponível. Verifique as regras do banco.");});
-  },[authorized,db]);
+
   const clients=rows.filter(r=>r.kind==="client");
   const activeClients=clients.filter(r=>r.status==="ativo");
   const visible=rows.filter(r=>r.kind===kind && (!filter || r.clientId===filter || r.id===filter));
@@ -77,28 +71,29 @@ export default function Crm() {
   async function login(){
     if(!auth)return;
     setError("");try{await setPersistence(auth,browserSessionPersistence);await signInWithPopup(auth,new GoogleAuthProvider());}
-    catch{setError("Não foi possível entrar com Google.");}
+    catch{setError("Não foi possível entrar com Google. Verifique a conta, o pop-up e o provedor Google no Firebase.");}
   }
   async function save(e:FormEvent<HTMLFormElement>){
-    e.preventDefault(); if(!authorized||!db||!loaded||busy)return;
+    e.preventDefault(); if(!authorized||!user||!loaded||busy)return;
     const item={...form,title:form.title.trim(),notes:form.notes.trim(),url:form.url.trim()};
     if(!item.title || (item.kind!=="client"&&!clients.some(c=>c.id===item.clientId)) || (item.url&&!safeUrl(item.url)) || !Number.isSafeInteger(item.amountCents)||item.amountCents<0){setError("Revise os campos e o vínculo com o cliente.");return;}
     setBusy(true);setError("");
     try{
-      if(editId)await updateDoc(doc(db,"eyCrmRecords",editId),{...item,updatedAt:serverTimestamp(),updatedBy:auth?.currentUser?.uid});
-      else await addDoc(collection(db,"eyCrmRecords"),{...item,createdAt:serverTimestamp(),updatedAt:serverTimestamp(),createdBy:auth?.currentUser?.uid,updatedBy:auth?.currentUser?.uid});
-      setForm(empty(kind));setEditId(null);
-    }catch{setError("Não foi possível salvar. Nenhuma confirmação de gravação foi recebida.");}
+      const response=await fetch("/api/admin/crm",{method:"POST",headers:{Authorization:"Bearer "+await user.getIdToken(),"Content-Type":"application/json"},body:JSON.stringify({item,id:editId,version}),cache:"no-store"});
+      const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Falha ao salvar.");
+      setRows(payload.rows);setVersion(payload.version);setForm(empty(kind));setEditId(null);
+    }catch(err){setError(err instanceof Error?err.message:"Não foi possível salvar.");}
     finally{setBusy(false);}
   }
   if(!ready)return <main className="min-h-screen p-8">Validando acesso...</main>;
-  if(!enabled||!auth)return <main className="min-h-screen p-8"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p>Ambiente indisponível até a homologação de segurança.</p></main>;
-  if(!authorized)return <main className="min-h-screen grid place-items-center bg-slate-100 text-slate-900"><section className="w-full max-w-md rounded-2xl bg-white p-8 shadow"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p className="my-4">Acesso exclusivo a administradores autorizados.</p>{error&&<p role="alert" className="text-red-700">{error}</p>}<button className={button} onClick={login}>Entrar com Google</button>{auth.currentUser&&<button className="ml-3 underline" onClick={()=>signOut(auth)}>Sair</button>}</section></main>;
+  if(!enabled||!auth)return <main className="min-h-screen p-8"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p>Configuração de login indisponível. Verifique a integração Firebase.</p></main>;
+  if(!authorized)return <main className="min-h-screen grid place-items-center bg-slate-100 text-slate-900"><section className="w-full max-w-md rounded-2xl bg-white p-8 shadow"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p className="my-4">Acesso exclusivo a administradores autorizados. Entre com a conta Google da agência.</p>{error&&<p role="alert" className="text-red-700">{error}</p>}<button className={button} onClick={login}>Entrar com Google</button>{auth.currentUser&&<button className="ml-3 underline" onClick={()=>signOut(auth)}>Sair</button>}</section></main>;
   return <main className="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-8"><div className="mx-auto max-w-6xl">
     <header className="flex flex-wrap items-center justify-between gap-4 mb-6"><div><p className="font-semibold text-emerald-700">EYAGENCIA</p><h1 className="text-3xl font-bold">Gestão de clientes</h1></div><button className="underline" onClick={()=>{setRows([]);setAuthorized(false);void signOut(auth);}}>Sair</button></header>
     {error&&<p role="alert" className="my-3 rounded bg-red-100 p-3 text-red-800">{error}</p>}
     {!loaded?<p>Carregando registros autorizados...</p>:<>
-    <div className="grid gap-3 sm:grid-cols-3 mb-6">
+    <div className="grid gap-3 sm:grid-cols-4 mb-6">
+      <div className="rounded-xl bg-white p-4"><p>Mensalidades de referência</p><strong className="text-2xl">{currency(rows.filter(r=>r.kind==="monthly"&&r.status!=="cancelada").reduce((a,r)=>a+r.amountCents,0))}</strong><p className="text-xs text-slate-500">Valores previstos e históricos; não recebimentos</p></div>
       <div className="rounded-xl bg-white p-4"><p>Clientes ativos</p><strong className="text-2xl">{activeClients.length}</strong></div>
       <div className="rounded-xl bg-white p-4"><p>Contratos assinados</p><strong className="text-2xl">{rows.filter(r=>r.kind==="contract"&&r.status==="assinado").length}</strong></div>
       <div className="rounded-xl bg-white p-4"><p>Pagamentos pendentes (registrados)</p><strong className="text-2xl">{currency(rows.filter(r=>r.kind==="payment"&&r.status==="pendente").reduce((a,r)=>a+r.amountCents,0))}</strong></div>
