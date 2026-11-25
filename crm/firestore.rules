@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function admin() {
+   return request.auth != null && request.auth.token.ey_crm_admin == true && request.auth.token.email_verified == true;
+  }
+  function valid(d) {
+   return d.keys().hasAll(['kind','title','clientId','unit','status','amountCents','date','notes','url','createdAt','updatedAt','createdBy','updatedBy']) &&
+    d.keys().hasOnly(['kind','title','clientId','unit','status','amountCents','date','notes','url','createdAt','updatedAt','createdBy','updatedBy']) &&
+    d.title is string && d.title.size() > 0 && d.title.size() <= 180 &&
+    d.clientId is string && d.unit is string && d.unit.size() <= 150 &&
+    d.date is string && d.date.size() <= 10 &&
+    d.notes is string && d.notes.size() <= 5000 &&
+    d.url is string && d.url.size() <= 1000 &&
+    d.amountCents is int && d.amountCents >= 0 && d.amountCents <= 10000000000 &&
+    ((d.kind == 'client' && d.clientId == '' && d.status in ['lead','negociação','ativo','inativo']) ||
+      (d.kind != 'client' && d.clientId.size() > 0 && exists(/databases/$(database)/documents/eyCrmRecords/$(d.clientId)) &&
+      get(/databases/$(database)/documents/eyCrmRecords/$(d.clientId)).data.kind == 'client' &&
+      ((d.kind == 'contract' && d.status in ['minuta','aguardando assinatura','assinado','encerrado']) ||
+       (d.kind == 'monthly' && d.status in ['prevista','cobrada','cancelada']) ||
+       (d.kind == 'payment' && d.status in ['pendente','recebido','cancelado']) ||
+       (d.kind == 'delivery' && d.status in ['pendente','em andamento','concluída']) ||
+       (d.kind == 'document' && d.status in ['minuta','validado','arquivado'])))) &&
+    d.updatedAt == request.time && d.updatedBy == request.auth.uid;
+  }
+  match /eyCrmRecords/{id} {
+   allow read: if admin();
+   allow create: if admin() && valid(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+   allow update: if admin() && valid(request.resource.data) && request.resource.data.kind == resource.data.kind && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
+   allow delete: if false;
+  }
+ }
+}
