@@ -970,7 +970,7 @@ export async function POST(request: NextRequest) {
         '\n\nArtigo:\n' +
         JSON.stringify(article) +
         '\n\nPROBLEMAS ESTRUTURAIS (validação independente):\n' + JSON.stringify(structuralIssues) +
-        '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 90, risco baixo e issues como lista vazia. Se detectar qualquer problema real, registre-o em issues e reprove; nunca omita problemas para permitir publicação.',
+        '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 85, risco baixo e issues como lista vazia. Se detectar qualquer problema real, registre-o em issues e reprove; nunca omita problemas para permitir publicação.',
     })
     let qaResult = parseJson(qa.text, 'qa')
     let revisionAttempted = false
@@ -1001,7 +1001,7 @@ export async function POST(request: NextRequest) {
           const finalQa = await callAgent({
             maxOutputTokens: 3000,
             instructions:
-              'Você é o QA editorial final. Audite o artigo revisado contra o fact-check documental; não invente evidências ou auditoria jurídica. Bloqueie projeções como fatos, causalidade não demonstrada, dados jurídicos sem texto oficial, repetição, SEO/GEO ruim e fontes inexistentes. Retorne JSON válido com passed, score (0-100), issues, fixes, publicationRisk (low|medium|high). Aprovação exige nota >=90, risco baixo e nenhuma pendência editorial; relate honestamente todos os problemas.',
+              'Você é o QA editorial final. Audite o artigo revisado contra o fact-check documental; não invente evidências ou auditoria jurídica. Bloqueie projeções como fatos, causalidade não demonstrada, dados jurídicos sem texto oficial, repetição, SEO/GEO ruim e fontes inexistentes. Retorne JSON válido com passed, score (0-100), issues, fixes, publicationRisk (low|medium|high). Aprovação exige nota >=85, risco baixo e nenhuma pendência editorial; relate honestamente todos os problemas.',
             input:
               'FACT-CHECK:\n' + JSON.stringify(safeFactCheck) +
               '\n\nARTIGO REVISADO:\n' + JSON.stringify(revisedArticle) +
