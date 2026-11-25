@@ -31,7 +31,7 @@ export async function beginCrmLogin(){
 }
 export async function finishCrmLogin(request:Request){
  const params=new URL(request.url).searchParams;const state=params.get("state");
- const jar=await cookies();const stored=jar.get(stateCookie)?.value;jar.delete(stateCookie);
+ const jar=await cookies();const stored=jar.get(stateCookie)?.value;jar.set(stateCookie,"",{...options,maxAge:0});
  try{
   if(!stored||!state)return redirectError("invalid");
   const expected=JSON.parse(stored);
@@ -61,4 +61,4 @@ export async function getCrmUser(){
   return {sub:user.sub,email:user.email};
  }catch{return null;}
 }
-export async function endCrmLogin(){const jar=await cookies();jar.delete(sessionCookie);jar.delete(stateCookie);}
+export async function endCrmLogin(){const jar=await cookies();jar.set(sessionCookie,"",{...options,maxAge:0});jar.set(stateCookie,"",{...options,maxAge:0});}
