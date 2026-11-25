@@ -36,6 +36,10 @@
     {
       "path": "/api/cron/weekly-stories",
       "schedule": "0 16,23 * * 1,5"
+    },
+    {
+      "path": "/api/cron/blog-cover-repair",
+      "schedule": "30 10,20 * * *"
     }
   ]
 }
