@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isCrmState, finishCrmLogin } from "@/app/lib/crm-google-session";
 import {
   GOOGLE_REPUTATION_REDIRECT_URI,
   googleClientId,
@@ -12,6 +13,9 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const state = requestUrl.searchParams.get("state");
   const oauthError = requestUrl.searchParams.get("error");
+
+  // Independent CRM state namespace; do not modify Business Profile sessions.
+  if (isCrmState(state)) return finishCrmLogin(request);
 
   if (oauthError) {
     return NextResponse.redirect(

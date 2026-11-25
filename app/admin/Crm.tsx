@@ -1,16 +1,6 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, setPersistence, browserSessionPersistence, type Auth } from "firebase/auth";
-import type { User } from "firebase/auth";
 
-const config = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-const enabled = Boolean(config.apiKey && config.authDomain && config.projectId && config.appId);
 const modules = {
   client: { title: "Clientes e leads", statuses: ["lead", "negociação", "ativo", "inativo"] },
   contract: { title: "Contratos", statuses: ["minuta", "aguardando assinatura", "assinado", "encerrado"] },
@@ -29,8 +19,6 @@ const button = "rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white disab
 function safeUrl(s: string) { try { return new URL(s).protocol === "https:"; } catch { return false; } }
 
 export default function Crm() {
-  const [auth,setAuth]=useState<Auth|null>(null);
-  const [user,setUser]=useState<User|null>(null);
   const [version,setVersion]=useState("");
   const [authorized,setAuthorized]=useState(false);
   const [ready,setReady]=useState(false);
@@ -43,24 +31,23 @@ export default function Crm() {
   const [error,setError]=useState("");
   const [filter,setFilter]=useState("");
   useEffect(()=>{
-    if(!enabled){setReady(true);return;}
-    try {
-      const app=getApps().find(a=>a.name==="ey-private-crm") || initializeApp(config,"ey-private-crm");
-      const a=getAuth(app); setAuth(a);
-      let active=true;
-      const stop=onAuthStateChanged(a,async current=>{
-        setAuthorized(false);setRows([]);setLoaded(false);setVersion("");setUser(null);
-        if(!current){if(active)setReady(true);return;}
-        try {
-          const response=await fetch("/api/admin/crm",{headers:{Authorization:"Bearer "+await current.getIdToken()},cache:"no-store"});
-          const payload=await response.json();
-          if(!response.ok)throw new Error(payload.error||"Acesso não autorizado.");
-          if(active&&a.currentUser?.uid===current.uid){setUser(current);setRows(payload.rows);setVersion(payload.version);setAuthorized(true);setLoaded(true);setError("");}
-        }catch(err){if(active)setError(err instanceof Error?err.message:"Não foi possível validar o acesso.");}
-        finally {if(active)setReady(true);}
-      });
-      return ()=>{active=false;stop();};
-    } catch {setReady(true);setError("Configuração do CRM indisponível.");}
+    let active=true;
+    const query=new URLSearchParams(window.location.search);
+    const code=query.get("login");
+    const errors:Record<string,string>={denied:"A conta Google não está autorizada.",cancelled:"Login cancelado. Tente novamente.",invalid:"Sessão de login inválida ou expirada. Tente novamente.",provider:"O Google não concluiu a autenticação. Verifique as permissões do aplicativo.",config:"Configuração do login Google indisponível."};
+    async function start(){
+      try{
+        const response=await fetch("/api/admin/crm",{cache:"no-store",credentials:"same-origin"});
+        if(!active)return;
+        if(response.status===401||response.status===403){if(code)setError(errors[code]||"Não foi possível concluir o login.");return;}
+        const payload=await response.json();
+        if(!response.ok)throw new Error(payload.error||"Não foi possível abrir o CRM.");
+        setRows(payload.rows);setVersion(payload.version);setAuthorized(true);setLoaded(true);setError("");
+      }catch(err){if(active)setError(err instanceof Error?err.message:"Falha ao consultar CRM.");}
+      finally{if(active)setReady(true);}
+    }
+    void start();
+    return()=>{active=false;};
   },[]);
 
   const clients=rows.filter(r=>r.kind==="client");
@@ -68,28 +55,30 @@ export default function Crm() {
   const visible=rows.filter(r=>r.kind===kind && (!filter || r.clientId===filter || r.id===filter));
   const changeKind=(k:Kind)=>{setKind(k);setForm(empty(k));setEditId(null);setFilter("");};
   const change=(k:keyof RecordData,v:string|number)=>setForm(f=>({...f,[k]:v}));
-  async function login(){
-    if(!auth)return;
-    setError("");try{await setPersistence(auth,browserSessionPersistence);await signInWithPopup(auth,new GoogleAuthProvider());}
-    catch{setError("Não foi possível entrar com Google. Verifique a conta, o pop-up e o provedor Google no Firebase.");}
+  function login(){window.location.assign("https://eyagencia.com.br/api/admin/auth");}
+  async function logout(){
+    try{
+      const response=await fetch("/api/admin/auth/logout",{method:"POST",credentials:"same-origin"});
+      if(!response.ok)throw new Error();
+      setRows([]);setVersion("");setAuthorized(false);setLoaded(false);window.location.assign("/admin");
+    }catch{setError("Não foi possível sair. Tente novamente.");}
   }
   async function save(e:FormEvent<HTMLFormElement>){
-    e.preventDefault(); if(!authorized||!user||!loaded||busy)return;
+    e.preventDefault(); if(!authorized||!loaded||busy)return;
     const item={...form,title:form.title.trim(),notes:form.notes.trim(),url:form.url.trim()};
     if(!item.title || (item.kind!=="client"&&!clients.some(c=>c.id===item.clientId)) || (item.url&&!safeUrl(item.url)) || !Number.isSafeInteger(item.amountCents)||item.amountCents<0){setError("Revise os campos e o vínculo com o cliente.");return;}
     setBusy(true);setError("");
     try{
-      const response=await fetch("/api/admin/crm",{method:"POST",headers:{Authorization:"Bearer "+await user.getIdToken(),"Content-Type":"application/json"},body:JSON.stringify({item,id:editId,version}),cache:"no-store"});
+      const response=await fetch("/api/admin/crm",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({item,id:editId,version}),cache:"no-store"});
       const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Falha ao salvar.");
       setRows(payload.rows);setVersion(payload.version);setForm(empty(kind));setEditId(null);
     }catch(err){setError(err instanceof Error?err.message:"Não foi possível salvar.");}
     finally{setBusy(false);}
   }
   if(!ready)return <main className="min-h-screen p-8">Validando acesso...</main>;
-  if(!enabled||!auth)return <main className="min-h-screen p-8"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p>Configuração de login indisponível. Verifique a integração Firebase.</p></main>;
-  if(!authorized)return <main className="min-h-screen grid place-items-center bg-slate-100 text-slate-900"><section className="w-full max-w-md rounded-2xl bg-white p-8 shadow"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p className="my-4">Acesso exclusivo a administradores autorizados. Entre com a conta Google da agência.</p>{error&&<p role="alert" className="text-red-700">{error}</p>}<button className={button} onClick={login}>Entrar com Google</button>{auth.currentUser&&<button className="ml-3 underline" onClick={()=>signOut(auth)}>Sair</button>}</section></main>;
+  if(!authorized)return <main className="min-h-screen grid place-items-center bg-slate-100 text-slate-900"><section className="w-full max-w-md rounded-2xl bg-white p-8 shadow"><h1 className="text-2xl font-bold">EYAGENCIA | Gestão interna</h1><p className="my-4">Acesso exclusivo a administradores autorizados. Entre com a conta Google da agência.</p>{error&&<p role="alert" className="text-red-700">{error}</p>}<button className={button} onClick={login}>Entrar com Google</button></section></main>;
   return <main className="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-8"><div className="mx-auto max-w-6xl">
-    <header className="flex flex-wrap items-center justify-between gap-4 mb-6"><div><p className="font-semibold text-emerald-700">EYAGENCIA</p><h1 className="text-3xl font-bold">Gestão de clientes</h1></div><button className="underline" onClick={()=>{setRows([]);setAuthorized(false);void signOut(auth);}}>Sair</button></header>
+    <header className="flex flex-wrap items-center justify-between gap-4 mb-6"><div><p className="font-semibold text-emerald-700">EYAGENCIA</p><h1 className="text-3xl font-bold">Gestão de clientes</h1></div><button className="underline" onClick={()=>void logout()}>Sair</button></header>
     {error&&<p role="alert" className="my-3 rounded bg-red-100 p-3 text-red-800">{error}</p>}
     {!loaded?<p>Carregando registros autorizados...</p>:<>
     <div className="grid gap-3 sm:grid-cols-4 mb-6">

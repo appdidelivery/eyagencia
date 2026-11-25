@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
+import { getCrmUser, validCrmOrigin } from "@/app/lib/crm-google-session";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -19,28 +20,11 @@ const headers={"Cache-Control":"private, no-store, max-age=0","X-Content-Type-Op
 function json(data:unknown,status=200){return NextResponse.json(data,{status,headers});}
 function errorResponse(err:unknown){return err instanceof CrmError?json({error:err.message},err.status):json({error:"CRM temporariamente indisponível. Nenhum dado foi confirmado como salvo."},503);}
 
-// Firebase validates the signature, expiration and project when accounts:lookup
-// is called with the user's ID token. Claims are used only after this succeeds.
 async function authorize(request:Request):Promise<string>{
- const token=request.headers.get("authorization")?.match(/^Bearer ([A-Za-z0-9._-]+)$/)?.[1];
- if(!token||token.length>10000)throw new CrmError("Entre com sua conta Google.",401);
- const apiKey=process.env.NEXT_PUBLIC_FIREBASE_API_KEY, project=process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
- const emails=(process.env.EY_CRM_ADMIN_EMAILS||"").split(",").map(e=>e.trim().toLowerCase()).filter(Boolean);
- if(!apiKey||!project||!emails.length)throw new CrmError("Configuração de acesso administrativo incompleta.",503);
- const auth=await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key="+encodeURIComponent(apiKey),{
-  method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:token}),cache:"no-store",signal:AbortSignal.timeout(8000)
- });
- if(!auth.ok)throw new CrmError("Sessão inválida ou expirada.",401);
- const response=await auth.json();const account=response.users?.[0];
- let claims;try{claims=JSON.parse(Buffer.from(token.split(".")[1],"base64url").toString("utf8"));}catch{throw new CrmError("Sessão inválida.",401);}
- const email=String(account?.email||"").toLowerCase();
- if(!account?.localId||account.disabled===true||account.emailVerified!==true||claims.email_verified!==true||
-   claims.aud!==project||claims.iss!=="https://securetoken.google.com/"+project||claims.sub!==account.localId||
-   String(claims.email||"").toLowerCase()!==email||claims.firebase?.sign_in_provider!=="google.com"||
-   !account.providerUserInfo?.some((p:{providerId?:string})=>p.providerId==="google.com")||!emails.includes(email)){
-   throw new CrmError("Conta Google sem autorização administrativa.",403);
- }
- return account.localId;
+ const user=await getCrmUser();
+ if(!user)throw new CrmError("Entre com sua conta Google.",401);
+ if(request.method==="POST"&&!validCrmOrigin(request))throw new CrmError("Origem da solicitação inválida.",403);
+ return user.sub;
 }
 
 const pathname="ey-crm/records-v1.json";
