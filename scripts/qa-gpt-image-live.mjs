@@ -1,28 +1,32 @@
-// Disposable QA branch: never merge this live, billable smoke test into main.
-import {mkdir,writeFile} from 'node:fs/promises'
-import {generateEditorialPhoto} from './creative-studio.mjs'
-import {makeBrandSocialSvg} from './brand-social-visual.mjs'
-import {renderBrandArt} from './render-brand-art.mjs'
-import sharp from 'sharp'
+// Disposable QA branch: single low-cost request to identify the Gateway rejection.
 if(process.env.VERCEL_ENV!=='preview'||process.env.VERCEL_GIT_COMMIT_REF!=='qa/gpt-image-live-20261125')
-  throw Error('Live smoke test is restricted to its dedicated preview branch')
-process.env.SOCIAL_AGENT_IMAGES_ENABLED='true'
-process.env.SOCIAL_AGENT_IMAGE_MODEL='openai/gpt-image-2'
-process.env.SOCIAL_AGENT_IMAGE_QUALITY='medium'
-process.env.SOCIAL_AGENT_IMAGE_SIZE='1024x1536'
-process.env.SOCIAL_AGENT_IMAGE_MAX_USD='0.055'
-const cases=[
-  {slug:'eyagencia',topic:'SEO e busca inteligente para e-commerce',concept:'Gestor revisando uma operacao de comercio digital em estudio editorial, sem interfaces falsas'},
-  {slug:'velo-delivery',topic:'Organize os pedidos e melhore o atendimento',concept:'Cozinha de restaurante real, equipe preparando embalagens de delivery sem marcas'},
-]
-await mkdir('public/qa-gpt-image',{recursive:true})
-for(const {slug,topic,concept} of cases){
-  const result=await generateEditorialPhoto({brandSlug:slug,topic,concept,date:'2026-11-25',mode:'blog'})
-  const svg=makeBrandSocialSvg({slug,topic,date:'2026-11-25',cover:true,photographic:true})
-  const image=await renderBrandArt(svg,{backgroundBuffer:result.buffer})
-  const metadata=await sharp(image).metadata()
-  if(metadata.width!==1080||metadata.height!==1080)throw Error('Unexpected composed art dimensions')
-  await writeFile('public/qa-gpt-image/'+slug+'.png',image)
-  console.info('[gpt-image-live-qa]',JSON.stringify({brand:slug,model:result.model,score:result.score,attempts:result.attempts,estimatedImageUsd:result.maximumEstimatedImageCostUsd,width:metadata.width,height:metadata.height}))
+  throw Error('Diagnostic restricted to its dedicated preview branch')
+const key=process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN
+if(!key)throw Error('No Gateway credential configured')
+const res=await fetch('https://ai-gateway.vercel.sh/v1/images/generations',{
+  method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
+  body:JSON.stringify({model:'openai/gpt-image-2',prompt:'Editorial photograph of a red apple on a wooden table, no text',n:1,size:'1024x1024',quality:'low',output_format:'png'}),
+  signal:AbortSignal.timeout(110000),cache:'no-store'
+})
+if(!res.ok){
+  let body={}
+  try{body=await res.json()}catch{}
+  const e=body?.error||{}
+  const msg=[e.message,e.type,e.code,e.param?.error].filter(x=>typeof x==='string').join(' ')
+  const indicators={
+    freeTier:/free.?(credits?|tier)|restrictedmodels|restricted access/i.test(msg),
+    cardVerification:/customer_verification_required|valid (credit card|payment method)|card on file/i.test(msg),
+    creditPurchase:/purchase.*credits|paid credits|top.up/i.test(msg),
+    organizationVerification:/organi[sz]ation.*verif/i.test(msg),
+    policy:/allowlist|routing rule|denied by rule/i.test(msg),
+    budget:/budget|insufficient (credits|funds|balance)/i.test(msg)
+  }
+  const code=typeof e.type==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(e.type)?e.type:'unavailable'
+  const errorCode=typeof e.code==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(e.code)?e.code:'unavailable'
+  console.error('[gateway-diagnostic]',JSON.stringify({http:res.status,type:code,code:errorCode,indicators}))
+  throw Error('Gateway diagnostic rejected; see classified response above')
 }
-// No CMS writes, no publication calls, no new keys. Artifacts are preview-only.
+const data=await res.json()
+console.info('[gateway-diagnostic]',JSON.stringify({http:res.status,imageReturned:Boolean(data?.data?.[0]?.b64_json),inputTokens:data?.usage?.input_tokens??null,outputTokens:data?.usage?.output_tokens??null}))
+if(!data?.data?.[0]?.b64_json)throw Error('No image in successful response')
+// No CMS writes, publication, or credential changes.
