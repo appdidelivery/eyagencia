@@ -64,7 +64,7 @@ async function readBlob():Promise<{rows:RecordData[];version:string}|null>{
 async function writeBlob(rows:RecordData[],version?:string){
  const {token,storeId}=blobConfig();const body=JSON.stringify(rows);
  if(Buffer.byteLength(body)>3500000)throw new CrmError("Limite de armazenamento desta versão atingido.",413);
- const h:Record<string,string>={Authorization:"Bearer "+token,"x-vercel-blob-store-id":storeId,"x-api-version":"13","x-vercel-blob-access":"private","x-content-type":"application/json","x-add-random-suffix":"0","x-allow-overwrite":version?"true":"false","x-cache-control-max-age":"0","Content-Type":"application/json"};
+ const h:Record<string,string>={Authorization:"Bearer "+token,"x-vercel-blob-store-id":storeId,"x-api-version":"13","x-vercel-blob-access":"private","x-content-type":"application/json","x-add-random-suffix":"0","x-allow-overwrite":version?"1":"0","x-cache-control-max-age":"60","Content-Type":"application/json"};
  if(version)h["x-if-match"]=version;
  const r=await fetch("https://vercel.com/api/blob/?"+new URLSearchParams({pathname}),{method:"PUT",headers:h,body,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)});
  if(!r.ok){if(r.status===409||r.status===412||r.status===400)throw new CrmError("Não foi possível gravar esta versão. Atualize o painel e tente novamente.",409);throw new CrmError("Falha ao gravar no armazenamento privado.",503);}
