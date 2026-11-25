@@ -49,7 +49,7 @@ async function writeBlob(rows:RecordData[],version?:string,path=pathname){
  const {token,storeId}=blobConfig();const body=JSON.stringify(rows);
  if(Buffer.byteLength(body)>3500000)throw new CrmError("Limite de armazenamento desta versão atingido.",413);
  const h:Record<string,string>={Authorization:"Bearer "+token,"x-vercel-blob-store-id":storeId,"x-api-version":"13","x-vercel-blob-access":"private","x-content-type":"application/json","x-add-random-suffix":"0","x-allow-overwrite":version?"1":"0","x-cache-control-max-age":"60","Content-Type":"application/json"};
- if(version)h["x-if-match"]=version.startsWith('"')?version:'"'+version.replace(/^W\\//,"").replace(/^"|"$/g,"")+'"';
+ if(version){if(version.startsWith("W/"))throw new CrmError("Versão fraca do armazenamento; gravação protegida.",409);h["x-if-match"]=version.startsWith('"')?version:'"'+version+'"';}
  h["x-api-blob-request-id"]=randomUUID();h["x-api-blob-request-attempt"]="0";h["x-content-length"]=String(Buffer.byteLength(body));
  const r=await fetch("https://vercel.com/api/blob/?"+new URLSearchParams({pathname:path}),{method:"PUT",headers:h,body,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)});
  if(!r.ok){
