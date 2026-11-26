@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { modules, clientOptional, validDate, validPeriod, canGenerate, type Kind, type Row, type Item, type Company } from "@/app/lib/crm-model";
+import { modules, clientOptional, validDate, validPeriod, canGenerate, companyOf, type Kind, type Row, type Item, type Company } from "@/app/lib/crm-model";
 import { getCrmUser, validCrmOrigin } from "@/app/lib/crm-google-session";
 
 export const dynamic = "force-dynamic";
@@ -119,13 +119,16 @@ function validate(input:unknown,rows:RecordData[],existing?:Row):Item{
  if(referenceId){
   const ref=rows.find(r=>r.id===referenceId);
   if(!ref||!((kind==="monthly"&&ref.kind==="contract")||(kind==="payment"&&ref.kind==="monthly")||(kind==="expense"&&ref.kind==="expense"))||ref.clientId!==clientId||ref.id===existing?.id)throw new CrmError("Vínculo financeiro inválido.",400);
-  if(kind!=="expense"&&company&&ref.company&&company!==ref.company)throw new CrmError("Empresas do vínculo não coincidem.",400);
+  const refCompany=companyOf(ref,rows), effectiveCompany=company||rows.find(r=>r.kind==="client"&&r.id===clientId)?.company||"";
+  if(refCompany!==effectiveCompany)throw new CrmError("Empresas do vínculo não coincidem. Classifique os registros de origem primeiro.",400);
   if(kind==="monthly"||kind==="expense"){
    if(rows.some(r=>r.id!==existing?.id&&r.kind===kind&&r.period===period&&r.referenceId===referenceId))throw new CrmError("Já existe lançamento dessa recorrência para a competência.",409);
    if(!existing&&!canGenerate(rows,ref,period))throw new CrmError("Recorrência não disponível nessa competência.",409);
   }
+  if(kind==="payment"&&ref.status==="cancelada")throw new CrmError("Mensalidade cancelada.",400);
   if(kind==="payment"&&status==="recebido"&&sumReceived(rows,referenceId,existing?.id)+amountCents>ref.amountCents)throw new CrmError("Recebimento excede o saldo do lançamento. Revise os valores.",400);
  }
+ if(existing&&rows.some(r=>r.referenceId===existing.id)&&(existing.clientId!==clientId||companyOf(existing,rows)!==(company||rows.find(r=>r.kind==="client"&&r.id===clientId)?.company||"")))throw new CrmError("Registro possui vínculos; revise a empresa e o cliente antes de alterar.",400);
  if(kind==="monthly"&&existing&&sumReceived(rows,existing.id)>amountCents)throw new CrmError("Valor menor que os recebimentos vinculados.",400);
  if(kind==="monthly"&&existing&&status==="cancelada"&&rows.some(r=>r.kind==="payment"&&r.referenceId===existing.id&&r.status==="recebido"))throw new CrmError("Revise recebimentos vinculados antes de cancelar.",400);
  return {kind,title,clientId,unit,status,date,notes,url,amountCents,company,period,paidDate,startDate,endDate,recurring,referenceId,owner,priority,email,phone,service,source,nextAction,time};
