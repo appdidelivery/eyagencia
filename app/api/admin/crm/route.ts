@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { modules, clientOptional, validDate, validPeriod, canGenerate, companyOf, type Kind, type Row, type Item, type Company } from "@/app/lib/crm-model";
 import { getCrmUser, validCrmOrigin } from "@/app/lib/crm-google-session";
+import { prospectBlocked, publicSite } from "@/app/lib/prospecting";
 import { CrmError, readSnapshot, writeSnapshot } from "@/app/lib/crm-blob";
 
 export const dynamic = "force-dynamic";
@@ -93,6 +94,12 @@ function validate(input:unknown,rows:RecordData[],existing?:Row):Item{
  if(!["baixa","normal","alta","urgente"].includes(priority))throw new CrmError("Prioridade inválida.",400);
  const email=string("email",180,true),phone=string("phone",50,true),owner=string("owner",150,true),service=string("service",250,true),source=string("source",150,true),nextAction=string("nextAction",500,true),time=string("time",5,true),referenceId=string("referenceId",100,true);
  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new CrmError("E-mail inválido.",400);
+ if(kind==="prospect"){
+  if(!email||!company||!source||!notes||!url)throw new CrmError("Prospecção exige empresa, e-mail, fonte e diagnóstico.",400);
+  if(!existing){try{publicSite(url);publicSite(source);}catch{throw new CrmError("Informe fontes HTTPS públicas válidas.",400);}if(status!=="em revisão"||prospectBlocked(rows,email))throw new CrmError("Contato duplicado, ativo ou bloqueado. Revise o histórico.",409);}
+  if(existing?.status==="não contatar"&&(status!=="não contatar"||email.toLowerCase()!==(existing.email||"").toLowerCase()))throw new CrmError("Oposição registrada: mantenha o bloqueio de contato.",409);
+  if(existing&&email.toLowerCase()!==(existing.email||"").toLowerCase()&&prospectBlocked(rows,email,existing.id))throw new CrmError("Contato duplicado ou bloqueado.",409);
+ }
  if(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))throw new CrmError("Horário inválido.",400);
  if(["monthly","expense","payment"].includes(kind)&&!period)throw new CrmError("Informe a competência do lançamento; não confunda histórico com previsão.",400);
  if((kind==="payment"&&status==="recebido"||kind==="expense"&&status==="paga")&&!paidDate)throw new CrmError("Informe a data efetiva da movimentação confirmada.",400);
