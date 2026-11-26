@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {approvedCreativeReferences,creativeBrief,verifiedUnitImagePrice,imageRequestConfig,estimatedGptImageCost,gptImageRequest} from '../scripts/creative-studio.mjs'
+import {approvedCreativeReferences,creativeAngle,creativeBrief,verifiedUnitImagePrice,imageRequestConfig,estimatedGptImageCost,gptImageRequest} from '../scripts/creative-studio.mjs'
 test('nao insere references nao aprovadas nem urls externas',()=>{
   assert.equal(approvedCreativeReferences([{approved:false,url:'https://cdn.sanity.io/images/x/y/a.png'},
     {approved:true,url:'https://evil.test/a.png'}]).length,0)
@@ -52,4 +52,16 @@ test('blog cover requires horizontal photographic composition',()=>{
  assert.match(prompt,/horizontal 3:2/)
  assert.match(prompt,/no illustration, vector or CGI/)
  assert.doesNotMatch(prompt,/LEFT 60%/)
+})
+
+test('direction is brand-specific, varied and deterministic',()=>{
+ const a=Array.from({length:12},(_,i)=>creativeAngle('velo-delivery','Cardápio','2026-11-'+i))
+ assert.ok(new Set(a).size>=3)
+ assert.notEqual(creativeAngle('velo-delivery','Tema','26'),creativeAngle('eyagencia','Tema','26'))
+ assert.notEqual(creativeAngle('eyagencia','Tema','26',1),creativeAngle('eyagencia','Tema','26',2))
+ assert.equal(creativeAngle('eyagencia','Tema','26'),creativeAngle('eyagencia','Tema','26'))
+ const prompt=creativeBrief({brandSlug:'velo-delivery',topic:'Cardápio',date:'2026-11-26'})
+ assert.match(prompt,/Campaign art direction/)
+ assert.match(prompt,/Avoid default tablet portraits/)
+ assert.ok(estimatedGptImageCost(gpt2,imageRequestConfig({}),prompt)<0.055)
 })
