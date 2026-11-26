@@ -77,8 +77,10 @@ export function premiumComposition({slug,topic='',date='',cover=false,photograph
   if(photographic) {
     // Opaque left-to-right tint keeps independently-rendered typography legible.
     // This mode layers on top of a topic-specific licensed or generated photograph.
-    return defs+`<rect width="1080" height="1080" fill="url(#premiumBlend)"/>`+
-      `<path d="M0 1015 Q540 907 1080 850" stroke="${conf.accent}" stroke-width="5" opacity=".5" fill="none"/>`+
+    const details=teal
+      ? [`<path d="M80 270 H540 M80 280 H240" stroke="${conf.accent}" stroke-width="3" opacity=".64"/>`,`<path d="M48 72 V1008 M48 1008 H420" stroke="${conf.detail}" stroke-width="3" opacity=".55" fill="none"/>`]
+      : [`<path d="M0 1040 Q560 980 1080 815" stroke="${conf.detail}" stroke-width="12" opacity=".65" fill="none"/><path d="M0 1060 Q650 1000 1080 845" stroke="${conf.accent}" stroke-width="5" opacity=".85" fill="none"/>`,`<path d="M0 1015 Q540 907 1080 850" stroke="${conf.accent}" stroke-width="8" opacity=".7" fill="none"/><path d="M1080 0 Q930 140 1010 260" stroke="${conf.detail}" stroke-width="6" opacity=".55" fill="none"/>`]
+    return defs+`<rect width="1080" height="1080" fill="url(#premiumBlend)"/>`+details[v%2]+
       `<rect x="0" y="0" width="13" height="1080" fill="${conf.accent}" opacity=".87"/>`
   }
   return defs+`<rect width="1080" height="1080" fill="url(#premiumBg)"/>`+

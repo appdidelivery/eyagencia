@@ -76,7 +76,7 @@ function art(type) {
   }
   return '<g '+common+'>'+byType[type]+'</g>'
 }
-export function makeBrandSocialSvg({slug,topic,concept='',date='',cover=false,subtitle='',photographic=false}) {
+export function makeBrandSocialSvg({slug,topic,concept='',date='',cover=false,closing=false,subtitle='',photographic=false}) {
   const brand=palettes[String(slug||'')]
   if(!brand) throw new Error('Identidade social indisponível para a marca')
   const title=clean(topic,122) || 'Ideias para seu negócio'
@@ -98,7 +98,7 @@ export function makeBrandSocialSvg({slug,topic,concept='',date='',cover=false,su
   const supporting=bodyLines.map((line,i)=>
     '<text x="89" y="'+(subStart+i*53)+'" fill="#e3edff" font-size="34" font-family="Noto Sans">'+
     escapeXml(line)+'</text>').join('')
-  const brandMark=cover&&brand.kind==='velo'
+  const brandMark=(cover||closing)&&brand.kind==='velo'
     ?officialLogoSvg({x:82,y:47,width:490,height:132})
     :'<text x="87" y="118" fill="'+brand.soft+
       '" font-size="33" font-weight="700" font-family="Noto Sans">'+
@@ -120,7 +120,7 @@ export function makeBrandSocialSvg({slug,topic,concept='',date='',cover=false,su
     '<rect x="80" y="185" width="'+badgeWidth+'" height="63" rx="17" fill="'+brand.accent+'"/>'+
     '<text x="107" y="226" font-family="Noto Sans" font-weight="700" font-size="'+minLabel+'" fill="'+brand.bg+'">'+escapeXml(semantic.tag)+'</text>'+
     '<path d="M86 277 H641" stroke="'+brand.soft+'" stroke-width="7" stroke-linecap="round"/>'+
-    ink+supporting+
+    (cover&&photographic&&brand.kind==='velo'?'<path d="M80 '+(textY+(titleLines.length-1)*titleHeight+22)+' H'+Math.min(690,90+titleLines[titleLines.length-1].length*35)+'" stroke="'+brand.accent+'" stroke-width="10" stroke-linecap="round"/>':'')+ink+supporting+
     '<path d="M88 960 H990" stroke="'+brand.accent+'" stroke-width="6" opacity=".88"/>'+
     '<text x="89" y="1019" fill="#f5faff" font-size="29" font-family="Noto Sans" font-weight="700">'+
     escapeXml(brand.website)+'</text>'+
