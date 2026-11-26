@@ -1,4 +1,5 @@
 export const modules={
+ prospect:{title:"Prospecção",statuses:["em revisão","aprovado","abordado","respondeu","reunião","proposta","convertido","descartado","não contatar"]},
  client:{title:"Clientes e leads",statuses:["lead","negociação","ativo","inativo","a conferir"]},
  contract:{title:"Contratos",statuses:["minuta","aguardando assinatura","assinado","encerrado","a conferir"]},
  monthly:{title:"Mensalidades",statuses:["prevista","cobrada","cancelada"]},
@@ -18,7 +19,7 @@ export type Kind=keyof typeof modules;
 export type Company="EYAGENCIA"|"VELO"|"";
 export type Item={kind:Kind;title:string;clientId:string;unit:string;status:string;amountCents:number;date:string;notes:string;url:string;company?:Company;period?:string;paidDate?:string;startDate?:string;endDate?:string;recurring?:boolean;referenceId?:string;owner?:string;priority?:string;email?:string;phone?:string;service?:string;source?:string;nextAction?:string;time?:string};
 export type Row=Item&{id:string;updatedAt?:string;updatedBy?:string;createdAt?:string;createdBy?:string};
-export const clientOptional=new Set<Kind>(["client","expense","task","meeting","project","document"]);
+export const clientOptional=new Set<Kind>(["client","prospect","expense","task","meeting","project","document"]);
 export const moneyKinds=new Set<Kind>(["monthly","payment","expense","contract","proposal"]);
 export const blank=(kind:Kind):Item=>({kind,title:"",clientId:"",unit:"",status:modules[kind].statuses[0],amountCents:0,date:"",notes:"",url:"",company:"",period:"",paidDate:"",startDate:"",endDate:"",recurring:false,referenceId:"",owner:"",priority:"normal",email:"",phone:"",service:"",source:"",nextAction:"",time:""});
 export function validDate(s:string){return /^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(Date.parse(s+"T00:00:00Z"))&&new Date(s+"T00:00:00Z").toISOString().slice(0,10)===s}
