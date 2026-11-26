@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 
 export class CrmError extends Error {
- constructor(message:string,public status:number){super(message);}
+ readonly status:number;
+ constructor(message:string,status:number){super(message);this.status=status;}
 }
 
 type BlobConfig={token:string;storeId:string};
