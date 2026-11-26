@@ -2,7 +2,13 @@ export const PUBLICATION_QA_MINIMUM = 85
 
 export function hasBlockingEditorialIssues(issues: unknown): boolean {
   if (!Array.isArray(issues)) return true
-  return issues.length > 0
+  return issues.some(issue => {
+    if (!issue || typeof issue !== 'object' || Array.isArray(issue)) return true
+    const item = issue as Record<string, unknown>
+    // Only explicitly optional stylistic polish can be nonblocking. Unknown,
+    // factual, structural, source, SEO and risk findings remain blocking.
+    return !(item.severity === 'low' && item.dimension === 'style' && item.blocking === false)
+  })
 }
 
 export function editorialQaApproved(qa: Record<string, unknown>): boolean {
