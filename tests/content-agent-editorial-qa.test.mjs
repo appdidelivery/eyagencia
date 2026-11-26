@@ -17,3 +17,10 @@ test('metadata only reuses an existing complete sentence',()=>{
  assert.equal(result.sections,a.sections)
  assert.equal(repairSeoMetadata({...a,excerpt:'Curto'}).seoDescription,'Curta')
 })
+
+test('optional style polish does not block an otherwise approved article',()=>{
+ assert.equal(editorialQaApproved({...approved,score:85,issues:[{severity:'low',dimension:'style',blocking:false,detail:'Preferir frase mais curta'}]}),true)
+ assert.equal(editorialQaApproved({...approved,issues:[{severity:'low',dimension:'seo',blocking:false}]}),false)
+ assert.equal(editorialQaApproved({...approved,issues:[{severity:'high',dimension:'style',blocking:false}]}),false)
+ assert.equal(editorialQaApproved({...approved,passed:false,issues:[{severity:'low',dimension:'style',blocking:false}]}),false)
+})
