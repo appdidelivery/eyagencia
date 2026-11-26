@@ -82,7 +82,7 @@ export function makeSocialSvg(pkg,frame,format,index,count,usePhoto=false) {
   const photoOverlay=usePhoto
     ?`<defs><linearGradient id="premiumPhotoTint">
         <stop stop-color="#031e22" stop-opacity=".97"/>
-        <stop offset=".62" stop-color="#052c31" stop-opacity=".88"/>
+        <stop offset="${variant%2===0?'.50':'.62'}" stop-color="#052c31" stop-opacity=".88"/>
         <stop offset="1" stop-color="#062b2d" stop-opacity=".16"/>
       </linearGradient></defs>
       <rect width="${width}" height="${height}" fill="url(#premiumPhotoTint)"/>
@@ -104,6 +104,7 @@ export function makeSocialSvg(pkg,frame,format,index,count,usePhoto=false) {
     <text x="131" y="${story?374:175}" fill="#062b32" font-size="26" font-weight="800" font-family="Arial,sans-serif">${xml(theme.label)}</text>
     <text x="105" y="${story?500:291}" fill="${accent}" font-size="31" font-weight="700" font-family="Arial,sans-serif">EYAGENCIA · INTELIGÊNCIA DIGITAL</text>
     <path d="M104 ${story?528:322} H644" stroke="${theme.accent}" stroke-width="6" stroke-linecap="round"/>
+    ${cover&&usePhoto?`<path d="M105 ${y0-103} H${variant%2===0?395:245}" stroke="${accent}" stroke-width="10" stroke-linecap="round"/>`:``}
     ${titleSvg(title,105,y0,size,titleColor,lineHeight,cover?accent:'')}
     ${supporting}
     <path d="M105 ${footer} H965" stroke="${accent}" stroke-width="5" opacity=".8"/>
