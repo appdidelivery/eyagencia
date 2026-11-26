@@ -2,7 +2,8 @@ export const MAIL_ACCOUNTS={contato:"contato@eyagencia.com.br",financeiro:"finan
 export type MailAccount=keyof typeof MAIL_ACCOUNTS;
 export function mailAccount(value:unknown):value is MailAccount{return value==="contato"||value==="financeiro"}
 export class UmblerConfigError extends Error{
- constructor(public readonly missingKey:"UMBLER_CONTATO_PASSWORD"|"UMBLER_FINANCEIRO_PASSWORD"){super("Credencial não disponível neste ambiente.");this.name="UmblerConfigError";}
+ readonly missingKey:"UMBLER_CONTATO_PASSWORD"|"UMBLER_FINANCEIRO_PASSWORD";
+ constructor(missingKey:"UMBLER_CONTATO_PASSWORD"|"UMBLER_FINANCEIRO_PASSWORD"){super("Credencial não disponível neste ambiente.");this.name="UmblerConfigError";this.missingKey=missingKey;}
 }
 // Accounts and TLS endpoints are fixed to the explicitly approved Umbler service.
 // Do not accept a configurable destination that could receive mailbox credentials.
