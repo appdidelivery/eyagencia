@@ -1,6 +1,7 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
 import {makeBrandSocialSvg} from '../../../scripts/brand-social-visual.mjs'
 import {renderBrandArt} from '../../../scripts/render-brand-art.mjs'
+import {generateEditorialPhoto} from '../../../scripts/creative-studio.mjs'
 import {
   NEWS_SOURCES, sourceInstagramHandle, extractNewsLinks, extractNewsDate, articleHeadline,
   isRecent, rankHeadline,
@@ -174,12 +175,14 @@ async function makeSourceCarousel(brand:BrandKey,source:Source,article:Article,d
     'Crédito: '+source.name+'. Leia a matéria no link da legenda.',
   ]
   const images:string[]=[],assets:string[]=[]
+  const photo=await generateEditorialPhoto({brandSlug:brand,topic:brand==='eyagencia'?'Ambiente de comércio eletrônico':'Operação de restaurante e delivery',concept:'Fotografia editorial ilustrativa genérica do setor; não representar evento, pessoa, empresa ou produto específico da notícia',date:day+'-'+slot,mode:'social'})
   for (const [index,headline] of slides.entries()) {
+    const background=index%2===0?photo.buffer:null
     const svg=makeBrandSocialSvg({
       slug:brand,topic:headline,concept:'Análise original de notícia setorial',
-      date:day+'-'+slot+'-fonte-'+(index+1),
+      date:day+'-'+slot+'-fonte-'+(index+1),cover:index===0,photographic:Boolean(background),
     })
-    const png=await renderBrandArt(svg)
+    const png=await renderBrandArt(svg,background?{backgroundBuffer:background}:{})
     const asset=await writeClient.assets.upload('image',png,{
       filename:'radar-original-'+brand+'-'+day+'-'+slot+'-'+(index+1)+'.png',
       contentType:'image/png',
