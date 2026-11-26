@@ -970,7 +970,7 @@ export async function POST(request: NextRequest) {
         '\n\nArtigo:\n' +
         JSON.stringify(article) +
         '\n\nPROBLEMAS ESTRUTURAIS (validação independente):\n' + JSON.stringify(structuralIssues) +
-        '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 85, risco baixo e issues como lista vazia. Se detectar qualquer problema real, registre-o em issues e reprove; nunca omita problemas para permitir publicação.',
+        '\n\nRetorne JSON com: passed (boolean), score (0-100), issues, fixes e publicationRisk (low|medium|high). Considere passed somente com score >= 85, risco baixo e nenhum problema bloqueante. Registre sugestões puramente opcionais de estilo como {severity:"low",dimension:"style",blocking:false,detail:"..."}; qualquer problema factual, SEO, estrutura, fonte ou risco é bloqueante, reprove e nunca o omita.',
     })
     let qaResult = parseJson(qa.text, 'qa')
     let revisionAttempted = false
@@ -1001,7 +1001,7 @@ export async function POST(request: NextRequest) {
           const finalQa = await callAgent({
             maxOutputTokens: 3000,
             instructions:
-              'Você é o QA editorial final. Audite o artigo revisado contra o fact-check documental; não invente evidências ou auditoria jurídica. Bloqueie projeções como fatos, causalidade não demonstrada, dados jurídicos sem texto oficial, repetição, SEO/GEO ruim e fontes inexistentes. Retorne JSON válido com passed, score (0-100), issues, fixes, publicationRisk (low|medium|high). Aprovação exige nota >=85, risco baixo e nenhuma pendência editorial; relate honestamente todos os problemas.',
+              'Você é o QA editorial final. Audite o artigo revisado contra o fact-check documental; não invente evidências ou auditoria jurídica. Bloqueie projeções como fatos, causalidade não demonstrada, dados jurídicos sem texto oficial, repetição, SEO/GEO ruim e fontes inexistentes. Retorne JSON válido com passed, score (0-100), issues, fixes, publicationRisk (low|medium|high). Aprovação exige nota >=85, risco baixo e nenhum problema bloqueante. Apenas sugestões opcionais de estilo podem usar severity low, dimension style, blocking false; relate e bloqueie qualquer problema factual, SEO, estrutural ou de fontes.',
             input:
               'FACT-CHECK:\n' + JSON.stringify(safeFactCheck) +
               '\n\nARTIGO REVISADO:\n' + JSON.stringify(revisedArticle) +
@@ -1059,7 +1059,7 @@ export async function POST(request: NextRequest) {
               'Você é o auditor independente de qualidade, fontes e segurança de um artigo B2B. ' +
               'Não considere a publicação obrigatória. Reprove fatos inventados, atribuições jurídicas não verificadas, ' +
               'citações sem trecho literal, causalidade sem teste, repetição, afirmações comerciais sem provas e conteúdo superficial. ' +
-              'Retorne SOMENTE JSON com passed booleano, score entre 0 e 100, issues array, fixes array e publicationRisk low|medium|high.',
+              'Retorne SOMENTE JSON com passed booleano, score entre 0 e 100, issues array, fixes array e publicationRisk low|medium|high. Aprove com nota >=85, risco baixo e nenhum problema bloqueante. Sugestões exclusivamente opcionais de estilo devem ser objetos com severity low, dimension style, blocking false, detail. Problemas de fatos, fontes, SEO, estrutura ou risco sempre bloqueiam.',
             input:
               'FATOS E FONTES: ' + JSON.stringify(safeFactCheck) +
               '\nARTIGO: ' + JSON.stringify(candidate) +
@@ -1074,7 +1074,7 @@ export async function POST(request: NextRequest) {
             console.info('[content-agent] targeted_repair_passed', JSON.stringify({topic}))
           } else {
             console.info('[content-agent] targeted_repair_rejected', JSON.stringify({
-              topic, structural: candidateStructural.length, score: Number(verdict.score || 0),
+              topic, structural: candidateStructural.length, score: Number(verdict.score || 0), risk: verdict.publicationRisk, passed: verdict.passed === true, issueCount: Array.isArray(verdict.issues) ? verdict.issues.length : null,
             }))
           }
         }
