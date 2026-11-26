@@ -164,16 +164,16 @@ export function makeBrandMotivationSvg({slug,topic,date='',closing=false,cover=f
 
 // Story-sized companion to the original weekly feed post. The square source
 // remains intact within a 9:16 canvas; it is never cropped to fit Stories.
-export function makeBrandMotivationStorySvg({slug,topic,date='',closing=false}) {
+export function makeBrandMotivationStorySvg({slug,topic,date='',closing=false,photographic=false}) {
   const brand=palettes[String(slug||'')]
   if(!brand)throw new Error('Brand story unavailable')
-  const original=makeBrandMotivationSvg({slug,topic,date,closing})
+  const original=makeBrandMotivationSvg({slug,topic,date,closing,photographic})
     .replace(/^<svg\b[^>]*>/,
       '<svg x="0" y="390" width="1080" height="1080" viewBox="0 0 1080 1080">')
   const heading=closing?'SEXTA-FEIRA · GRATIDÃO':'SEGUNDA-FEIRA · PROPÓSITO'
   const prompt=closing?'QUAL CONQUISTA VOCÊ CELEBRA HOJE?':'QUAL HÁBITO VOCÊ VAI CULTIVAR?'
   return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">'+
-    '<rect width="1080" height="1920" fill="'+brand.bg+'"/>'+
+    '<rect width="1080" height="1920" fill="'+brand.bg+'" opacity="'+(photographic?'.42':'1')+'"/>'+
     '<rect x="0" y="0" width="1080" height="350" fill="'+brand.bg2+'" opacity=".7"/>'+
     '<path d="M83 338 H998" stroke="'+brand.accent+'" stroke-width="9" stroke-linecap="round"/>'+
     '<text x="88" y="143" font-family="Noto Sans" font-size="56" font-weight="700" fill="#ffffff">'+escapeXml(brand.brand)+'</text>'+
