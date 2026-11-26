@@ -47,7 +47,7 @@ export async function renderBrandArt(svg,{backgroundBuffer=null}={}) {
 }
 
 // Same bundled font and glyph gate as the feed renderer; 1080x1920 Stories.
-export async function renderBrandStoryArt(svg) {
+export async function renderBrandStoryArt(svg,{backgroundBuffer=null}={}) {
   const image=new Resvg(svg,{
     font:{fontFiles,loadSystemFonts:false,defaultFontFamily:'Noto Sans'},
     textRendering:2,
@@ -63,5 +63,10 @@ export async function renderBrandStoryArt(svg) {
     if(data[p]>215&&data[p+1]>215&&data[p+2]>215)bright++
   }
   if(bright<1100)throw new Error('Story: missing or unreadable headline glyphs')
+  if(backgroundBuffer){
+    const meta=await sharp(backgroundBuffer).metadata()
+    if((meta.width||0)<500||(meta.height||0)<500)throw Error('Story: background photo below minimum resolution')
+    return sharp(backgroundBuffer).rotate().resize(1080,1920,{fit:'cover',position:'attention'}).composite([{input:png,top:0,left:0}]).png({compressionLevel:8}).toBuffer()
+  }
   return png
 }
