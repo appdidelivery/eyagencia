@@ -110,7 +110,7 @@ async function visualReview(apiKey,buffer,topic,brandSlug,references,mode){
       mode==='blog-cover'?'Enquadramento editorial horizontal equilibrado, sem texto, marcas ou interfaces falsas.':'Protagonista à DIREITA, 60% à esquerda escuro e livre para título; sem texto, números, marcas, logos, watermarks ou interfaces falsas.',
       'Reprove colagens de objetos deformados e visual genérico.',
       'Retorne SOMENTE JSON: {"approved":boolean,"score":numero_de_0_a_100,"issues":["problema concreto"]}.',
-      'Aprovar somente com nota >= 78 e sem violação de posicionamento, texto indevido ou falsa marca.',
+      mode==='blog-cover'?'Aprovar somente com nota >= 78, fotografia convincente e sem texto indevido ou falsa marca. Não exigir área escura nem posição lateral: o título é renderizado fora da foto.':'Aprovar somente com nota >= 78 e sem violação de posicionamento, texto indevido ou falsa marca.',
     ].join(' ')},
     {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+preview.toString('base64')}},
   ]
