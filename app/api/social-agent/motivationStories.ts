@@ -1,6 +1,7 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
 import {makeBrandMotivationStorySvg} from '../../../scripts/brand-social-visual.mjs'
 import {renderBrandStoryArt} from '../../../scripts/render-brand-art.mjs'
+import {generateEditorialPhoto} from '../../../scripts/creative-studio.mjs'
 
 type BrandSlug='eyagencia'|'velo-delivery'
 type PublishedFeed={_id:string;_rev:string;topic?:string;instagramPostId?:string;
@@ -88,9 +89,10 @@ async function publishBrandStory(brand:BrandSlug,day:string,weekday:string):Prom
   let publishStarted=false
   try{
     const closing=weekday==='Fri'
+    const shot=await generateEditorialPhoto({brandSlug:brand,topic:post.topic,concept:'Fotografia editorial humana de trabalho e propósito, composição vertical',date:day+'-story',mode:'motivation'})
     const png=await renderBrandStoryArt(makeBrandMotivationStorySvg({
-      slug:brand,topic:post.topic,date:day,closing,
-    }))
+      slug:brand,topic:post.topic,date:day,closing,photographic:true,
+    }),{backgroundBuffer:shot.buffer})
     const asset=await writeClient.assets.upload('image',png,{
       filename:'weekly-story-'+brand+'-'+day+'.png',
       contentType:'image/png',
