@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { modules, clientOptional, validDate, validPeriod, canGenerate, companyOf, type Kind, type Row, type Item, type Company } from "@/app/lib/crm-model";
 import { getCrmUser, validCrmOrigin } from "@/app/lib/crm-google-session";
-import { CrmError, readSnapshot, strongVersion } from "@/app/lib/crm-blob";
+import { CrmError, readSnapshot, writeSnapshot } from "@/app/lib/crm-blob";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,18 +30,7 @@ async function readBlob(path=pathname):Promise<{rows:RecordData[];version:string
  return readSnapshot<RecordData>(path,blobConfig());
 }
 async function writeBlob(rows:RecordData[],version?:string,path=pathname){
- const {token,storeId}=blobConfig();const body=JSON.stringify(rows);
- if(Buffer.byteLength(body)>3500000)throw new CrmError("Limite de armazenamento desta versão atingido.",413);
- const h:Record<string,string>={Authorization:"Bearer "+token,"x-vercel-blob-store-id":storeId,"x-api-version":"13","x-vercel-blob-access":"private","x-content-type":"application/json","x-add-random-suffix":"0","x-allow-overwrite":version?"1":"0","x-cache-control-max-age":"60","Content-Type":"application/json"};
- if(version){const match=strongVersion(version);if(!match)throw new CrmError("Versão segura do armazenamento indisponível.",503);h["x-if-match"]=match;}
- h["x-api-blob-request-id"]=randomUUID();h["x-api-blob-request-attempt"]="0";h["x-content-length"]=String(Buffer.byteLength(body));
- const r=await fetch("https://vercel.com/api/blob/?"+new URLSearchParams({pathname:path}),{method:"PUT",headers:h,body,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)});
- if(!r.ok){
-  let code="unknown";try{const result=await r.json();const candidate=result?.error?.code??result?.code;if(typeof candidate==="string"&&/^[a-zA-Z0-9_-]{1,80}$/.test(candidate))code=candidate;}catch{}
-  console.warn("[crm-blob-write]",{status:r.status,code,conditional:Boolean(version),archive:path!==pathname});
-  if(r.status===409||r.status===412)throw new CrmError("Outra gravação alterou a base. Atualize o painel.",409);
-  throw new CrmError("Armazenamento recusou a gravação ("+r.status+"). Nenhum dado anterior foi substituído.",503);
- }
+ return writeSnapshot(rows,blobConfig(),path,version);
 }
 const archivePath="ey-crm/contract-import-v1.json";
 type Snapshot={rows:RecordData[];version:string;notice?:string};

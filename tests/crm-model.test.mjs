@@ -21,7 +21,7 @@ test("prazos reais e segurança CSV",()=>{
  assert.equal(validDate("2026-02-30"),false);assert.equal(validDate("2024-02-29"),true);assert.equal(dueItems([r("task","t",{date:"2026-11-25"}),r("task","x",{date:"2026-11-23",status:"concluída"})],"2026-11-26").length,1);assert.equal(csvCell("=SUM(A1)"),"\"'=SUM(A1)\"")
 });
 
-import { readSnapshot, strongVersion } from "../app/lib/crm-blob.ts";
+import { readSnapshot, strongVersion, writeSnapshot } from "../app/lib/crm-blob.ts";
 const blobConfig={token:"test-token",storeId:"teststore"};
 const meta=etag=>new Response(JSON.stringify({etag}),{status:200});
 const body=(rows,etag)=>new Response(JSON.stringify(rows),{status:200,headers:{etag}});
@@ -49,4 +49,42 @@ test("metadados fracos ou ausentes falham com segurança; 404 permite inicializa
  assert.equal(strongVersion('W/"a"'),null);assert.equal(strongVersion("abc"),'"abc"');
  await assert.rejects(readSnapshot("records.json",blobConfig,mockBlob([meta('W/"a"')]).fetcher),e=>e.status===503);
  assert.equal(await readSnapshot("records.json",blobConfig,mockBlob([new Response(null,{status:404})]).fetcher),null);
+});
+
+test("gravação condicional conserva o ETag e mapeia conflito 412 para 409",async()=>{
+ const m=mockBlob([new Response(JSON.stringify({error:{code:"precondition_failed"}}),{status:412})]);
+ await assert.rejects(writeSnapshot([{id:"c"}],blobConfig,"records.json",'"abc"',m.fetcher),e=>e.status===409);
+ assert.equal(m.calls[0].opts.headers["x-if-match"],'"abc"');
+ assert.equal(m.calls[0].opts.headers["x-allow-overwrite"],"1");
+ assert.equal(m.calls[0].opts.headers["x-vercel-blob-access"],"private");
+});
+import { randomUUID } from "node:crypto";
+// Explicitly limited to this hotfix preview. No production CRM data is read or
+// written. A unique synthetic object is removed even if the assertions fail.
+const liveBlobTest=process.env.VERCEL_ENV==="preview"&&process.env.VERCEL_GIT_COMMIT_REF==="fix/crm-blob-etag-20261126";
+test("Blob real privado: criar, alterar, reler e rejeitar versão antiga",{skip:!liveBlobTest,timeout:90000},async()=>{
+ const token=process.env.BLOB_READ_WRITE_TOKEN;
+ const storeId=token?.split("_")[3];
+ assert.ok(token&&storeId&&/^[A-Za-z0-9]+$/.test(storeId),"Conexão privada de teste indisponível");
+ const config={token,storeId};
+ const path="ey-crm-tests/"+randomUUID()+".json";
+ try{
+  assert.equal(await readSnapshot(path,config),null);
+  await writeSnapshot([{id:"synthetic",status:"initial"}],config,path);
+  const first=await readSnapshot(path,config);
+  assert.equal(first?.rows[0]?.status,"initial");
+  assert.ok(first?.version);
+  await writeSnapshot([{id:"synthetic",status:"updated"}],config,path,first.version);
+  const second=await readSnapshot(path,config);
+  assert.equal(second?.rows[0]?.status,"updated");
+  assert.notEqual(second?.version,first.version);
+  await assert.rejects(writeSnapshot([{id:"synthetic",status:"stale"}],config,path,first.version),e=>e.status===409);
+  assert.equal((await readSnapshot(path,config))?.rows[0]?.status,"updated");
+ }finally{
+  const url="https://"+storeId+".private.blob.vercel-storage.com/"+path;
+  const response=await fetch("https://vercel.com/api/blob/delete",{
+   method:"POST",headers:{Authorization:"Bearer "+token,"x-vercel-blob-store-id":storeId,"x-api-version":"13","x-api-blob-request-id":randomUUID(),"x-api-blob-request-attempt":"0","Content-Type":"application/json"},body:JSON.stringify({urls:[url]}),cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)
+  });
+  assert.ok(response.ok||response.status===404,"Falha na limpeza do objeto sintético");
+ }
 });

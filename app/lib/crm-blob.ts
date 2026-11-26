@@ -48,3 +48,18 @@ export async function readSnapshot<T>(path:string,{token,storeId}:BlobConfig,fet
  }
  throw new CrmError("Outra alteração ocorreu durante a leitura. Atualize o painel antes de salvar.",409);
 }
+
+export async function writeSnapshot<T>(rows:T[],{token,storeId}:BlobConfig,path:string,version?:string,fetcher:typeof fetch=fetch){
+ const body=JSON.stringify(rows);
+ if(Buffer.byteLength(body)>3500000)throw new CrmError("Limite de armazenamento desta versão atingido.",413);
+ const h:Record<string,string>={Authorization:"Bearer "+token,"x-vercel-blob-store-id":storeId,"x-api-version":"13","x-vercel-blob-access":"private","x-content-type":"application/json","x-add-random-suffix":"0","x-allow-overwrite":version?"1":"0","x-cache-control-max-age":"60","Content-Type":"application/json"};
+ if(version){const match=strongVersion(version);if(!match)throw new CrmError("Versão segura do armazenamento indisponível.",503);h["x-if-match"]=match;}
+ h["x-api-blob-request-id"]=randomUUID();h["x-api-blob-request-attempt"]="0";h["x-content-length"]=String(Buffer.byteLength(body));
+ const r=await fetcher("https://vercel.com/api/blob/?"+new URLSearchParams({pathname:path}),{method:"PUT",headers:h,body,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)});
+ if(!r.ok){
+  let code="unknown";try{const result=await r.json();const candidate=result?.error?.code??result?.code;if(typeof candidate==="string"&&/^[a-zA-Z0-9_-]{1,80}$/.test(candidate))code=candidate;}catch{}
+  console.warn("[crm-blob-write]",{status:r.status,code,conditional:Boolean(version),archive:path!=="ey-crm/records-v1.json"});
+  if(r.status===409||r.status===412)throw new CrmError("Outra gravação alterou a base. Atualize o painel.",409);
+  throw new CrmError("Armazenamento recusou a gravação ("+r.status+"). Nenhum dado anterior foi substituído.",503);
+ }
+}
