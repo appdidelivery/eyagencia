@@ -93,6 +93,6 @@ export function visualBriefForBrand(slug,topic='',mode='feed'){
   const config=BRAND_ART_DIRECTION[slug]||BRAND_ART_DIRECTION.eyagencia
   const subject=String(topic).replace(/\s+/g,' ').slice(0,220)
   return [config.identity,config.mood,'Uma cena forte e plausível, uma única ideia, fotografia realista de publicidade, assunto: '+subject,
-    mode==='motivation'?'Cenário de trabalho e objeto protagonista, iluminação suave e humana.':'Elemento principal no terço DIREITO, esquerdo com área negativa escura para tipografia.',
+    mode==='blog-cover'?'Enquadramento editorial horizontal equilibrado, sem reservar área para texto.':mode==='motivation'?'Cenário de trabalho e objeto protagonista, iluminação suave e humana.':'Elemento principal no terço DIREITO, esquerdo com área negativa escura para tipografia.',
     'Sem textos, letras, marcas falsas, números, logos, interfaces inventadas, pessoas reconhecíveis nem promessas visuais.'].join(' ')
 }
