@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {getCrmUser,validCrmOrigin} from "@/app/lib/crm-google-session";
-import {mailAccount,umblerConfig,MAIL_ACCOUNTS} from "@/app/lib/umbler-config";
+import {mailAccount,umblerConfig,MAIL_ACCOUNTS,UmblerConfigError,safeMailFailure} from "@/app/lib/umbler-config";
 import {ImapFlow} from "imapflow";
 import nodemailer from "nodemailer";
 export const runtime="nodejs";
@@ -12,12 +12,12 @@ async function verifyImap(c:Config){
  const imap=new ImapFlow({host:c.imapHost,port:c.imapPort,secure:true,auth:{user:c.user,pass:c.pass},logger:false,connectionTimeout:10000,greetingTimeout:10000,socketTimeout:12000,tls:{rejectUnauthorized:true,minVersion:"TLSv1.2"},disableAutoIdle:true});
  imap.on("error",()=>{});
  const timer=setTimeout(()=>imap.close(),24000);
- try{await imap.connect();const mailbox=await imap.mailboxOpen("INBOX",{readOnly:true});return {ok:true,messageCount:mailbox.exists};}catch{return {ok:false};}finally{clearTimeout(timer);imap.close();}
+ try{await imap.connect();const mailbox=await imap.mailboxOpen("INBOX",{readOnly:true});return {ok:true,messageCount:mailbox.exists};}catch(error){return {ok:false,reason:safeMailFailure(error)};}finally{clearTimeout(timer);imap.close();}
 }
 async function verifySmtp(c:Config){
  const transport=nodemailer.createTransport({host:c.smtpHost,port:c.smtpPort,secure:false,requireTLS:true,auth:{user:c.user,pass:c.pass},tls:{rejectUnauthorized:true,minVersion:"TLSv1.2"},connectionTimeout:10000,greetingTimeout:8000,socketTimeout:12000,logger:false,debug:false});
  let timer:ReturnType<typeof setTimeout>|undefined;
- try{const ok=await Promise.race([transport.verify(),new Promise<boolean>(resolve=>{timer=setTimeout(()=>resolve(false),24000)})]);return {ok:ok===true};}catch{return {ok:false};}finally{if(timer)clearTimeout(timer);transport.close();}
+ try{const ok=await Promise.race([transport.verify(),new Promise<boolean>(resolve=>{timer=setTimeout(()=>resolve(false),24000)})]);return ok===true?{ok:true}:{ok:false,reason:"Tempo limite ou verificação não confirmada"};}catch(error){return {ok:false,reason:safeMailFailure(error)};}finally{if(timer)clearTimeout(timer);transport.close();}
 }
 export async function POST(request:Request){
  if(!await getCrmUser())return json({error:"Entre com sua conta Google."},401);
@@ -26,7 +26,7 @@ export async function POST(request:Request){
  let account:unknown;
  try{const raw=await request.text();if(raw.length>128)throw Error();account=JSON.parse(raw).account;}catch{return json({error:"Solicitação inválida."},400);}
  if(!mailAccount(account))return json({error:"Conta inválida."},400);
- let c:Config;try{c=umblerConfig(account,process.env);}catch{return json({error:"Credenciais ou parâmetros Umbler não configurados neste ambiente."},503);}
+ let c:Config;try{c=umblerConfig(account,{UMBLER_CONTATO_PASSWORD:process.env.UMBLER_CONTATO_PASSWORD,UMBLER_FINANCEIRO_PASSWORD:process.env.UMBLER_FINANCEIRO_PASSWORD});}catch(error){if(error instanceof UmblerConfigError)return json({error:"Credencial não disponível no ambiente de execução: "+error.missingKey+". Confira Production e o deploy vigente."},503);return json({error:"Configuração indisponível."},503);}
  const [imap,smtp]=await Promise.all([verifyImap(c),verifySmtp(c)]);
  return json({account:MAIL_ACCOUNTS[account],imap,smtp,checkedAt:new Date().toISOString(),sent:false});
 }
