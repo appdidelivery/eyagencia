@@ -96,7 +96,8 @@ function validate(input:unknown,rows:RecordData[],existing?:Row):Item{
  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new CrmError("E-mail inválido.",400);
  if(kind==="prospect"){
   if(!email||!company||!source||!notes||!url)throw new CrmError("Prospecção exige empresa, e-mail, fonte e diagnóstico.",400);
-  if(!existing){try{publicSite(url);publicSite(source);}catch{throw new CrmError("Informe fontes HTTPS públicas válidas.",400);}if(status!=="em revisão"||prospectBlocked(rows,email))throw new CrmError("Contato duplicado, ativo ou bloqueado. Revise o histórico.",409);}
+  try{publicSite(url);publicSite(source);}catch{throw new CrmError("Informe fontes HTTPS públicas válidas.",400);}
+  if(!existing){if(status!=="em revisão"||prospectBlocked(rows,email))throw new CrmError("Contato duplicado, ativo ou bloqueado. Revise o histórico.",409);}
   if(existing?.status==="não contatar"&&(status!=="não contatar"||email.toLowerCase()!==(existing.email||"").toLowerCase()))throw new CrmError("Oposição registrada: mantenha o bloqueio de contato.",409);
   if(existing&&email.toLowerCase()!==(existing.email||"").toLowerCase()&&prospectBlocked(rows,email,existing.id))throw new CrmError("Contato duplicado ou bloqueado.",409);
  }
