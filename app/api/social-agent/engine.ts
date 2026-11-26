@@ -81,13 +81,13 @@ async function createCaption(brand: Brand, topic: string, day: string) {
     '{"caption":"legenda completa, sem markdown","visualConcept":"descrição visual em uma frase","slides":["dica 1","dica 2","dica 3","dica 4","dica 5","dica 6"]}.',
     'Para Velo Delivery, slides deve conter 6 orientações reais, cada uma de 25 a 95 caracteres, específicas do tema, distintas, sem promessas.',
     'Cada dica será um slide do carrossel, então nunca invente recursos, dados, resultados ou depoimentos.',
-    'É obrigatório escrever em português brasileiro, com linguagem natural e CTA discreto.',
+    'Escreva em português brasileiro. Primeira frase com pergunta ou tensão específica da pauta; desenvolva uma ideia útil; encerre com CTA contextual para salvar, compartilhar ou comentar, sem engagement bait.',
     'NÃO invente preço, promoção, estoque, oferta, dados, porcentagem, depoimento, legislação, resultado ou característica de produto.',
     'Somente fatos fornecidos como verificados podem ser afirmados especificamente.',
     'Não invente URLs. Não repita frases genéricas e não use termos como garantia de sucesso.',
     'Não diga que aumenta vendas, ticket médio, faturamento, lucro ou conversão sem evidências verificadas; não afirme que o cliente já possui filtros, fotos, integração ou funcionalidades sem fatos verificados.',
     'Evite frases sensacionalistas como máquina de vendas, resultados garantidos, venda mais, descubra o segredo, comprovadamente, imperdível.',
-    'O conceito visual é obrigatório e deve servir como briefing de fotografia editorial: 1 objeto ou cena protagonista, localização do sujeito no terço direito, iluminação, profundidade e atmosfera coerentes com a marca.',
+    'O conceito visual deve ser um briefing publicitário original: uma tensão, metáfora física ou situação reconhecível ligada ao tema; protagonista no terço direito, ângulo de câmera intencional, iluminação, profundidade e atmosfera de marca. Varie entre retrato, ação, detalhe, natureza-morta e contraste; não use tablet por padrão.',
     'Não descreva posts com fundo geométrico genérico, ícone aleatório, tipografia embutida na foto ou grande caixa de texto. Tipografia e logotipo são aplicados separadamente pelo compositor.',
     'Adapte Velo Delivery a cenas autênticas de operação, cozinha, atendimento e gestão; adapte EYAGENCIA a estratégia, e-commerce e metáforas visuais elegantes, sem clichês de cérebro holográfico.',
     'O texto deve ser publicável diretamente, sem revisão humana, ou você deve retornar JSON {"caption":"","visualConcept":""}.',
@@ -808,7 +808,7 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
         const shot=await generateEditorialPhoto({
           brandSlug:'velo-delivery',
           topic:index===0?post.title:String(slides[index]).slice(0,160),
-          concept:'Cena distinta de operacao de restaurante real, luz cinematografica, composicao premium',
+          concept:index===0?'Campanha editorial de alto impacto: representar uma tensão específica do tema com cena autêntica, sem tablet por padrão':'Detalhe tátil ou bastidor distinto que ilustre a orientação do slide, sem repetir a capa',
           date:day+'-blog-'+index,mode:'social',
         })
         photos.set(index,shot.buffer)
@@ -827,11 +827,12 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
     const detail=divider>0?title.slice(divider+2):''
     const image=makeBrandSocialSvg({
       slug:'velo-delivery',topic:heading.slice(0,120),
-      subtitle:detail.slice(0,150),cover:i===0,
+      subtitle:detail.slice(0,150),cover:i===0,closing:i===slides.length-1,
       concept:'Conteúdo do blog Velo Delivery: '+(post.title||''),
-      date:day+'-blog-'+(i+1),photographic:photos.has(i),
+      date:day+'-blog-'+(i+1),photographic:photos.has(i)||photos.has(0),
     })
-    const png=await renderBrandArt(image,photos.has(i)?{backgroundBuffer:photos.get(i)}:{})
+    const picture=photos.get(i)||photos.get(i%2===0?0:4)||photos.get(0)
+    const png=await renderBrandArt(image,picture?{backgroundBuffer:picture}:{})
     const asset=await writeClient.assets.upload('image',png,{
       filename:'velo-blog-carousel-'+day+'-'+(i+1)+'.png',
       contentType:'image/png',
@@ -877,8 +878,9 @@ export async function runVeloBlogSocial() {
     if(!chosen)return {enabled:true,day,results:[{brand:brand.name,status:'no_new_blog_article'}]}
     const article=chosen
     const caption=[
-      '📚 Velo Insights | Conteúdo para gestores de delivery',
-      '',article.title||'',article.excerpt||'',
+      article.title||'Velo Insights',
+      '',article.excerpt||'',
+      'Qual ponto merece mais atenção na sua operação? Salve este conteúdo para revisar com sua equipe.',
       'Confira o artigo completo: '+article.url,'','#VeloDelivery #Delivery #Gestao',
     ].join('\n').slice(0,2100)
     try {
