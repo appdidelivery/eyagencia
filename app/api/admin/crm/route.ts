@@ -1,20 +1,12 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
+import { modules, clientOptional, validDate, validPeriod, canGenerate, type Kind, type Row, type Item, type Company } from "@/app/lib/crm-model";
 import { getCrmUser, validCrmOrigin } from "@/app/lib/crm-google-session";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const statuses = {
- client:["lead","negociação","ativo","inativo","a conferir"],
- contract:["minuta","aguardando assinatura","assinado","encerrado","a conferir"],
- monthly:["prevista","cobrada","cancelada"],
- payment:["pendente","recebido","cancelado"],
- delivery:["pendente","em andamento","concluída"],
- document:["minuta","validado","arquivado","a conferir"],
-} as const;
-type Kind = keyof typeof statuses;
-type RecordData = {id:string;kind:Kind;title:string;clientId:string;unit:string;status:string;amountCents:number;date:string;notes:string;url:string;updatedAt?:string;updatedBy?:string};
+type RecordData=Row;
 class CrmError extends Error { constructor(message:string,public status:number){super(message);} }
 const headers={"Cache-Control":"private, no-store, max-age=0","X-Content-Type-Options":"nosniff","X-Robots-Tag":"noindex, nofollow","Referrer-Policy":"no-referrer"};
 function json(data:unknown,status=200){return NextResponse.json(data,{status,headers});}
@@ -98,20 +90,47 @@ async function load():Promise<Snapshot>{
  try{await writeBlob(rows);}catch(err){const raced=await readBlob();if(raced)return withArchive(raced);throw err;}
  const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a importação inicial.",503);return withArchive(saved);
 }
-function validate(input:unknown,rows:RecordData[]):Omit<RecordData,"id">{
+function validate(input:unknown,rows:RecordData[],existing?:Row):Item{
  if(!input||typeof input!=="object")throw new CrmError("Registro inválido.",400);
  const v=input as Record<string,unknown>;
- const string=(key:string,max:number)=>{const x=v[key];if(typeof x!=="string"||x.length>max)throw new CrmError("Campo inválido: "+key,400);return x.trim();};
+ const string=(key:string,max:number,optional=false)=>{const x=v[key];if(x===undefined&&optional)return "";if(typeof x!=="string"||x.length>max)throw new CrmError("Campo inválido: "+key,400);return x.trim();};
  const kind=string("kind",20) as Kind;
- if(!Object.prototype.hasOwnProperty.call(statuses,kind))throw new CrmError("Tipo inválido.",400);
+ if(!Object.prototype.hasOwnProperty.call(modules,kind))throw new CrmError("Tipo inválido.",400);
  const title=string("title",180),clientId=string("clientId",100),unit=string("unit",150),status=string("status",50),date=string("date",10),notes=string("notes",5000),url=string("url",1000);
- if(!title||!(statuses[kind] as readonly string[]).includes(status)|| (kind==="client"?clientId!=="":!rows.some(r=>r.id===clientId&&r.kind==="client")))throw new CrmError("Revise o título, cliente e status.",400);
- if(date&&!/^\d{4}-\d{2}-\d{2}$/.test(date))throw new CrmError("Data inválida.",400);
- if(url){try{if(new URL(url).protocol!=="https:")throw Error();}catch{throw new CrmError("Use um link HTTPS.",400);}}
+ if(!title||!(modules[kind].statuses as readonly string[]).includes(status)|| (kind==="client"?clientId!=="":clientId?!rows.some(r=>r.id===clientId&&r.kind==="client"):!clientOptional.has(kind)))throw new CrmError("Revise o título, cliente e status.",400);
+ const company=string("company",20,true) as Company;
+ if(!["","EYAGENCIA","VELO"].includes(company))throw new CrmError("Empresa inválida.",400);
+ const period=string("period",7,true),paidDate=string("paidDate",10,true),startDate=string("startDate",10,true),endDate=string("endDate",10,true);
+ for(const d of [date,paidDate,startDate,endDate])if(d&&!validDate(d))throw new CrmError("Data inválida.",400);
+ if(period&&!validPeriod(period))throw new CrmError("Competência inválida.",400);
+ if(startDate&&endDate&&endDate<startDate)throw new CrmError("Fim anterior ao início.",400);
+ if(url){try{const u=new URL(url);if(u.protocol!=="https:"||u.username||u.password)throw Error()}catch{throw new CrmError("Use um link HTTPS sem credenciais.",400)}}
  const amountCents=v.amountCents;
  if(typeof amountCents!=="number"||!Number.isSafeInteger(amountCents)||amountCents<0||amountCents>10000000000)throw new CrmError("Valor inválido.",400);
- return {kind,title,clientId,unit,status,date,notes,url,amountCents};
+ const recurring=v.recurring===true;
+ const priority=string("priority",20,true)||"normal";
+ if(!["baixa","normal","alta","urgente"].includes(priority))throw new CrmError("Prioridade inválida.",400);
+ const email=string("email",180,true),phone=string("phone",50,true),owner=string("owner",150,true),service=string("service",250,true),source=string("source",150,true),nextAction=string("nextAction",500,true),time=string("time",5,true),referenceId=string("referenceId",100,true);
+ if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new CrmError("E-mail inválido.",400);
+ if(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))throw new CrmError("Horário inválido.",400);
+ if(["monthly","expense","payment"].includes(kind)&&!period)throw new CrmError("Informe a competência do lançamento; não confunda histórico com previsão.",400);
+ if((kind==="payment"&&status==="recebido"||kind==="expense"&&status==="paga")&&!paidDate)throw new CrmError("Informe a data efetiva da movimentação confirmada.",400);
+ if(kind==="contract"&&recurring&&(!startDate||amountCents<=0))throw new CrmError("Contrato recorrente exige valor mensal e início de vigência.",400);
+ if(referenceId){
+  const ref=rows.find(r=>r.id===referenceId);
+  if(!ref||!((kind==="monthly"&&ref.kind==="contract")||(kind==="payment"&&ref.kind==="monthly")||(kind==="expense"&&ref.kind==="expense"))||ref.clientId!==clientId||ref.id===existing?.id)throw new CrmError("Vínculo financeiro inválido.",400);
+  if(kind!=="expense"&&company&&ref.company&&company!==ref.company)throw new CrmError("Empresas do vínculo não coincidem.",400);
+  if(kind==="monthly"||kind==="expense"){
+   if(rows.some(r=>r.id!==existing?.id&&r.kind===kind&&r.period===period&&r.referenceId===referenceId))throw new CrmError("Já existe lançamento dessa recorrência para a competência.",409);
+   if(!existing&&!canGenerate(rows,ref,period))throw new CrmError("Recorrência não disponível nessa competência.",409);
+  }
+  if(kind==="payment"&&status==="recebido"&&sumReceived(rows,referenceId,existing?.id)+amountCents>ref.amountCents)throw new CrmError("Recebimento excede o saldo do lançamento. Revise os valores.",400);
+ }
+ if(kind==="monthly"&&existing&&sumReceived(rows,existing.id)>amountCents)throw new CrmError("Valor menor que os recebimentos vinculados.",400);
+ if(kind==="monthly"&&existing&&status==="cancelada"&&rows.some(r=>r.kind==="payment"&&r.referenceId===existing.id&&r.status==="recebido"))throw new CrmError("Revise recebimentos vinculados antes de cancelar.",400);
+ return {kind,title,clientId,unit,status,date,notes,url,amountCents,company,period,paidDate,startDate,endDate,recurring,referenceId,owner,priority,email,phone,service,source,nextAction,time};
 }
+function sumReceived(rows:Row[],id:string,exclude?:string){return rows.filter(r=>r.kind==="payment"&&r.referenceId===id&&r.id!==exclude&&r.status==="recebido").reduce((n,r)=>n+r.amountCents,0)}
 export async function GET(request:Request){
  try{await authorize(request);return json(await load());}catch(err){return errorResponse(err);}
 }
@@ -123,12 +142,14 @@ export async function POST(request:Request){
   let payload;try{payload=JSON.parse(raw);}catch{throw new CrmError("JSON inválido.",400);}
   const current=await load();
   if(payload.version!==current.version)throw new CrmError("Outra alteração ocorreu. Recarregue o painel antes de salvar.",409);
-  const item=validate(payload.item,current.rows);
   const id=payload.id===null?randomUUID():payload.id;
   if(typeof id!=="string"||id.length>100)throw new CrmError("Identificador inválido.",400);
   const index=current.rows.findIndex(r=>r.id===id);
+  const existing=index>=0?current.rows[index]:undefined;
+  const item=validate(payload.item,current.rows,existing);
   if(payload.id!==null&&(index===-1||current.rows[index].kind!==item.kind))throw new CrmError("Registro não encontrado ou tipo alterado.",404);
-  const record={...item,id,updatedAt:new Date().toISOString(),updatedBy:uid};
+  const now=new Date().toISOString();
+  const record={...existing,...item,id,createdAt:existing?.createdAt||now,createdBy:existing?.createdBy||uid,updatedAt:now,updatedBy:uid};
   const rows=[...current.rows];if(index>=0)rows[index]=record;else rows.push(record);
   await writeBlob(rows,current.version);
   const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a gravação.",503);return json(await withArchive(saved));
