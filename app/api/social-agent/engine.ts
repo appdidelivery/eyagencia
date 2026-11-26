@@ -167,13 +167,12 @@ async function createImage(brand: Brand, concept: string, day: string, topic: st
       if(bytes.length<8000||bytes.length>12*1024*1024)throw new Error('approved_image_size')
       return await saveComposed(bytes,'approved')
     }catch(error) {
-      console.warn('[social-art] approved photo unavailable; drawing topic-specific vector instead',
+      console.warn('[social-art] approved photo unavailable; attempting GPT Image',
         error instanceof Error?error.message:'unknown')
     }
   }
 
-  if(process.env.SOCIAL_AGENT_IMAGES_ENABLED!=='true' || !supportedBrandSlug(brand.slug))
-    return saveComposed(null,'illustrated')
+  if(!supportedBrandSlug(brand.slug)||process.env.SOCIAL_AGENT_IMAGES_ENABLED!=='true')throw new Error('Fotografia social indisponível; publicação preservada')
 
   // A strict two-proposal limit and a vision-based critic run before posting.
   // The compositing layer still owns every character and official logo.
@@ -301,6 +300,11 @@ async function publishInstagramCarousel(igId: string, token: string, images: str
   if (!ready) throw new Error('Instagram: parent_not_ready')
   return metaPost(igId + '/media_publish', token, {creation_id: parent})
 }
+async function interiorSocialPhoto(brand:Brand,day:string,topic:string,concept:string,mode:'social'|'motivation'='social') {
+  const shot=await generateEditorialPhoto({brandSlug:brand.slug,topic,concept,date:day+'-interior',mode,references:brand.creativeReferences||[]})
+  console.info('[social-studio] interior_photo_approved',JSON.stringify({brand:brand.slug,model:shot.model,score:shot.score}))
+  return shot.buffer
+}
 async function buildVeloCarousel(brand: Brand, day: string, topic: string,
   concept: string, coverUrl: string, slides: string[]) {
   if (brand.slug !== 'velo-delivery' || slides.length !== 6)
@@ -308,12 +312,14 @@ async function buildVeloCarousel(brand: Brand, day: string, topic: string,
   const titles = [...slides, 'Salve este guia e revise uma melhoria por vez']
   const images = [coverUrl]
   const assetIds: string[] = []
+  const photo=await interiorSocialPhoto(brand,day,topic,concept+' — fotografia editorial distinta da capa')
   for (const [index, title] of titles.entries()) {
+    const background=index%2===0?photo:null
     const svg = makeBrandSocialSvg({
       slug: brand.slug, topic: title, concept: topic + ' ' + concept, cover:false,
-      date: day + '-slide-' + (index + 2),
+      date: day + '-slide-' + (index + 2),photographic:Boolean(background),
     })
-    const buffer = await renderBrandArt(svg)
+    const buffer = await renderBrandArt(svg,background?{backgroundBuffer:background}:{})
     const asset = await writeClient.assets.upload('image', buffer, {
       filename: 'velo-carousel-' + day + '-' + (index + 2) + '.png', contentType: 'image/png',
     })
@@ -492,10 +498,12 @@ async function buildMotivationCarousel(brand:Brand,day:string,coverUrl:string,me
   if(messages.length!==6)throw new Error('motivation_slides_invalid')
   const content=[...messages,'Salve este lembrete e compartilhe com quem empreende.']
   const images=[coverUrl],assetIds:string[]=[]
+  const photo=await interiorSocialPhoto(brand,day,content[0],'Ambiente de trabalho humano, fotografia editorial','motivation')
   for(let i=0;i<content.length;i++){
+    const background=i%2===0?photo:null
     const buffer=await renderBrandArt(makeBrandMotivationSvg({
-      slug:brand.slug,topic:content[i],date:day+'-'+i,
-    }))
+      slug:brand.slug,topic:content[i],date:day+'-'+i,photographic:Boolean(background),
+    }),background?{backgroundBuffer:background}:{})
     const asset=await writeClient.assets.upload('image',buffer,{
       filename:'weekly-motivation-'+brand.slug+'-'+day+'-'+(i+2)+'.png',
       contentType:'image/png',
@@ -564,11 +572,13 @@ async function buildPracticalCarousel(brand:Brand,day:string,coverUrl:string,mes
   if(messages.length!==6)throw new Error('practical_slides_invalid')
   const images=[coverUrl],assetIds:string[]=[]
   const captions=[...messages,'Salve este guia e escolha um ajuste para colocar em prática.']
+  const photo=await interiorSocialPhoto(brand,day,messages[0],'Cena de trabalho real ilustrando as dicas práticas')
   for(const [i,title] of captions.entries()){
+    const background=i%2===0?photo:null
     const svg=makeBrandSocialSvg({
-      slug:brand.slug,topic:title,concept:'Dica prática para a operação',date:day+'-tip-'+(i+2),
+      slug:brand.slug,topic:title,concept:'Dica prática para a operação',date:day+'-tip-'+(i+2),photographic:Boolean(background),
     })
-    const png=await renderBrandArt(svg)
+    const png=await renderBrandArt(svg,background?{backgroundBuffer:background}:{})
     const asset=await writeClient.assets.upload('image',png,{
       filename:'social-practical-'+brand.slug+'-'+day+'-'+(i+2)+'.png',
       contentType:'image/png',
@@ -802,6 +812,7 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
   const images:string[]=[],assetIds:string[]=[]
   // Two distinct photographic scenes instead of a repeated vector-only template.
   const photos=new Map<number,Buffer>()
+  if(process.env.SOCIAL_AGENT_IMAGES_ENABLED!=='true')throw new Error('Geração fotográfica desativada')
   if(process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
     for(const index of [0,4]){
       try{
@@ -825,13 +836,14 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
     const divider=i===0?-1:title.indexOf(': ')
     const heading=divider>0?title.slice(0,divider):title
     const detail=divider>0?title.slice(divider+2):''
+    const background=photos.get(i)||(i%2===0?(photos.get(4)||photos.get(0)):undefined)
     const image=makeBrandSocialSvg({
       slug:'velo-delivery',topic:heading.slice(0,120),
       subtitle:detail.slice(0,150),cover:i===0,
       concept:'Conteúdo do blog Velo Delivery: '+(post.title||''),
-      date:day+'-blog-'+(i+1),photographic:photos.has(i),
+      date:day+'-blog-'+(i+1),photographic:Boolean(background),
     })
-    const png=await renderBrandArt(image,photos.has(i)?{backgroundBuffer:photos.get(i)}:{})
+    const png=await renderBrandArt(image,background?{backgroundBuffer:background}:{})
     const asset=await writeClient.assets.upload('image',png,{
       filename:'velo-blog-carousel-'+day+'-'+(i+1)+'.png',
       contentType:'image/png',
