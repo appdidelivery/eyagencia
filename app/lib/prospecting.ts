@@ -1,3 +1,4 @@
+export const PROSPECT_SENDER="contato@eyagencia.com.br";
 export type Brand="EYAGENCIA"|"VELO";
 export type Finding={title:string;detail:string;url:string;observedAt:string};
 export type Audit={url:string;at:string;scores:{performance:number|null;seo:number|null;accessibility:number|null};findings:Finding[]};
@@ -35,9 +36,10 @@ export function buildApproach(brand:Brand,name:string,findings:Finding[]){
  const business=name.trim();if(!business||!findings.length)throw Error("Informe a empresa e pelo menos uma evidência verificável.");
  const first=findings[0];
  const identity=brand==="EYAGENCIA"?"EYAGENCIA":"Velo Delivery";
+ const signature=brand==="EYAGENCIA"?"Equipe EYAGENCIA\nhttps://eyagencia.com.br":"Equipe Velo Delivery | EYAGENCIA\nhttps://velodelivery.com.br";
  const value=brand==="EYAGENCIA"?"melhorar a presença digital e tornar o caminho até o contato mais simples":"facilitar o caminho até o pedido direto e melhorar a experiência de compra";
- const body="Olá, equipe da "+business+"! Tudo bem?\n\nSou da "+identity+". Em uma análise pontual da presença digital de vocês, identifiquei o seguinte ponto:\n\n"+first.title+": "+first.detail+"\nFonte: "+first.url+" ("+first.observedAt.slice(0,10)+").\n\nUma sugestão inicial: "+recommendation(first,brand)+" Isso pode ajudar a "+value+". Posso enviar a análise gratuita completa, sem compromisso?\n\nSe preferirem não receber novos contatos comerciais, basta responder a este e-mail.\n\nEquipe "+identity;
+ const body="Olá, equipe da "+business+"! Tudo bem?\n\nFaço parte da equipe "+identity+". Em uma análise pontual da presença digital de vocês, identifiquei o seguinte ponto:\n\n"+first.title+": "+first.detail+"\nFonte: "+first.url+" ("+first.observedAt.slice(0,10)+").\n\nUma sugestão inicial: "+recommendation(first,brand)+" Isso pode ajudar a "+value+". Posso enviar a análise gratuita completa, sem compromisso?\n\nSe preferirem não receber novos contatos comerciais, basta responder a este e-mail.\n\nAtenciosamente,\n"+signature;
  const report="DIAGNÓSTICO GRATUITO — "+business+" | "+identity+"\n"+findings.map((f,i)=>(i+1)+". "+f.title+" — "+f.detail+"\nSugestão: "+recommendation(f,brand)+"\nFonte: "+f.url+" | "+f.observedAt).join("\n\n")+"\n\nAnálise pontual, sem acesso às métricas internas da empresa. Não estima perdas de vendas nem garante resultados.";
  const followup="Olá, equipe da "+business+"! Retomo o e-mail anterior sobre "+first.title.toLowerCase()+". Se o tema for útil, posso compartilhar a análise e as sugestões práticas. Se não for prioridade ou preferirem não receber novos contatos, é só me avisar. Obrigado, equipe "+identity+".";
- return {followup,subject:business+" — uma sugestão para "+(brand==="EYAGENCIA"?"sua presença digital":"seu canal de pedidos"),body,report,priority:findings.length>=2?"alta":"normal"};
+ return {sender:PROSPECT_SENDER,followup,subject:business+" — uma sugestão para "+(brand==="EYAGENCIA"?"sua presença digital":"seu canal de pedidos"),body,report,priority:findings.length>=2?"alta":"normal"};
 }
