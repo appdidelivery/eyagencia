@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { modules, clientOptional, validDate, validPeriod, canGenerate, companyOf, type Kind, type Row, type Item, type Company } from "@/app/lib/crm-model";
 import { getCrmUser, validCrmOrigin } from "@/app/lib/crm-google-session";
+import { CrmError, readSnapshot, strongVersion } from "@/app/lib/crm-blob";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 type RecordData=Row;
-class CrmError extends Error { constructor(message:string,public status:number){super(message);} }
 const headers={"Cache-Control":"private, no-store, max-age=0","X-Content-Type-Options":"nosniff","X-Robots-Tag":"noindex, nofollow","Referrer-Policy":"no-referrer"};
 function json(data:unknown,status=200){return NextResponse.json(data,{status,headers});}
 function errorResponse(err:unknown){return err instanceof CrmError?json({error:err.message},err.status):json({error:"CRM temporariamente indisponível. Nenhum dado foi confirmado como salvo."},503);}
@@ -27,21 +27,13 @@ function blobConfig(){
  return {token,storeId};
 }
 async function readBlob(path=pathname):Promise<{rows:RecordData[];version:string}|null>{
- const {token,storeId}=blobConfig();
- const r=await fetch("https://"+storeId+".private.blob.vercel-storage.com/"+path+"?cache=0",{
-  headers:{Authorization:"Bearer "+token},cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)
- });
- if(r.status===404)return null;
- if(!r.ok)throw new CrmError("Não foi possível consultar o armazenamento privado.",503);
- const version=r.headers.get("etag");if(!version)throw new CrmError("Versão dos registros indisponível.",503);
- const rows=await r.json();if(!Array.isArray(rows)||rows.length>10000)throw new CrmError("Base de registros inválida.",503);
- return {rows,version};
+ return readSnapshot<RecordData>(path,blobConfig());
 }
 async function writeBlob(rows:RecordData[],version?:string,path=pathname){
  const {token,storeId}=blobConfig();const body=JSON.stringify(rows);
  if(Buffer.byteLength(body)>3500000)throw new CrmError("Limite de armazenamento desta versão atingido.",413);
  const h:Record<string,string>={Authorization:"Bearer "+token,"x-vercel-blob-store-id":storeId,"x-api-version":"13","x-vercel-blob-access":"private","x-content-type":"application/json","x-add-random-suffix":"0","x-allow-overwrite":version?"1":"0","x-cache-control-max-age":"60","Content-Type":"application/json"};
- if(version){if(version.startsWith("W/"))throw new CrmError("Versão fraca do armazenamento; gravação protegida.",409);h["x-if-match"]=version.startsWith('"')?version:'"'+version+'"';}
+ if(version){const match=strongVersion(version);if(!match)throw new CrmError("Versão segura do armazenamento indisponível.",503);h["x-if-match"]=match;}
  h["x-api-blob-request-id"]=randomUUID();h["x-api-blob-request-attempt"]="0";h["x-content-length"]=String(Buffer.byteLength(body));
  const r=await fetch("https://vercel.com/api/blob/?"+new URLSearchParams({pathname:path}),{method:"PUT",headers:h,body,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10000)});
  if(!r.ok){
@@ -155,6 +147,9 @@ export async function POST(request:Request){
   const record={...existing,...item,id,createdAt:existing?.createdAt||now,createdBy:existing?.createdBy||uid,updatedAt:now,updatedBy:uid};
   const rows=[...current.rows];if(index>=0)rows[index]=record;else rows.push(record);
   await writeBlob(rows,current.version);
-  const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a gravação.",503);return json(await withArchive(saved));
+  const saved=await readBlob();if(!saved)throw new CrmError("Não foi possível confirmar a gravação.",503);
+  const confirmed=saved.rows.find(r=>r.id===id);
+  if(!confirmed||confirmed.updatedAt!==now||confirmed.updatedBy!==uid||Object.entries(item).some(([key,value])=>confirmed[key as keyof Row]!==value))throw new CrmError("Não foi possível confirmar a alteração. Atualize o painel antes de tentar novamente.",409);
+  return json(await withArchive(saved));
  }catch(err){return errorResponse(err);}
 }

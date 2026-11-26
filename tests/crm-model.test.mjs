@@ -20,3 +20,33 @@ test("recorrência única, vigência e cancelamento",()=>{
 test("prazos reais e segurança CSV",()=>{
  assert.equal(validDate("2026-02-30"),false);assert.equal(validDate("2024-02-29"),true);assert.equal(dueItems([r("task","t",{date:"2026-11-25"}),r("task","x",{date:"2026-11-23",status:"concluída"})],"2026-11-26").length,1);assert.equal(csvCell("=SUM(A1)"),"\"'=SUM(A1)\"")
 });
+
+import { readSnapshot, strongVersion } from "../app/lib/crm-blob.ts";
+const blobConfig={token:"test-token",storeId:"teststore"};
+const meta=etag=>new Response(JSON.stringify({etag}),{status:200});
+const body=(rows,etag)=>new Response(JSON.stringify(rows),{status:200,headers:{etag}});
+function mockBlob(sequence){
+ const calls=[];
+ return {calls,fetcher:async(url,opts)=>{calls.push({url,opts});assert.ok(sequence.length,"unexpected request");return sequence.shift();}};
+}
+test("ETag de representação fraco usa versão forte dos metadados",async()=>{
+ const m=mockBlob([meta('"abc"'),body([{id:"c"}],'W/"compressed"'),meta('"abc"')]);
+ assert.deepEqual(await readSnapshot("records.json",blobConfig,m.fetcher),{rows:[{id:"c"}],version:'"abc"'});
+ assert.match(m.calls[0].url,/vercel.com\/api\/blob/);
+ assert.match(m.calls[1].url,/cache=0$/);
+ assert.equal(m.calls[1].opts.headers["Accept-Encoding"],"identity");
+ assert.ok(m.calls.every(c=>c.opts.cache==="no-store"&&c.opts.redirect==="error"));
+});
+test("alteração simultânea durante leitura não associa dados antigos à versão nova",async()=>{
+ const m=mockBlob([meta('"a"'),body([{id:"old"}],'W/"old"'),meta('"b"'),meta('"b"'),body([{id:"new"}],'W/"new"'),meta('"b"')]);
+ assert.deepEqual(await readSnapshot("records.json",blobConfig,m.fetcher),{rows:[{id:"new"}],version:'"b"'});
+});
+test("versão forte divergente e concorrência persistente não liberam gravação",async()=>{
+ const m=mockBlob(Array.from({length:3},()=>[meta('"a"'),body([],'"b"'),meta('"a"')]).flat());
+ await assert.rejects(readSnapshot("records.json",blobConfig,m.fetcher),e=>e.status===409);
+});
+test("metadados fracos ou ausentes falham com segurança; 404 permite inicialização create-only",async()=>{
+ assert.equal(strongVersion('W/"a"'),null);assert.equal(strongVersion("abc"),'"abc"');
+ await assert.rejects(readSnapshot("records.json",blobConfig,mockBlob([meta('W/"a"')]).fetcher),e=>e.status===503);
+ assert.equal(await readSnapshot("records.json",blobConfig,mockBlob([new Response(null,{status:404})]).fetcher),null);
+});
