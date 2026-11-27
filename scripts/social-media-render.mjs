@@ -170,7 +170,8 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
   const cfg=settings()
   const sharp= (await import('sharp')).default
   const fullPhotos=fullCarouselPhotosEnabled()
-  const packages=(await getPackages(cfg)).slice(0,fullPhotos?1:Math.min(4,Math.max(1,maxPackages)))
+  const packages=(await getPackages(cfg)).slice(0,fullPhotos?20:Math.min(4,Math.max(1,maxPackages)))
+  let paidRoundClaimed=false
   const results=[]
   for(const pkg of packages){
     const carousel=pkg.carousel||[],stories=pkg.stories||[]
@@ -184,9 +185,11 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       // Reserve the paid generation once, before any image calls. A crash or
       // ambiguous mutation response must not trigger another paid round.
       if(fullPhotos){
+        if(paidRoundClaimed)break
         const reservation='gpt-carousel-cost-'+pkg._id
         try{
           await save(cfg,[{create:{_id:reservation,_type:'socialImageCostLock',sourceId:pkg._id,createdAt:new Date().toISOString(),status:'reserved'}}])
+          paidRoundClaimed=true
         }catch{
           results.push({id:pkg._id,status:'paid-round-reserved-or-storage-unavailable'})
           continue
