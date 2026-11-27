@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['@resvg/resvg-js'],
+  serverExternalPackages: ['@resvg/resvg-js', 'imapflow', 'nodemailer'],
   outputFileTracingIncludes: {
     // Bundle the exact user-supplied Velo mark and font glyphs in functions
     // that render the cover. Static /public URLs alone are not sufficient.
