@@ -67,3 +67,13 @@ integração WhatsApp da Velo Delivery: Instagram/Facebook requerem permissões 
   e não oferece disparo público. Retorna estado por cliente, nunca tokens.
 - Studio Sanity exibe contas habilitadas e registros de publicação.
 - Sem credenciais oficiais Meta, **nenhuma publicação real é possível**.
+
+
+## Modo experimental de carrossel editorial GPT Image (EYAGENCIA e Velo)
+- Os fluxos de carrossel derivados do blog preservam oito slides e as rotinas existentes de publicação Meta.
+- Cada slide recebe uma cena fotográfica inédita, com briefing específico (gancho, contexto, diagnóstico, aprendizado, oportunidade, aplicação, resumo e encerramento). Texto e marca continuam na composição determinística, sem logotipos recriados pelo modelo.
+- Ativação opt-in: `SOCIAL_AGENT_FULL_CAROUSEL_ENABLED=true`, `SOCIAL_AGENT_IMAGES_ENABLED=true`, `SOCIAL_AGENT_CAROUSEL_MAX_USD` explícito (máximo estimado de US$ 0,44 por pacote, com teto de US$ 0,055 por imagem). Sem aumento automático de orçamento. Uma tentativa por slide, sem repetição ou publicação incompleta.
+- O limite é uma estimativa por rodada de geração de imagens; não inclui revisão visual, outras etapas ou novas rodadas. Não ativar em produção antes de validar orçamento total, idempotência de geração entre crons, latência e rate limits do provedor. Em caso de erro verificar o registro antes de nova tentativa.
+- Stories da EYAGENCIA reaproveitam quatro cenas do próprio carrossel; o carrossel não repete cenas. Outras séries sociais ainda usam o fluxo anterior.
+- Homologação: testar em ambiente isolado, sem publicação, validar oito imagens independentes e legíveis, custo real, logos oficiais, limites de execução e os gates de publicação. O modo permanece desabilitado por padrão.
+- Próximos conectores, ainda não implementados: Perfil da Empresa Google (imagem e texto adaptados), YouTube (Shorts e vídeos via API; Comunidade assistida) e TikTok (integração homologada). Não marcar como publicado sem confirmação do canal.
