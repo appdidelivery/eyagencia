@@ -24,8 +24,8 @@ export function creativeBrief({brandSlug,topic,concept='',date='',mode='social',
   const visualNotes=refs.map(x=>x.title+': '+x.visualNotes).filter(Boolean).join(' | ')
   // Art directions distilled from the client's own manual premium covers.
   const visualBenchmark=brandSlug==='velo-delivery'
-    ?'Photorealistic working restaurant kitchen and hands preparing actual orders; sophisticated navy and graphite, tasteful cyan/violet light, restrained orange accents, cinematic textures, prominent product or team scene; absolutely no gigantic badges or neon icons.'
-    :'Sophisticated ecommerce editorial still-life or human collaboration, deep teal/green, restrained peach and coral accents, luminous realistic objects, studio light and ample uncluttered space, not generic digital brains or flat abstract geometry.'
+    ?'Photorealistic working restaurant kitchen and hands preparing actual orders; deep navy and graphite, vivid but restrained orange accents, natural warm lighting, cinematic textures, prominent product or team scene; absolutely no gigantic badges or neon icons.'
+    :'Sophisticated ecommerce editorial still-life or human collaboration, deep navy and teal, clean cyan accents, luminous realistic objects, studio light and ample uncluttered space, not generic digital brains or flat abstract geometry.'
   return [
     'One PREMIUM high-end editorial commercial PHOTOGRAPH for '+brand+'. '+(mode==='blog-cover'?'Compose a horizontal 3:2 editorial hero, subject safely inside the central 16:9 crop.':'Compose for a portrait or square crop, keeping the focal subject inside the central safe area.'),
     visualBriefForBrand(brandSlug,topic,mode),
@@ -36,7 +36,7 @@ export function creativeBrief({brandSlug,topic,concept='',date='',mode='social',
     'A believable physical scene, premium authentic photographic lighting and coherent materials.',
     mode==='blog-cover'?'A distinct physical focal subject, naturally framed with balanced visual space; no title overlay. Photographic realism only, absolutely no illustration, vector or CGI.':'One distinct focal subject placed in the RIGHT THIRD of the frame; LEFT 60% quiet and DARK for large overlaid typography.',
     'No words, letters, text, logos, labels, UI screen text, watermarks, fake metrics or numbers.',
-    'Avoid flat gradients, huge geometric shapes, generic stock-style icons, repetitive compositions.',
+    'Avoid flat gradients, huge geometric shapes, generic stock-style icons, repetitive compositions. Vary human action, scale, and camera angle for each slide.',
     'Composition seed: '+String(date).slice(0,30)+'; concept variation '+attempt+'.',
     attempt>1?'Correct these problems in a NEW scene: '+String(feedback).slice(0,420):'',
   ].filter(Boolean).join(' ')
@@ -140,7 +140,8 @@ async function technicalPhotoReview(buffer){
   const stats=await sharp(buffer).resize(128,128,{fit:'fill'}).stats()
   if(stats.channels.slice(0,3).every(x=>x.stdev<10))throw Error('Fotografia sem detalhes')
 }
-export async function generateEditorialPhoto({brandSlug,topic,concept='',date='',mode='social',references=[]}){
+export async function generateEditorialPhoto({brandSlug,topic,concept='',date='',mode='social',references=[],attemptLimit=MAX_ATTEMPTS}){
+  if(!Number.isInteger(attemptLimit)||attemptLimit<1||attemptLimit>MAX_ATTEMPTS)throw Error('Limite de tentativas invalido')
   if((mode==='blog-cover'?process.env.CONTENT_AGENT_IMAGE_ENABLED:process.env.SOCIAL_AGENT_IMAGES_ENABLED)!=='true')throw Error('Geracao de imagens desabilitada')
   const apiKey=process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN
   if(!apiKey)throw Error('Gateway de imagens sem autenticacao')
@@ -152,7 +153,7 @@ export async function generateEditorialPhoto({brandSlug,topic,concept='',date=''
   if(review?.type!=='language'||!review.modalities?.input?.includes('image'))
     throw Error('Modelo de revisao visual indisponivel')
   let feedback='',lastScore=0,estimatedTotal=0
-  for(let attempt=1;attempt<=MAX_ATTEMPTS;attempt++){
+  for(let attempt=1;attempt<=attemptLimit;attempt++){
     const prompt=creativeBrief({brandSlug,topic,concept,date,mode,references,attempt,feedback})
     const unitPrice=estimatedGptImageCost(entry,config,prompt)
     if(unitPrice===null||unitPrice>config.maxUsd)
@@ -176,5 +177,44 @@ export async function generateEditorialPhoto({brandSlug,topic,concept='',date=''
       attempts:attempt,maximumEstimatedImageCostUsd:Number(estimatedTotal.toFixed(3))}
     feedback=verdict.issues.join('; ')||'insufficient photographic composition'
   }
-  throw Error('Revisao visual reprovou as '+MAX_ATTEMPTS+' propostas; ultima nota '+lastScore)
+  throw Error('Revisao visual reprovou as '+attemptLimit+' propostas; ultima nota '+lastScore)
+}
+
+// Opt-in: eight independent photographic scenes, one paid attempt per scene.
+// Explicit estimated package budget; never relax the existing per-image cap.
+export function fullCarouselPhotosEnabled(env=process.env){
+  return env.SOCIAL_AGENT_FULL_CAROUSEL_ENABLED==='true'
+}
+export function fullCarouselBudget(env=process.env){
+  if(!fullCarouselPhotosEnabled(env)||env.SOCIAL_AGENT_IMAGES_ENABLED!=='true')
+    throw Error('Carrossel fotografico completo desabilitado')
+  const perImage=imageRequestConfig(env).maxUsd
+  const max=Number(env.SOCIAL_AGENT_CAROUSEL_MAX_USD)
+  const worst=8*perImage
+  if(!Number.isFinite(max)||max<0||max>0.44||worst>max+1e-9)
+    throw Error('Orcamento explicito do carrossel ausente ou insuficiente')
+  return worst
+}
+const carouselRoles=['Gancho: uma cena humana que evidencia o problema',
+  'Contexto: ambiente e desafio do publico', 'Diagnostico: detalhe concreto da operacao',
+  'Aprendizado: gesto, objeto ou processo diferente', 'Oportunidade: nova perspectiva e acao',
+  'Aplicacao: tarefa pratica em ambiente real', 'Resumo: visual editorial de sintese',
+  'Encerramento: resultado possivel, sem promessas ou numeros']
+export async function generateCarouselPhotos({brandSlug,topic,frames,date='',references=[],env=process.env,generate=generateEditorialPhoto}){
+  fullCarouselBudget(env)
+  if(!Array.isArray(frames)||frames.length!==8||frames.some(x=>!String(typeof x==='string'?x:x?.title||'').trim()))
+    throw Error('Carrossel deve conter oito slides validos')
+  // One concurrent wave bounds wall time under the cron budget. No retry for
+  // individual rejected scenes, no fallback to a repeated cover or partial post.
+  const outcomes=await Promise.allSettled(frames.map((frame,i)=>generate({
+    brandSlug,topic:String(typeof frame==='string'?frame:frame.title).slice(0,180),
+    concept:(String(topic).slice(0,80)+' | '+carouselRoles[i]+' | '+String(typeof frame==='string'?'':frame.text||'').slice(0,100)).slice(0,240),
+    date:String(date).slice(0,21)+'-slide-'+(i+1),mode:'social',references,attemptLimit:1,
+  })))
+  if(outcomes.some(x=>x.status!=='fulfilled'))throw Error('Carrossel fotografico incompleto; publicacao bloqueada')
+  const shots=outcomes.map(x=>x.value)
+  const buffers=shots.map(x=>x.buffer)
+  if(buffers.some((b,i)=>!Buffer.isBuffer(b)||buffers.slice(0,i).some(other=>b.equals(other))))
+    throw Error('Carrossel contem imagem ausente ou repetida')
+  return buffers
 }

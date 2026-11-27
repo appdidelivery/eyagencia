@@ -1,5 +1,5 @@
 import {premiumComposition,ART_DIRECTION_VERSION} from './premium-social-scene.mjs'
-import {generateEditorialPhoto} from './creative-studio.mjs'
+import {generateEditorialPhoto, fullCarouselPhotosEnabled, generateCarouselPhotos} from './creative-studio.mjs'
 const VERSION=ART_DIRECTION_VERSION
 const API='v2026-07-01'
 function settings(){
@@ -169,7 +169,9 @@ async function verifySocialVisual(png,kind){
 export async function renderPendingSocialMedia({maxPackages=1}={}){
   const cfg=settings()
   const sharp= (await import('sharp')).default
-  const packages=(await getPackages(cfg)).slice(0,Math.min(4,Math.max(1,maxPackages)))
+  const fullPhotos=fullCarouselPhotosEnabled()
+  const packages=(await getPackages(cfg)).slice(0,fullPhotos?20:Math.min(4,Math.max(1,maxPackages)))
+  let paidRoundClaimed=false
   const results=[]
   for(const pkg of packages){
     const carousel=pkg.carousel||[],stories=pkg.stories||[]
@@ -180,7 +182,23 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
     try {
       // Article hero is a licensed first-party Sanity asset. Use only on
       // the carousel cover, never on every frame or on unrelated topics.
-      let hero=await approvedBlogPhoto(pkg.heroImageUrl)
+      // Reserve the paid generation once, before any image calls. A crash or
+      // ambiguous mutation response must not trigger another paid round.
+      if(fullPhotos){
+        if(paidRoundClaimed)break
+        const reservation='gpt-carousel-cost-'+pkg._id
+        try{
+          await save(cfg,[{create:{_id:reservation,_type:'socialImageCostLock',sourceId:pkg._id,createdAt:new Date().toISOString(),status:'reserved'}}])
+          paidRoundClaimed=true
+        }catch{
+          results.push({id:pkg._id,status:'paid-round-reserved-or-storage-unavailable'})
+          continue
+        }
+      }
+      const slidePhotos=fullPhotos?await generateCarouselPhotos({
+        brandSlug:'eyagencia',topic:String(pkg.title||'E-commerce'),frames:carousel,date:String(pkg.sourceSlug||''),
+      }):null
+      let hero=slidePhotos?slidePhotos[0]:await approvedBlogPhoto(pkg.heroImageUrl)
       if(!hero&&process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
         // No source image: create a premium cover instead of substituting
         // a generic vector when photograph-first mode is enabled.
@@ -195,7 +213,7 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       // One additional, visually reviewed editorial photograph varies the
       // interior of original EYAGENCIA blog carousels. Never used in reposts.
       let innerPhoto=null
-      if(process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
+      if(!slidePhotos&&process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
         try{
           const shot=await generateEditorialPhoto({
             brandSlug:'eyagencia',topic:String(pkg.title||'E-commerce'),
@@ -219,7 +237,9 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       for(let i=0;i<frames.length;i+=3){
         const batch=frames.slice(i,i+3)
         const media=await Promise.all(batch.map(async ({frame,index,kind,total})=>{
-          const picture=index%2===0?hero:(innerPhoto||hero)
+          const picture=slidePhotos
+            ?slidePhotos[kind==='carousel'?index:[0,2,5,7][index]]
+            :(index%2===0?hero:(innerPhoto||hero))
           const withPhoto=Boolean(picture)
           const svg=makeSocialSvg(pkg,frame,kind,index,total,withPhoto)
           const size=kind==='story'?[1080,1920]:[1080,1350]
@@ -245,7 +265,7 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
       const carouselMedia=imageRecords.filter(x=>x.kind==='carousel').sort((a,b)=>a.index-b.index)
       const storyMedia=imageRecords.filter(x=>x.kind==='story').sort((a,b)=>a.index-b.index)
       await save(cfg,[{patch:{id:pkg._id,ifRevisionID:pkg._rev,set:{
-        carouselMedia,storyMedia,mediaStatus:'rendered',mediaVersion:VERSION,
+        carouselMedia,storyMedia,mediaStatus:'rendered',mediaVersion:slidePhotos?'premium-social-v4-gpt-carousel':VERSION,
         mediaRenderedAt:new Date().toISOString(),state:'rendered',
       },unset:['mediaError']}}])
       results.push({id:pkg._id,status:'rendered',carousel:carouselMedia.length,stories:storyMedia.length})
