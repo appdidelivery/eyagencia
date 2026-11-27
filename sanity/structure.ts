@@ -6,6 +6,7 @@ export const structure: StructureResolver = (S) =>
     .items([
       S.documentTypeListItem('socialBrand').title('Redes sociais · Clientes'),
       S.documentTypeListItem('socialPublication').title('Redes sociais · Publicações'),
+      S.documentTypeListItem('sophiaVideo').title('Sophia · Reels Velo Delivery'),
       S.documentTypeListItem('socialPackage').title('Agente Social · Pacotes do Blog'),
       S.documentTypeListItem('socialNativeRepost').title('Instagram · Sugestões de Repost'),
       S.divider(),
@@ -20,7 +21,7 @@ export const structure: StructureResolver = (S) =>
       S.divider(),
       ...S.documentTypeListItems().filter(
         (item) => item.getId() && ![
-          'socialBrand', 'socialPublication', 'socialPackage', 'socialNativeRepost', 'post', 'aiContentJob', 'category', 'author', 'diegoBook', 'diegoFloodChapter', 'diegoFloodMedia', 'academyCompletion',
+          'socialBrand', 'socialPublication', 'sophiaVideo', 'sophiaReelLock', 'socialPackage', 'socialNativeRepost', 'post', 'aiContentJob', 'category', 'author', 'diegoBook', 'diegoFloodChapter', 'diegoFloodMedia', 'academyCompletion',
         ].includes(item.getId()!),
       ),
     ])
