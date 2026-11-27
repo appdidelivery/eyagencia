@@ -35,3 +35,27 @@ export function repairSeoMetadata<T extends Record<string, unknown>>(article: T)
     seoDescription: fits(seoDescription,110,165) ? seoDescription : candidate || seoDescription,
   }
 }
+
+
+/** Keep article and verdict together; never use a score to override a blocker. */
+export function preferEditorialCandidate(
+  currentQa: Record<string, unknown>, currentIssues: string[],
+  nextQa: Record<string, unknown>, nextIssues: string[],
+): boolean {
+  const rank = (qa: Record<string, unknown>, issues: string[]) => {
+    const risk = qa.publicationRisk === 'low' ? 0 : qa.publicationRisk === 'medium' ? 1 : 2
+    const blocking = Array.isArray(qa.issues)
+      ? qa.issues.filter(issue => hasBlockingEditorialIssues([issue])).length
+      : Number.MAX_SAFE_INTEGER
+    const score = typeof qa.score === 'number' && Number.isFinite(qa.score) && qa.score >= 0 && qa.score <= 100
+      ? qa.score : -1
+    return [editorialQaApproved(qa) && issues.length === 0 ? 0 : 1,
+      risk, issues.length, blocking, -score]
+  }
+  const a = rank(currentQa, currentIssues)
+  const b = rank(nextQa, nextIssues)
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return b[i] < a[i]
+  }
+  return false
+}

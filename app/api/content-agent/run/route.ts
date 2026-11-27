@@ -1,7 +1,8 @@
 import {randomUUID} from 'crypto'
 import {checkArticleQuality, stripUnsupportedYearClaims, testArticleQuality} from '../quality'
 import {createMethodologicalDraft} from '../editorialTemplate'
-import {editorialQaApproved, repairSeoMetadata} from '../editorialQaPolicy'
+import {recoveryGuides} from '../recoveryGuides'
+import {editorialQaApproved, preferEditorialCandidate, repairSeoMetadata} from '../editorialQaPolicy'
 import {testAutonomousPublishing} from '../publication'
 import {NextRequest, NextResponse} from 'next/server'
 import {writeClient} from '../../../../sanity/lib/writeClient'
@@ -953,6 +954,16 @@ export async function POST(request: NextRequest) {
     // the result must still pass independent structural, factual and model QA.
     article = repairSeoMetadata(stripUnsupportedYearClaims(article, supportedFacts))
     let structuralIssues = checkArticleQuality(article, supportedFacts)
+    // Use the same independent checks for selection and the final publication gate.
+    const candidateIssues = (candidate: JsonObject, structural: string[]) => [
+      ...evidenceGuardIssues,
+      ...structural,
+      ...deterministicEditorialIssues(candidate, safeFactCheck, evidenceCoverage(evidenceBundle).ready),
+      ...(knownSlugs.has(slugify(String(candidate.slug || candidate.title || topic)))
+        ? ['Slug já consta no inventário editorial.'] : []),
+    ]
+    const needsRepair = (qa: JsonObject, candidate: JsonObject, structural: string[]) =>
+      !editorialQaApproved(qa) || candidateIssues(candidate, structural).length > 0
 
     const qa = await callAgent({
       maxOutputTokens: 3500,
@@ -979,7 +990,7 @@ export async function POST(request: NextRequest) {
     if (
       Array.isArray(safeFactCheck.approvedFacts) &&
       safeFactCheck.approvedFacts.length >= 2 &&
-      (!editorialQaApproved(qaResult) || structuralIssues.length > 0)
+      needsRepair(qaResult, article, structuralIssues)
     ) {
       try {
         const repair = await callAgent({
@@ -989,7 +1000,7 @@ export async function POST(request: NextRequest) {
           input:
             'ARTIGO ORIGINAL:\n' + JSON.stringify(article) +
             '\n\nPROBLEMAS QA:\n' + JSON.stringify(qaResult) +
-            '\n\nFALHAS INDEPENDENTES DE ESTRUTURA E NÚMEROS:\n' + JSON.stringify(structuralIssues) +
+            '\n\nFALHAS INDEPENDENTES DE ESTRUTURA E NÚMEROS:\n' + JSON.stringify(candidateIssues(article, structuralIssues)) +
             '\n\nFACT-CHECK FUNDAMENTADO:\n' + JSON.stringify(safeFactCheck) +
             '\n\nFONTES PERMITIDAS:\n' +
             JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))),
@@ -1009,10 +1020,15 @@ export async function POST(request: NextRequest) {
               '\n\nFALHAS INDEPENDENTES NA VERSÃO REVISADA:\n' + JSON.stringify(revisedIssues),
           })
           const revisedVerdict = parseJson(finalQa.text, 'QA pós-revisão')
-          // Commit the candidate and its verdict together only after QA returned.
-          article = revisedArticle
-          structuralIssues = revisedIssues
-          qaResult = revisedVerdict
+          const currentChecks = candidateIssues(article, structuralIssues)
+          const revisedChecks = candidateIssues(revisedArticle, revisedIssues)
+          if (preferEditorialCandidate(qaResult, currentChecks, revisedVerdict, revisedChecks)) {
+            article = revisedArticle
+            structuralIssues = revisedIssues
+            qaResult = revisedVerdict
+          } else {
+            console.info('[content-agent] editorial_revision_preserved_previous', JSON.stringify({topic, currentChecks: currentChecks.length, revisedChecks: revisedChecks.length, currentScore: qaResult.score, revisedScore: revisedVerdict.score}))
+          }
         }
       } catch (repairError) {
         console.warn('[content-agent] Uma revisão automática não foi concluída:', repairError instanceof Error ? repairError.message : 'erro')
@@ -1022,7 +1038,7 @@ export async function POST(request: NextRequest) {
     // independently retrieved evidence. Neither the editor nor QA may bypass
     // deterministic checks or assign approval just to fill a publishing slot.
     if (supportedFacts.length >= 2 &&
-        (!editorialQaApproved(qaResult) || structuralIssues.length > 0)) {
+        needsRepair(qaResult, article, structuralIssues)) {
       try {
         const focusedEditor = await callAgent({
           maxOutputTokens: 7500,
@@ -1041,7 +1057,7 @@ export async function POST(request: NextRequest) {
           input:
             'PAUTA: ' + topic +
             '\nERROS DO QA A CORRIGIR: ' + JSON.stringify(qaResult) +
-            '\nPROBLEMAS DETERMINÍSTICOS: ' + JSON.stringify(structuralIssues) +
+            '\nPROBLEMAS DETERMINÍSTICOS: ' + JSON.stringify(candidateIssues(article, structuralIssues)) +
             '\nFATOS LITERALMENTE COMPROVADOS: ' + JSON.stringify(safeFactCheck) +
             '\nFONTES PERMITIDAS: ' + JSON.stringify(evidenceBundle.sources.map(
               ({title, url}) => ({title, url}))) +
@@ -1066,12 +1082,15 @@ export async function POST(request: NextRequest) {
               '\nPROBLEMAS INDEPENDENTES: ' + JSON.stringify(candidateStructural),
           })
           const verdict = parseJson(candidateQa.text, 'QA independente da revisão direcionada')
-          if (editorialQaApproved(verdict) && candidateStructural.length === 0) {
+          const currentChecks = candidateIssues(article, structuralIssues)
+          const nextChecks = candidateIssues(candidate, candidateStructural)
+          const improved = preferEditorialCandidate(qaResult, currentChecks, verdict, nextChecks)
+          if (improved) {
             article = candidate
             structuralIssues = candidateStructural
             qaResult = verdict
             revisionAttempted = true
-            console.info('[content-agent] targeted_repair_passed', JSON.stringify({topic}))
+            console.info('[content-agent] targeted_repair_selected', JSON.stringify({topic, score: verdict.score, remainingChecks: nextChecks.length, approved: !needsRepair(verdict, candidate, candidateStructural)}))
           } else {
             console.info('[content-agent] targeted_repair_rejected', JSON.stringify({
               topic, structural: candidateStructural.length, score: Number(verdict.score || 0), risk: verdict.publicationRisk, passed: verdict.passed === true, issueCount: Array.isArray(verdict.issues) ? verdict.issues.length : null,
@@ -1091,28 +1110,34 @@ export async function POST(request: NextRequest) {
     const eligibleTopic = /e[\s-]?commerce|com[eé]rcio eletr[oô]nico/i.test(topic) &&
       /intelig[eê]ncia artificial|\bIA\b/i.test(topic)
     if (eligibleTopic &&
-        (!editorialQaApproved(qaResult) || structuralIssues.length > 0)) {
-      const guide = createMethodologicalDraft(
-        evidenceBundle.sources.map(({title, url}) => ({title, url})),
-      )
-      // This fallback is a single fixed article. Once used, do not republish
-      // the same text with a different slug or keep failing with HTTP 409.
-      const fallbackSlug = slugify(guide.slug)
-      const fallbackAlreadyExists = await writeClient.withConfig({perspective: 'raw'}).fetch<number>(
-        'count(*[_type == "post" && slug.current == $slug])',
-        {slug: fallbackSlug},
-      )
-      if (fallbackAlreadyExists > 0) {
-        console.info('[content-agent] fallback_skipped_existing_article',
-          JSON.stringify({topic, slug: fallbackSlug}))
+        needsRepair(qaResult, article, structuralIssues)) {
+      const sources = evidenceBundle.sources.map(({title, url}) => ({title, url}))
+      const candidates = [...recoveryGuides(topic, sources), createMethodologicalDraft(sources)]
+      // Check raw drafts AND published posts. Choose at most one fresh
+      // substantive candidate per run; keep existing QA and call budget.
+      let guide: JsonObject | undefined
+      for (const candidate of candidates) {
+        const slug = slugify(candidate.slug)
+        const exists = await writeClient.withConfig({perspective: 'raw'}).fetch<number>(
+          'count(*[_type == "post" && slug.current == $slug])', {slug},
+        )
+        if (exists > 0) {
+          console.info('[content-agent] fallback_skipped_existing_article', JSON.stringify({topic, slug}))
+          continue
+        }
+        if (candidateIssues(candidate, checkArticleQuality(candidate, supportedFacts)).length === 0) {
+          guide = candidate
+          break
+        }
       }
-      const guideIssues = checkArticleQuality(guide, supportedFacts)
-      if (fallbackAlreadyExists === 0 && guideIssues.length === 0) {
+      if (!guide) console.warn('[content-agent] recovery_inventory_unavailable', JSON.stringify({topic}))
+      if (guide) {
+        const guideIssues = checkArticleQuality(guide, supportedFacts)
         try {
           const audit = await callAgent({
             maxOutputTokens: 3000,
             instructions:
-              'Você é auditor editorial rigoroso. Avalie este GUIA METODOLÓGICO: orientações condicionais de teste não são resultados de IA. Bloqueie promessas de ROI, fatos ou leis sem fonte, confusões entre fontes oficiais e varejo privado, SEO ruim e redundância. Não exija dados de ROI de texto que diz explicitamente que são desconhecidos. Retorne somente JSON válido: passed boolean, score 0-100, issues array, fixes array, publicationRisk low|medium|high.',
+              'Você é auditor editorial rigoroso. Avalie este GUIA METODOLÓGICO: orientações condicionais de teste não são resultados de IA. Bloqueie promessas de ROI, fatos ou leis sem fonte, confusões entre fontes oficiais e varejo privado, SEO ruim e redundância. Não exija dados de ROI de texto que diz explicitamente que são desconhecidos. Retorne somente JSON válido: passed boolean, score 0-100, issues array, fixes array, publicationRisk low|medium|high. Aprovação exige nota >=85, risco baixo e nenhum problema bloqueante. Sugestões puramente opcionais de estilo devem ser objetos com severity low, dimension style, blocking false e detail. Problemas factuais, de fontes, SEO, estrutura ou risco continuam bloqueantes.',
             input:
               'ARTIGO:\n' + JSON.stringify(guide) +
               '\n\nFONTES CONSULTADAS:\n' +
@@ -1120,7 +1145,7 @@ export async function POST(request: NextRequest) {
               '\n\nFATOS COM EVIDÊNCIA:\n' + JSON.stringify(supportedFacts),
           })
           const checked = parseJson(audit.text, 'QA do guia metodológico')
-          if (editorialQaApproved(checked)) {
+          if (editorialQaApproved(checked) && candidateIssues(guide, guideIssues).length === 0) {
             article = guide
             qaResult = checked
             structuralIssues = guideIssues
@@ -1132,11 +1157,7 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-    const deterministicIssues = [
-      ...evidenceGuardIssues,
-      ...structuralIssues,
-      ...deterministicEditorialIssues(article, safeFactCheck, evidenceCoverage(evidenceBundle).ready),
-    ]
+    const deterministicIssues = candidateIssues(article, structuralIssues)
     // The model cannot override deterministic factual checks or medium/high risk.
     const qaPassed =
       editorialQaApproved(qaResult) &&
