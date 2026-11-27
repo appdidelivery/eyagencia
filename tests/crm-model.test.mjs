@@ -115,3 +115,22 @@ test("seleção de texto ignora anexos e prefere texto simples; HTML nunca rende
  assert.equal(mailTextPart({type:"application/pdf",part:"1"}),null);
  assert.equal(mailHtmlText("<head><style>hidden</style></head><p>Olá &amp; tchau</p><script>evil()</script><img src='https://tracker.example/a'>"),"Olá & tchau");
 });
+
+import {isPublicIPv4,officialEmails,businessMentioned,candidatesFromOsm,sameBusiness,prospectDraft} from "../app/lib/prospect-agent-model.ts";
+test("agente bloqueia IPs internos e reservados; só confirma e-mail funcional publicado no domínio",()=>{
+ for(const ip of ["127.0.0.1","10.1.2.3","169.254.169.254","172.16.0.1","192.168.1.1","100.64.0.1","198.18.0.1","192.0.2.1","203.0.113.1","224.0.0.1","::1"])assert.equal(isPublicIPv4(ip),false);
+ assert.equal(isPublicIPv4("8.8.8.8"),true);
+ const html='<script><a href="mailto:vendas@loja.com.br">x</a></script><a href="mailto:contato@loja.com.br">Contato</a><a href="mailto:joao@loja.com.br">Pessoa</a><a href="mailto:contato@outro.com.br">Outro</a>';
+ assert.deepEqual(officialEmails(html,"https://www.loja.com.br/"),["contato@loja.com.br"]);
+ assert.equal(businessMentioned("<h1>Loja São João</h1>","Loja Sao Joao"),true);
+ assert.equal(businessMentioned("<script>Loja São João</script>","Loja Sao Joao"),false);
+});
+test("agente exige achado real, deduplica empresas e mantém oportunidade em revisão",()=>{
+ const cs=candidatesFromOsm({elements:[{id:1,type:"node",tags:{name:"Loja Teste",website:"https://loja.com.br"}},{id:2,type:"node",tags:{name:"Outra",website:"https://instagram.com/loja"}},{id:3,type:"node",tags:{name:"Duplicada",website:"https://www.loja.com.br"}}]},"EYAGENCIA");
+ assert.equal(cs.length,1);
+ const c={...cs[0],email:"contato@loja.com.br",source:"https://loja.com.br/"};
+ const at="2026-11-27T12:00:00.000Z",audit={url:c.site,at,scores:{performance:42,seo:99,accessibility:90},findings:[]};
+ assert.equal(prospectDraft(c,audit,at,"p1"),null);
+ const row=prospectDraft(c,{...audit,findings:[{title:"Desempenho mobile",detail:"Pontuação 42/100",url:c.site,observedAt:at}]},at,"p1");
+ assert.equal(row.status,"em revisão");assert.equal(row.createdBy,"agent:prospect");assert.equal(sameBusiness([row],c),true);assert.equal(sameBusiness([{...row,status:"não contatar",email:"vendas@loja.com.br"}],c),true);
+});
