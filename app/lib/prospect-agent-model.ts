@@ -1,8 +1,9 @@
 import {buildApproach,publicSite,prospectBlocked,type Audit,type Brand} from "./prospecting.ts";
 import {blank,type Row} from "./crm-model.ts";
+import {leadScore,channelPolicy} from "./sdr-qualification.ts";
 
 export type Candidate={name:string;site:string;discovery:string;brand:Brand};
-export type VerifiedCandidate=Candidate&{email:string;source:string};
+export type VerifiedCandidate=Candidate&{email:string;source:string;presence?:import("./prospecting.ts").Finding[]};
 export function hostOf(value:string){try{return new URL(publicSite(value)).hostname.toLowerCase().replace(/^www\./,"");}catch{return "";}}
 export function normalizeBusiness(value:string){return value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
 export function isPublicIPv4(ip:string){
@@ -47,8 +48,9 @@ export function sameBusiness(rows:Row[],c:Candidate,email=""){
 }
 export function prospectDraft(c:VerifiedCandidate,audit:Audit,now:string,id:string):Row|null{
  if(!audit.findings.length||hostOf(audit.url)!==hostOf(c.site)||hostOf(c.source)!==hostOf(c.site)||c.source.length>150||!role.test(c.email.split("@")[0]||"")||c.email.split("@")[1]!==hostOf(c.site))return null;
+ const score=leadScore(audit.findings,true);if(score<60)return null;
  const draft=buildApproach(c.brand,c.name,audit.findings.slice(0,3));
- const notes=[draft.report,"Medição mobile: performance "+(audit.scores.performance??"n/d")+"; SEO "+(audit.scores.seo??"n/d")+"; acessibilidade "+(audit.scores.accessibility??"n/d"),"Descoberta: "+c.discovery+" · © contribuidores OpenStreetMap (https://www.openstreetmap.org/copyright)","Fonte pública do e-mail: "+c.source,"REMETENTE PLANEJADO (envio bloqueado): "+draft.sender,"ASSUNTO: "+draft.subject,draft.body,"FOLLOW-UP (rascunho; não programado): "+draft.followup].join("\n\n");
+ const notes=["SDR · Lead Score "+score+"/100 · qualificação comercial automática (não autoriza envio)",draft.report,"Medição mobile: performance "+(audit.scores.performance??"n/d")+"; SEO "+(audit.scores.seo??"n/d")+"; acessibilidade "+(audit.scores.accessibility??"n/d"),"Descoberta: "+c.discovery+" · © contribuidores OpenStreetMap (https://www.openstreetmap.org/copyright)","Fonte pública do e-mail: "+c.source,"REMETENTE PLANEJADO (envio bloqueado): "+draft.sender,"ASSUNTO: "+draft.subject,draft.body,"FOLLOW-UP (rascunho; não programado): "+draft.followup,"Elegibilidade de canais: "+Object.entries(channelPolicy()).map(([k,v])=>k+": "+v).join("; ")].join("\n\n");
  if(notes.length>5000)return null;
- return {...blank("prospect"),id,title:c.name,company:c.brand,email:c.email,url:c.site,source:c.source,notes,priority:draft.priority,owner:"Agente de prospecção",status:"em revisão",nextAction:"Revisar pertinência, base legal, oposição e evidências antes de autorizar qualquer envio.",createdAt:now,updatedAt:now,createdBy:"agent:prospect",updatedBy:"agent:prospect"};
+ return {...blank("prospect"),id,title:c.name,company:c.brand,email:c.email,url:c.site,source:c.source,notes,priority:score>=80?"alta":"normal",owner:"SDR automático",status:"aprovado",nextAction:"Revisar pertinência, base legal, oposição e evidências antes de autorizar qualquer envio.",createdAt:now,updatedAt:now,createdBy:"agent:prospect",updatedBy:"agent:prospect"};
 }
