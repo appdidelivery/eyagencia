@@ -1,15 +1,18 @@
 import {redirect} from 'next/navigation'
 import {recentAssistedContent} from '@/app/api/social-agent/assistedContent'
 import {getCrmUser} from '@/app/lib/crm-google-session'
+import {diagnosticEvidence} from '@/app/lib/social-google-oauth'
 import {brands,channels,bindingStatus} from '@/app/lib/social-google-binding'
 export const metadata={title:'Conexões de marketing | EYAGENCIA',robots:{index:false,follow:false}}
 export const dynamic='force-dynamic'
 export const runtime='nodejs'
 export default async function SocialConnections({searchParams}:{searchParams:Promise<{status?:string}>}){
- if(!await getCrmUser())redirect('/admin')
+ const user=await getCrmUser()
+ if(!user)redirect('/admin')
  const status=(await searchParams).status
  const bindingEnabled=process.env.SOCIAL_GOOGLE_BINDINGS_ENABLED==='true'
- const diagnosticMessage=brands.flatMap(brand=>channels.map(channel=>({key:brand+'_'+channel+'_diagnostic_ok',label:(brand==='eyagencia'?'EYAGENCIA':'Velo Delivery')+' — '+(channel==='gbp'?'Perfil da Empresa':'YouTube')}))).find(item=>item.key===status)
+ const evidence=status==='diagnostic_ok'?await diagnosticEvidence(user.sub):null
+ const diagnosticMessage=evidence?{label:(evidence.brand==='eyagencia'?'EYAGENCIA':'Velo Delivery')+' — '+(evidence.channel==='gbp'?'Perfil da Empresa':'YouTube')}:null
  const queue=process.env.VERCEL_ENV==='production'?await recentAssistedContent().catch(()=>null):null
  const messages:Record<string,string>={disconnected:'Vínculo local removido; novos envios ficam bloqueados.',consent_required:'Confirme a autorização antes de continuar.',production_only:'Conexões reais disponíveis apenas em produção.',connected:'Autorização vinculada e gravada.',cancelled:'Autorização não concluída.',channel_identity_not_unique:'O canal autorizado não corresponde inequivocamente à marca.',location_identity_not_unique:'Não foi encontrado um único Perfil com o site oficial da marca.',existing_target_mismatch:'Já existe vínculo com outro destino. Nenhum vínculo foi substituído.',offline_access_missing:'Google não concedeu autorização offline.',provider_error:'Google recusou a autorização.',private_storage_missing:'Armazenamento privado indisponível.',connection_failed:'Não foi possível confirmar a autorização.'}
  return <main style={{maxWidth:840,margin:'48px auto',padding:24,fontFamily:'system-ui'}}>
