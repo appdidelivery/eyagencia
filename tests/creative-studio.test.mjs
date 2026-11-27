@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {approvedCreativeReferences,creativeBrief,verifiedUnitImagePrice,imageRequestConfig,estimatedGptImageCost,gptImageRequest} from '../scripts/creative-studio.mjs'
+import {approvedCreativeReferences,creativeBrief,verifiedUnitImagePrice,imageRequestConfig,estimatedGptImageCost,gptImageRequest,fullCarouselPhotosEnabled,fullCarouselBudget,generateCarouselPhotos} from '../scripts/creative-studio.mjs'
 test('nao insere references nao aprovadas nem urls externas',()=>{
   assert.equal(approvedCreativeReferences([{approved:false,url:'https://cdn.sanity.io/images/x/y/a.png'},
     {approved:true,url:'https://evil.test/a.png'}]).length,0)
@@ -52,4 +52,37 @@ test('blog cover requires horizontal photographic composition',()=>{
  assert.match(prompt,/horizontal 3:2/)
  assert.match(prompt,/no illustration, vector or CGI/)
  assert.doesNotMatch(prompt,/LEFT 60%/)
+})
+
+const carouselEnv={SOCIAL_AGENT_FULL_CAROUSEL_ENABLED:'true',SOCIAL_AGENT_IMAGES_ENABLED:'true',SOCIAL_AGENT_CAROUSEL_MAX_USD:'0.44'}
+const carouselFrames=Array.from({length:8},(_,i)=>({title:'Slide '+(i+1),text:'Detalhe '+(i+1)}))
+test('carrossel completo exige ativacao e teto explicito sem elevar custo por imagem',()=>{
+  assert.equal(fullCarouselPhotosEnabled({}),false)
+  assert.throws(()=>fullCarouselBudget({}))
+  assert.throws(()=>fullCarouselBudget({...carouselEnv,SOCIAL_AGENT_CAROUSEL_MAX_USD:'0.43'}))
+  assert.throws(()=>fullCarouselBudget({...carouselEnv,SOCIAL_AGENT_CAROUSEL_MAX_USD:'0.45'}))
+  assert.throws(()=>fullCarouselBudget({...carouselEnv,SOCIAL_AGENT_IMAGE_MAX_USD:'0.06'}))
+  assert.ok(Math.abs(fullCarouselBudget(carouselEnv)-0.44)<1e-9)
+})
+test('cada slide tem briefing proprio e apenas uma tentativa, sem chamada real',async()=>{
+  const requests=[]
+  const photos=await generateCarouselPhotos({brandSlug:'eyagencia',topic:'GEO 2027',frames:carouselFrames,date:'2026-11-27',env:carouselEnv,generate:async args=>{
+    requests.push(args)
+    return {buffer:Buffer.from(args.date)}
+  }})
+  assert.equal(photos.length,8)
+  assert.equal(new Set(photos.map(b=>b.toString())).size,8)
+  assert.equal(new Set(requests.map(x=>x.concept)).size,8)
+  assert.ok(requests.every(x=>x.attemptLimit===1&&x.brandSlug==='eyagencia'))
+})
+test('reprova pacote incompleto ou repetido, sem iniciar chamadas quando o teto falha',async()=>{
+  let calls=0
+  const base={brandSlug:'velo-delivery',topic:'Fidelizacao',frames:carouselFrames,env:carouselEnv}
+  await assert.rejects(generateCarouselPhotos({...base,env:{},generate:async()=>{calls++;return {buffer:Buffer.from('x')}}}))
+  assert.equal(calls,0)
+  await assert.rejects(generateCarouselPhotos({...base,generate:async()=>({buffer:Buffer.from('same')})}),/repetida/)
+  await assert.rejects(generateCarouselPhotos({...base,generate:async args=>{
+    if(args.date.endsWith('-4'))throw Error('QA')
+    return {buffer:Buffer.from(args.date)}
+  }}),/incompleto/)
 })
