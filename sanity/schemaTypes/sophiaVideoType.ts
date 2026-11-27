@@ -24,8 +24,10 @@ export const sophiaVideoType = defineType({
     defineField({name:'rightsVerified',title:'Direitos de imagem, voz e trilha conferidos',type:'boolean'}),
     defineField({name:'audioReviewed',title:'Áudio e sincronização conferidos',type:'boolean'}),
     defineField({name:'aiDisclosureReviewed',title:'Rotulagem de IA e requisitos Meta conferidos',type:'boolean'}),
-    defineField({name:'status',title:'Estado editorial (não dispara publicação)',type:'string',options:{list:[
-      {title:'Rascunho',value:'draft'},{title:'Aguardando revisão',value:'review'},{title:'Aprovado para homologação manual',value:'approved'}
+    defineField({name:'collaboratorVerified',title:'Perfil oficial e autorização do colaborador conferidos',type:'boolean',initialValue:false}),
+    defineField({name:'approvedSnapshot',title:'Registro de aprovação (invalidado por alterações)',type:'text',readOnly:true,hidden:true}),
+    defineField({name:'status',title:'Estado editorial (publicação depende de ativação e agenda)',type:'string',options:{list:[
+      {title:'Rascunho',value:'draft'},{title:'Aguardando revisão',value:'review'},{title:'Aprovado para agenda de Reels',value:'approved'}
     ]},validation:R=>R.required()}),
   ],
   preview:{select:{title:'title',subtitle:'status'}},
