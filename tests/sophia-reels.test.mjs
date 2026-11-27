@@ -53,3 +53,13 @@ test('Facebook upload and publish confirmation',async()=>{
  assert.deepEqual(out.errors,[])
  assert.deepEqual(marks,['facebook_video','facebook_publish_started','facebook_post'])
 })
+
+import {approvalSnapshot,isCurrentApproval} from '../scripts/sophia-approval.mjs'
+test('approval binds video, campaign, caption, collaboration, date and rights',()=>{
+ const doc={video:{asset:{_ref:'file-abc123-mp4'}},title:'Campanha',clientName:'Cliente',caption:'Legenda',collaborator:'@parceiro',collaboratorVerified:true,commercialFactsVerified:true,rightsVerified:true,audioReviewed:true,aiDisclosureReviewed:true,status:'approved',scheduledDay:'2026-11-29',source:'flow'}
+ doc.approvedSnapshot=approvalSnapshot(doc)
+ assert.equal(isCurrentApproval(doc),true)
+ for(const changed of [{caption:'Nova legenda'},{scheduledDay:'2026-12-06'},{collaborator:'@outro'},{video:{asset:{_ref:'file-def456-mp4'}}},{rightsVerified:false},{collaboratorVerified:false}]){
+ assert.equal(isCurrentApproval({...doc,...changed}),false)
+ }
+})
