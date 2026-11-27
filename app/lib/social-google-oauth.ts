@@ -40,7 +40,7 @@ export async function beginSocialOAuth(request:Request){
  const url=new URL('https://accounts.google.com/o/oauth2/v2/auth')
  url.search=new URLSearchParams({client_id:googleClientId(),redirect_uri:GOOGLE_REPUTATION_REDIRECT_URI,
  response_type:'code',scope:channel==='gbp'?'https://www.googleapis.com/auth/business.manage':'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly',
- access_type:'offline',prompt:'consent select_account',state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'}).toString()
+ access_type:diagnostic?'online':'offline',prompt:'consent select_account',state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'}).toString()
  return NextResponse.redirect(url,303)
 }
 export async function finishSocialOAuth(request:Request){
@@ -59,7 +59,7 @@ export async function finishSocialOAuth(request:Request){
    cache:'no-store',redirect:'error',signal:AbortSignal.timeout(15000)})
   if(!res.ok)return result('provider_error')
   const data=await res.json()
-  if(typeof data.access_token!=='string'||typeof data.refresh_token!=='string')return result('offline_access_missing')
+  if(typeof data.access_token!=='string'||(s.diagnostic!==true&&typeof data.refresh_token!=='string'))return result('offline_access_missing')
   const granted=new Set(String(data.scope||'').split(/\s+/))
   const required=s.channel==='gbp'?['https://www.googleapis.com/auth/business.manage']:['https://www.googleapis.com/auth/youtube.upload','https://www.googleapis.com/auth/youtube.readonly']
   if(required.some(scope=>!granted.has(scope)))return result('scope_missing')
