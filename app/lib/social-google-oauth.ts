@@ -3,15 +3,21 @@ import {cookies} from 'next/headers'
 import {NextResponse} from 'next/server'
 import {getCrmUser} from './crm-google-session'
 import {googleClientId,googleClientSecret,GOOGLE_REPUTATION_REDIRECT_URI} from './reputation-google-session'
-import {isBrand,isChannel,discoverBinding,saveBinding} from './social-google-binding'
+import {isBrand,isChannel,discoverBinding,saveBinding,disconnectBinding} from './social-google-binding'
 const origin='https://eyagencia.com.br',cookie='__Host-ey_social_oauth'
 const opts={httpOnly:true,secure:true,sameSite:'lax' as const,path:'/'}
 const result=(status:string)=>NextResponse.redirect(origin+'/admin/social?status='+encodeURIComponent(status),303)
 export const isSocialState=(state:string|null)=>Boolean(state?.startsWith('social.'))
 export async function beginSocialOAuth(request:Request){
  const user=await getCrmUser();if(!user)return NextResponse.redirect(origin+'/admin',303)
+ if(process.env.VERCEL_ENV!=='production')return result('production_only')
  const form=await request.formData(),brand=form.get('brand'),channel=form.get('channel')
  if(request.headers.get('origin')!==origin||!isBrand(brand)||!isChannel(channel))return result('invalid')
+ if(form.get('action')==='disconnect'){
+  if(form.get('confirm')!=='yes')return result('consent_required')
+  try{await disconnectBinding(brand,channel);return result('disconnected')}catch{return result('connection_failed')}
+ }
+ if(form.get('consent')!=='yes')return result('consent_required')
  const state='social.'+randomBytes(32).toString('base64url'),verifier=randomBytes(48).toString('base64url')
  const jar=await cookies()
  jar.set(cookie,JSON.stringify({state,verifier,brand,channel,sub:user.sub}),{...opts,maxAge:600})
@@ -22,6 +28,7 @@ export async function beginSocialOAuth(request:Request){
  return NextResponse.redirect(url,303)
 }
 export async function finishSocialOAuth(request:Request){
+ if(process.env.VERCEL_ENV!=='production')return result('production_only')
  const jar=await cookies(),stored=jar.get(cookie)?.value;jar.set(cookie,'',{...opts,maxAge:0})
  try{
   const user=await getCrmUser(),p=new URL(request.url).searchParams,state=p.get('state'),code=p.get('code')
