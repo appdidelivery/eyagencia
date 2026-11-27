@@ -3,7 +3,7 @@ import {cookies} from 'next/headers'
 import {NextResponse} from 'next/server'
 import {getCrmUser} from './crm-google-session'
 import {googleClientId,googleClientSecret,GOOGLE_REPUTATION_REDIRECT_URI} from './reputation-google-session'
-import {isBrand,isChannel,discoverBinding,saveBinding,disconnectBinding} from './social-google-binding'
+import {isBrand,isChannel,discoverBinding,saveBinding,disconnectBinding,googleJson} from './social-google-binding'
 const origin='https://eyagencia.com.br',cookie='__Host-ey_social_oauth'
 const opts={httpOnly:true,secure:true,sameSite:'lax' as const,path:'/'}
 const result=(status:string)=>NextResponse.redirect(origin+'/admin/social?status='+encodeURIComponent(status),303)
@@ -18,9 +18,11 @@ export async function beginSocialOAuth(request:Request){
   try{await disconnectBinding(brand,channel);return result('disconnected')}catch{return result('connection_failed')}
  }
  if(form.get('consent')!=='yes')return result('consent_required')
+ const diagnostic=form.get('action')==='diagnostic'
+ if(!diagnostic&&process.env.SOCIAL_GOOGLE_BINDINGS_ENABLED!=='true')return result('binding_disabled')
  const state='social.'+randomBytes(32).toString('base64url'),verifier=randomBytes(48).toString('base64url')
  const jar=await cookies()
- jar.set(cookie,JSON.stringify({state,verifier,brand,channel,sub:user.sub}),{...opts,maxAge:600})
+ jar.set(cookie,JSON.stringify({state,verifier,brand,channel,diagnostic,sub:user.sub}),{...opts,maxAge:600})
  const url=new URL('https://accounts.google.com/o/oauth2/v2/auth')
  url.search=new URLSearchParams({client_id:googleClientId(),redirect_uri:GOOGLE_REPUTATION_REDIRECT_URI,
  response_type:'code',scope:channel==='gbp'?'https://www.googleapis.com/auth/business.manage':'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly',
@@ -44,7 +46,13 @@ export async function finishSocialOAuth(request:Request){
   if(!res.ok)return result('provider_error')
   const data=await res.json()
   if(typeof data.access_token!=='string'||typeof data.refresh_token!=='string')return result('offline_access_missing')
+  const granted=new Set(String(data.scope||'').split(/\s+/))
+  const required=s.channel==='gbp'?['https://www.googleapis.com/auth/business.manage']:['https://www.googleapis.com/auth/youtube.upload','https://www.googleapis.com/auth/youtube.readonly']
+  if(required.some(scope=>!granted.has(scope)))return result('scope_missing')
   const b=await discoverBinding(s.brand,s.channel,data.access_token)
+  if(s.channel==='gbp')await googleJson('https://mybusiness.googleapis.com/v4/'+b.target+'/localPosts?pageSize=1',data.access_token)
+  if(s.diagnostic===true)return result(s.brand+'_'+s.channel+'_diagnostic_ok')
+  if(process.env.SOCIAL_GOOGLE_BINDINGS_ENABLED!=='true')return result('binding_disabled')
   await saveBinding(s.brand,s.channel,b.target,b.label,data.refresh_token)
   return result('connected')
  }catch(error){
