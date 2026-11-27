@@ -76,5 +76,7 @@ export async function auditCandidate(c:VerifiedCandidate,key:string){
  for(const category of ["performance","seo","accessibility"])params.append("category",category);
  const r=await fetch("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?"+params,{cache:"no-store",redirect:"error",signal:AbortSignal.timeout(50000)});
  if(!r.ok)throw Error(r.status===429?"pagespeed_quota":"pagespeed_unavailable");
- return interpretAudit(await r.json(),c.site,new Date().toISOString());
+ const data=await r.json();const final=data?.lighthouseResult?.finalDisplayedUrl||data?.lighthouseResult?.finalUrl;
+ if(typeof final!=="string"||hostOf(final)!==hostOf(c.site))throw Error("pagespeed_unavailable");
+ return interpretAudit(data,c.site,new Date().toISOString());
 }

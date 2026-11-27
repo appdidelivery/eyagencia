@@ -22,7 +22,7 @@ export function candidatesFromOsm(data:unknown,brand:Brand):Candidate[]{
  }
  return result;
 }
-const role=/^(contato|comercial|vendas|atendimento|reservas|pedidos|loja|marketing|info|contact|sales|hello|suporte)(?:[._-][a-z0-9]{1,15})?$/i;
+const role=/^(contato|comercial|vendas|atendimento|reservas|pedidos|loja|marketing|info|contact|sales|hello|suporte)$/i;
 export function officialEmails(html:string,site:string){
  const host=hostOf(site);if(!host)return [];
  // Only explicit mailto links on official HTML; do not infer an address.
