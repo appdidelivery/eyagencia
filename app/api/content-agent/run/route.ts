@@ -1,6 +1,7 @@
 import {randomUUID} from 'crypto'
 import {checkArticleQuality, stripUnsupportedYearClaims, testArticleQuality} from '../quality'
 import {createMethodologicalDraft} from '../editorialTemplate'
+import {recoveryGuides} from '../recoveryGuides'
 import {editorialQaApproved, preferEditorialCandidate, repairSeoMetadata} from '../editorialQaPolicy'
 import {testAutonomousPublishing} from '../publication'
 import {NextRequest, NextResponse} from 'next/server'
@@ -999,7 +1000,7 @@ export async function POST(request: NextRequest) {
           input:
             'ARTIGO ORIGINAL:\n' + JSON.stringify(article) +
             '\n\nPROBLEMAS QA:\n' + JSON.stringify(qaResult) +
-            '\n\nFALHAS INDEPENDENTES DE ESTRUTURA E NÚMEROS:\n' + JSON.stringify(structuralIssues) +
+            '\n\nFALHAS INDEPENDENTES DE ESTRUTURA E NÚMEROS:\n' + JSON.stringify(candidateIssues(article, structuralIssues)) +
             '\n\nFACT-CHECK FUNDAMENTADO:\n' + JSON.stringify(safeFactCheck) +
             '\n\nFONTES PERMITIDAS:\n' +
             JSON.stringify(evidenceBundle.sources.map(({title, url}) => ({title, url}))),
@@ -1056,7 +1057,7 @@ export async function POST(request: NextRequest) {
           input:
             'PAUTA: ' + topic +
             '\nERROS DO QA A CORRIGIR: ' + JSON.stringify(qaResult) +
-            '\nPROBLEMAS DETERMINÍSTICOS: ' + JSON.stringify(structuralIssues) +
+            '\nPROBLEMAS DETERMINÍSTICOS: ' + JSON.stringify(candidateIssues(article, structuralIssues)) +
             '\nFATOS LITERALMENTE COMPROVADOS: ' + JSON.stringify(safeFactCheck) +
             '\nFONTES PERMITIDAS: ' + JSON.stringify(evidenceBundle.sources.map(
               ({title, url}) => ({title, url}))) +
@@ -1110,27 +1111,33 @@ export async function POST(request: NextRequest) {
       /intelig[eê]ncia artificial|\bIA\b/i.test(topic)
     if (eligibleTopic &&
         needsRepair(qaResult, article, structuralIssues)) {
-      const guide = createMethodologicalDraft(
-        evidenceBundle.sources.map(({title, url}) => ({title, url})),
-      )
-      // This fallback is a single fixed article. Once used, do not republish
-      // the same text with a different slug or keep failing with HTTP 409.
-      const fallbackSlug = slugify(guide.slug)
-      const fallbackAlreadyExists = await writeClient.withConfig({perspective: 'raw'}).fetch<number>(
-        'count(*[_type == "post" && slug.current == $slug])',
-        {slug: fallbackSlug},
-      )
-      if (fallbackAlreadyExists > 0) {
-        console.info('[content-agent] fallback_skipped_existing_article',
-          JSON.stringify({topic, slug: fallbackSlug}))
+      const sources = evidenceBundle.sources.map(({title, url}) => ({title, url}))
+      const candidates = [...recoveryGuides(topic, sources), createMethodologicalDraft(sources)]
+      // Check raw drafts AND published posts. Choose at most one fresh
+      // substantive candidate per run; keep existing QA and call budget.
+      let guide: JsonObject | undefined
+      for (const candidate of candidates) {
+        const slug = slugify(candidate.slug)
+        const exists = await writeClient.withConfig({perspective: 'raw'}).fetch<number>(
+          'count(*[_type == "post" && slug.current == $slug])', {slug},
+        )
+        if (exists > 0) {
+          console.info('[content-agent] fallback_skipped_existing_article', JSON.stringify({topic, slug}))
+          continue
+        }
+        if (candidateIssues(candidate, checkArticleQuality(candidate, supportedFacts)).length === 0) {
+          guide = candidate
+          break
+        }
       }
-      const guideIssues = checkArticleQuality(guide, supportedFacts)
-      if (fallbackAlreadyExists === 0 && guideIssues.length === 0) {
+      if (!guide) console.warn('[content-agent] recovery_inventory_unavailable', JSON.stringify({topic}))
+      if (guide) {
+        const guideIssues = checkArticleQuality(guide, supportedFacts)
         try {
           const audit = await callAgent({
             maxOutputTokens: 3000,
             instructions:
-              'Você é auditor editorial rigoroso. Avalie este GUIA METODOLÓGICO: orientações condicionais de teste não são resultados de IA. Bloqueie promessas de ROI, fatos ou leis sem fonte, confusões entre fontes oficiais e varejo privado, SEO ruim e redundância. Não exija dados de ROI de texto que diz explicitamente que são desconhecidos. Retorne somente JSON válido: passed boolean, score 0-100, issues array, fixes array, publicationRisk low|medium|high.',
+              'Você é auditor editorial rigoroso. Avalie este GUIA METODOLÓGICO: orientações condicionais de teste não são resultados de IA. Bloqueie promessas de ROI, fatos ou leis sem fonte, confusões entre fontes oficiais e varejo privado, SEO ruim e redundância. Não exija dados de ROI de texto que diz explicitamente que são desconhecidos. Retorne somente JSON válido: passed boolean, score 0-100, issues array, fixes array, publicationRisk low|medium|high. Aprovação exige nota >=85, risco baixo e nenhum problema bloqueante. Sugestões puramente opcionais de estilo devem ser objetos com severity low, dimension style, blocking false e detail. Problemas factuais, de fontes, SEO, estrutura ou risco continuam bloqueantes.',
             input:
               'ARTIGO:\n' + JSON.stringify(guide) +
               '\n\nFONTES CONSULTADAS:\n' +
