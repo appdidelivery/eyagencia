@@ -63,3 +63,25 @@ test('approval binds video, campaign, caption, collaboration, date and rights',(
  assert.equal(isCurrentApproval({...doc,...changed}),false)
  }
 })
+
+import {probeMp4,fetchMp4ForReview} from '../scripts/sophia-mp4.mjs'
+import {createHash} from 'node:crypto'
+const box=(type,...parts)=>{const data=Buffer.concat(parts);const h=Buffer.alloc(8);h.writeUInt32BE(data.length+8);h.write(type,4,'ascii');return Buffer.concat([h,data])}
+const time=()=>{const b=Buffer.alloc(20);b.writeUInt32BE(1000,12);b.writeUInt32BE(32000,16);return b}
+const track=(kind,codec)=>{const tk=Buffer.alloc(84);tk.writeInt32BE(65536,40);tk.writeInt32BE(65536,56);tk.writeUInt32BE(1080*65536,76);tk.writeUInt32BE(1920*65536,80);const h=Buffer.alloc(12);h.write(kind,8);const st=Buffer.alloc(8);st.writeUInt32BE(1,4);const entry=Buffer.alloc(28);entry.writeUInt16BE(1080,24);entry.writeUInt16BE(1920,26);return box('trak',box('tkhd',tk),box('mdia',box('hdlr',h),box('mdhd',time()),box('minf',box('stbl',box('stsd',st,box(codec,entry))))))}
+const fixture=()=>Buffer.concat([box('ftyp',Buffer.from('isom0000')),box('moov',box('mvhd',time()),track('vide','avc1'),track('soun','mp4a')),box('mdat',Buffer.alloc(10))])
+test('MP4 probe checks actual vertical metadata, H264/AAC and duration',()=>{
+ const b=fixture()
+ assert.deepEqual(probeMp4(b),{width:1080,height:1920,durationSeconds:32,hasAudio:true,videoCodec:'avc1',audioCodec:'mp4a'})
+ assert.throws(()=>probeMp4(Buffer.alloc(200)))
+ assert.throws(()=>probeMp4(b.subarray(0,-1)))
+})
+test('download must be same approved Sanity asset hash',async()=>{
+ const b=fixture(),hash=createHash('sha1').update(b).digest('hex')
+ const make=bytes=>async()=>new Response(bytes,{headers:{'content-type':'video/mp4','content-length':String(bytes.length)}})
+ const input={assetUrl:'https://cdn.sanity.io/files/abc/production/'+hash+'.mp4',assetId:'file-'+hash+'-mp4',fetcher:make(b)}
+ assert.equal((await fetchMp4ForReview(input)).width,1080)
+ const corrupt=Buffer.from(b);corrupt[corrupt.length-1]=1
+ await assert.rejects(fetchMp4ForReview({...input,fetcher:make(corrupt)}),/asset-hash-mismatch/)
+ await assert.rejects(fetchMp4ForReview({...input,assetUrl:'https://example.com/'+hash+'.mp4'}),/invalid-asset/)
+})

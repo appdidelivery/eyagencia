@@ -27,3 +27,9 @@
 - https://aistudio.google.com/docs/omni
 - https://aistudio.google.com/docs/pricing#gemini-omni-1.2-flash
 - https://developers.facebook.com/docs/graph-api/reference/page/video_reels
+
+## Liberação do fluxo Flow/MP4
+- Produção: `SOPHIA_REELS_AUTOPUBLISH_ENABLED=true` ativa somente Reels aprovados para domingo no slot já existente. Terça segue carrossel do blog. Sem campanha aprovada, segue carrossel normal. Campanhas ambíguas, inválidas ou com vídeo já utilizado bloqueiam a execução sem republicação automática.
+- Studio: Sophia · Reels Velo Delivery → importar MP4 (H.264/AAC, 9:16, até 1080×1920/64 MB), preencher data domingo, legenda, CTA e verificações, usar a ação Aprovar material Sophia e publicar o documento. Qualquer alteração exige nova aprovação. O vídeo é verificado por hash e cabeçalhos MP4 antes de reservar o slot.
+- A chave Gemini foi homologada por metadados no Preview. Geração paga, transferência de personagem Flow para API, montagem automática e ledger permanecem não liberados. Não chamar geração real sem controle persistente e autorização de gasto por campanha.
+- O adaptador Meta v27.0 solicita rotulagem de IA e colaboração; confirmação real dos IDs depende do primeiro MP4 autorizado e o aceite do parceiro é independente.

@@ -1,6 +1,7 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
 import {manualVideoReview} from '../../../scripts/sophia-audiovisual.mjs'
 import {isCurrentApproval} from '../../../scripts/sophia-approval.mjs'
+import {fetchMp4ForReview} from '../../../scripts/sophia-mp4.mjs'
 import {publishReels} from '../../../scripts/sophia-reels-transport.mjs'
 type Brand={_id:string;name:string;instagramEnabled?:boolean;facebookEnabled?:boolean}
 type Keys={instagramId?:string;pageId?:string;pageToken:string}
@@ -17,7 +18,12 @@ export async function runScheduledSophiaReel({day,weekday,publicationId,brand,ke
  if(!isCurrentApproval(doc)||doc.mimeType!=='video/mp4')return result('blocked','Aprovação desatualizada ou MP4 inválido.')
  const review=manualVideoReview({assetUrl:doc.assetUrl,projectId:process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,dataset:process.env.NEXT_PUBLIC_SANITY_DATASET,width:doc.width,height:doc.height,durationSeconds:doc.durationSeconds,hasAudio:doc.audioReviewed,approved:true,commercialFactsVerified:doc.commercialFactsVerified,rightsVerified:doc.rightsVerified,aiDisclosureReviewed:doc.aiDisclosureReviewed,caption:doc.caption,scheduledDay:doc.scheduledDay,collaborator:doc.collaborator})
  if(!review.readyForManualReview)return result('blocked',review.issues.join(', '))
+ if(doc.collaborator&&!brand.instagramEnabled)return result('blocked','Colaboração exige Instagram habilitado.')
  const asset=doc.video.asset._ref
+ try {
+  const actual=await fetchMp4ForReview({assetUrl:doc.assetUrl,assetId:asset})
+  if(actual.width!==doc.width||actual.height!==doc.height||Math.abs(actual.durationSeconds-doc.durationSeconds)>1)throw Error('metadata-mismatch')
+ }catch{return result('blocked','MP4 reprovado na conferência técnica: exporte 9:16 H.264/AAC, até 64 MB e confirme a duração.')}
  const lockId='sophia-reel-asset-'+asset
  try{
   await writeClient.transaction()
@@ -30,11 +36,12 @@ export async function runScheduledSophiaReel({day,weekday,publicationId,brand,ke
   await writeClient.patch(publicationId).set({status:'publishing',publishStartedAt:new Date().toISOString()}).commit()
   const pageToken=brand.facebookEnabled&&keys.pageId?await getPageToken(keys.pageId,keys.pageToken):undefined
   const out=await publishReels({permit:true,assetUrl:doc.assetUrl,title:doc.title,caption:doc.caption,collaborator:doc.collaborator,aiGenerated:true,instagramId:brand.instagramEnabled?keys.instagramId:undefined,instagramToken:keys.pageToken,pageId:brand.facebookEnabled?keys.pageId:undefined,pageToken,checkpoint:async(k:string,v:string)=>{await writeClient.patch(publicationId).set({['sophia_'+k]:v}).commit()}})
-  const status=out.errors.length?(out.instagram||out.facebook?'partial':'blocked'):'published'
-  await writeClient.patch(publicationId).set({status,instagramPostId:out.instagram,facebookPostId:out.facebook,errors:out.errors,finishedAt:new Date().toISOString()}).commit()
+  const ok=(!brand.instagramEnabled||Boolean(out.instagram))&&(!brand.facebookEnabled||Boolean(out.facebook))&&out.errors.length===0&&Boolean(out.instagram||out.facebook)
+  const status=ok?'published':out.instagram||out.facebook?'partial':'blocked'
+  await writeClient.patch(publicationId).set({status,instagramPostId:out.instagram,facebookPostId:out.facebook,errors:out.errors,verificationRequired:!ok,finishedAt:new Date().toISOString()}).commit()
   return result(status,out.errors.join(', ')||undefined)
  }catch{
-  await writeClient.patch(publicationId).set({status:'blocked',errors:['manual-reconciliation-required'],finishedAt:new Date().toISOString()}).commit().catch(()=>{})
+  await writeClient.patch(publicationId).set({status:'blocked',errors:['manual-reconciliation-required'],verificationRequired:true,finishedAt:new Date().toISOString()}).commit().catch(()=>{})
   return result('blocked','Conferência manual necessária; nenhuma nova tentativa automática.')
  }
 }
