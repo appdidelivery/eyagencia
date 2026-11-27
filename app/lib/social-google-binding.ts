@@ -32,11 +32,22 @@ function open(b:Binding,brand:Brand,channel:Channel){
 async function read(brand:Brand,channel:Channel){
  return readSnapshot<Binding>(path(brand,channel),config())
 }
+// Remove the stored grant for only this brand/channel. Google-wide revocation
+// is deliberately not automatic: this OAuth client is shared with CRM/reputation.
+export async function disconnectBinding(brand:Brand,channel:Channel){
+ if(process.env.VERCEL_ENV!=='production')throw Error('production_only')
+ const previous=await read(brand,channel)
+ if(!previous?.rows.length)return
+ await writeSnapshot([],config(),path(brand,channel),previous.version)
+ const verified=await read(brand,channel)
+ if(!verified||verified.rows.length!==0)throw Error('disconnect_unverified')
+}
 export async function bindingStatus(brand:Brand,channel:Channel){
  const b=(await read(brand,channel))?.rows[0]
  return b?{target:b.target,label:b.label,connectedAt:b.connectedAt}:null
 }
 export async function saveBinding(brand:Brand,channel:Channel,target:string,label:string,refresh:string){
+ if(process.env.VERCEL_ENV!=='production')throw Error('production_only')
  if(!refresh)throw Error('refresh_token_missing')
  const previous=await read(brand,channel)
  if(previous?.rows[0]&&previous.rows[0].target!==target)throw Error('existing_target_mismatch')
