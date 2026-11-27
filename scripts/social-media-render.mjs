@@ -181,6 +181,17 @@ export async function renderPendingSocialMedia({maxPackages=1}={}){
     try {
       // Article hero is a licensed first-party Sanity asset. Use only on
       // the carousel cover, never on every frame or on unrelated topics.
+      // Reserve the paid generation once, before any image calls. A crash or
+      // ambiguous mutation response must not trigger another paid round.
+      if(fullPhotos){
+        const reservation='gpt-carousel-cost-'+pkg._id
+        try{
+          await save(cfg,[{create:{_id:reservation,_type:'socialImageCostLock',sourceId:pkg._id,createdAt:new Date().toISOString(),status:'reserved'}}])
+        }catch{
+          results.push({id:pkg._id,status:'paid-round-reserved-or-storage-unavailable'})
+          continue
+        }
+      }
       const slidePhotos=fullPhotos?await generateCarouselPhotos({
         brandSlug:'eyagencia',topic:String(pkg.title||'E-commerce'),frames:carousel,date:String(pkg.sourceSlug||''),
       }):null
