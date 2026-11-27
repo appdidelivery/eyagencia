@@ -16,6 +16,8 @@ import {diegoFloodChapterType} from './diegoFloodChapterType'
 import {diegoFloodMediaType} from './diegoFloodMediaType'
 import {academyCompletionType} from './academyCompletionType'
 
+import {sophiaVideoType} from './sophiaVideoType'
+
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [blockContentType, categoryType, postType, authorType, aiContentJobType, socialBrandType, socialPublicationType, socialPackageType, socialNewsPostType, socialNativeRepostType, blogFeedbackType, diegoBookType, diegoFloodChapterType, diegoFloodMediaType, academyCompletionType],
+  types: [sophiaVideoType, blockContentType, categoryType, postType, authorType, aiContentJobType, socialBrandType, socialPublicationType, socialPackageType, socialNewsPostType, socialNativeRepostType, blogFeedbackType, diegoBookType, diegoFloodChapterType, diegoFloodMediaType, academyCompletionType],
 }
