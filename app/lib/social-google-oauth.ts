@@ -1,4 +1,4 @@
-import {createHash,randomBytes,timingSafeEqual} from 'node:crypto'
+import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto'
 import {cookies} from 'next/headers'
 import {NextResponse} from 'next/server'
 import {getCrmUser} from './crm-google-session'
@@ -7,6 +7,20 @@ import {isBrand,isChannel,discoverBinding,saveBinding,disconnectBinding,googleJs
 const origin='https://eyagencia.com.br',cookie='__Host-ey_social_oauth'
 const opts={httpOnly:true,secure:true,sameSite:'lax' as const,path:'/'}
 const result=(status:string)=>NextResponse.redirect(origin+'/admin/social?status='+encodeURIComponent(status),303)
+const evidenceCookie='__Host-ey_social_diagnostic'
+function evidenceSignature(body:string){return createHmac('sha256',googleClientSecret()).update('social-diagnostic-v1:'+body).digest('base64url')}
+export async function diagnosticEvidence(sub:string){
+ try{
+  const value=(await cookies()).get(evidenceCookie)?.value||''
+  const [body,sig,...extra]=value.split('.')
+  if(!body||!sig||extra.length)return null
+  const expected=evidenceSignature(body)
+  if(Buffer.byteLength(sig)!==Buffer.byteLength(expected)||!timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))return null
+  const data=JSON.parse(Buffer.from(body,'base64url').toString('utf8'))
+  if(data.sub!==sub||!isBrand(data.brand)||!isChannel(data.channel)||typeof data.exp!=='number'||data.exp<Date.now())return null
+  return {brand:data.brand,channel:data.channel}
+ }catch{return null}
+}
 export const isSocialState=(state:string|null)=>Boolean(state?.startsWith('social.'))
 export async function beginSocialOAuth(request:Request){
  const user=await getCrmUser();if(!user)return NextResponse.redirect(origin+'/admin',303)
@@ -51,7 +65,11 @@ export async function finishSocialOAuth(request:Request){
   if(required.some(scope=>!granted.has(scope)))return result('scope_missing')
   const b=await discoverBinding(s.brand,s.channel,data.access_token)
   if(s.channel==='gbp')await googleJson('https://mybusiness.googleapis.com/v4/'+b.target+'/localPosts?pageSize=1',data.access_token)
-  if(s.diagnostic===true)return result(s.brand+'_'+s.channel+'_diagnostic_ok')
+  if(s.diagnostic===true){
+   const body=Buffer.from(JSON.stringify({sub:user.sub,brand:s.brand,channel:s.channel,exp:Date.now()+600000})).toString('base64url')
+   jar.set(evidenceCookie,body+'.'+evidenceSignature(body),{...opts,maxAge:600})
+   return result('diagnostic_ok')
+  }
   if(process.env.SOCIAL_GOOGLE_BINDINGS_ENABLED!=='true')return result('binding_disabled')
   await saveBinding(s.brand,s.channel,b.target,b.label,data.refresh_token)
   return result('connected')
