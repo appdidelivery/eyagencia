@@ -65,3 +65,20 @@ export async function discoverOmni({apiKey,fetcher=fetch}) {
     return {configured:true,available:response.ok,httpStatus:response.status,model:OMNI_MODEL};
   }catch{return {configured:true,available:false,model:OMNI_MODEL,error:'metadata-unavailable'}}
 }
+
+// Provider contracts for review only: no network call, no automatic retry.
+export function prepareOmniRequest({prompt,seconds=8,resolution='720p'}) {
+  integer(seconds,3,15,'duracao da cena invalida');
+  if(!['360p','720p','1080p','4k'].includes(resolution))throw Error('resolucao invalida');
+  if(typeof prompt!=='string'||!prompt.trim()||prompt.length>5000)throw Error('prompt invalido');
+  return {method:'POST',url:'https://generativelanguage.googleapis.com/v1beta/interactions',body:{
+    model:OMNI_MODEL,input:prompt.trim(),response_format:{type:'video',aspect_ratio:'9:16',duration:seconds+'s',resolution,delivery:'uri'}
+  },execute:false};
+}
+export function prepareInstagramReel({instagramId,reviewInput}) {
+  if(typeof instagramId!=='string'||!/^\d+$/.test(instagramId))throw Error('instagram id invalido');
+  const review=manualVideoReview(reviewInput);
+  if(!review.readyForManualReview)return {execute:false,issues:review.issues};
+  // Collaboration intentionally remains manual until permissions and parameters are homologated.
+  return {execute:false,container:{path:instagramId+'/media',params:{media_type:'REELS',video_url:reviewInput.assetUrl,caption:reviewInput.caption}},publishPath:instagramId+'/media_publish',collaborationManual:Boolean(reviewInput.collaborator),requiresAiDisclosureReview:true};
+}
