@@ -41,3 +41,18 @@ test('deterministic issues and unknown QA inventory cannot be overridden by a sc
  assert.equal(preferEditorialCandidate(previous,[],{...approved,score:100,issues:undefined},[]),false)
  assert.equal(preferEditorialCandidate(previous,[],{...approved,score:100},['Duplicate slug']),false)
 })
+
+import { recoveryGuides } from '../app/api/content-agent/recoveryGuides.ts'
+import { checkArticleQuality } from '../app/api/content-agent/quality.ts'
+test('recovery bank has distinct relevant drafts and passes structural checks',()=>{
+ const sources=[{title:'Fonte 1',url:'https://example.org/1'},{title:'Fonte 2',url:'https://example.org/2'}]
+ const topics=['IA no e-commerce: experimentos de jornada de compra','IA no e-commerce: avaliação de respostas automatizadas','IA no e-commerce: padronização do catálogo']
+ const drafts=topics.map(topic=>recoveryGuides(topic,sources)[0])
+ assert.equal(new Set(drafts.map(d=>d.slug)).size,3)
+ for (const draft of drafts) {
+  assert.deepEqual(checkArticleQuality(draft,[]),[],draft.slug)
+  assert.deepEqual(draft.sources,sources)
+ }
+ assert.equal(recoveryGuides('tema não coberto',sources).length,0)
+ assert.equal(recoveryGuides(topics[0],sources)[0].slug,drafts[0].slug)
+})
