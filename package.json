@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/verify-lockfile.mjs && node --experimental-strip-types --test tests/crm-model.test.mjs && next build --webpack && node scripts/verify-social-render.mjs && node scripts/verify-brand-social.mjs && node scripts/verify-news-radar.mjs && node scripts/verify-weekly-social.mjs && node --experimental-strip-types --test tests/content-agent-topic-cooldown.test.mjs tests/creative-studio.test.mjs tests/content-agent-editorial-qa.test.mjs && npm run test:sophia",
+    "build": "node scripts/verify-lockfile.mjs && node --experimental-strip-types --test tests/crm-model.test.mjs && next build --webpack && node scripts/verify-social-render.mjs && node scripts/verify-brand-social.mjs && node scripts/verify-news-radar.mjs && node scripts/verify-weekly-social.mjs && node --experimental-strip-types --test tests/content-agent-topic-cooldown.test.mjs tests/creative-studio.test.mjs tests/content-agent-editorial-qa.test.mjs && node --test tests/social-channel-routing.test.mjs && npm run test:sophia",
     "test:sophia": "node --test tests/sophia-audiovisual.test.mjs tests/sophia-reels.test.mjs",
     "social:bootstrap": "node scripts/bootstrap-social-packages.mjs",
     "start": "next start",
