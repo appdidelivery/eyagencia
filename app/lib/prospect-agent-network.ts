@@ -4,16 +4,17 @@ import {checkServerIdentity} from "node:tls";
 import {publicSite,interpretAudit,type Brand} from "./prospecting";
 import {isPublicIPv4,hostOf,candidatesFromOsm,officialEmails,businessMentioned,type Candidate,type VerifiedCandidate} from "./prospect-agent-model";
 
+import {noSiteResearch,presenceFindings} from "./sdr-qualification";
 const USER_AGENT="EYAGENCIA-ProspectAgent/1.0 (+https://eyagencia.com.br/)";
 const MAX_HTML=512*1024;
 const bbox="-27.80,-48.80,-27.35,-48.35";
 export async function discover(brand:Brand){
  const selector=brand==="VELO"?'["amenity"~"^(restaurant|fast_food|cafe)$"]':'["shop"~"^(clothes|furniture|beauty|hairdresser|bakery|gift|optician|florist|sports)$"]';
- const query='[out:json][timeout:12];nwr'+selector+'["name"][~"^(website|contact:website)$"~"^https://"]('+bbox+');out tags 80;';
+ const query='[out:json][timeout:15];nwr'+selector+'["name"][~"^(website|contact:website)$"~"^https://"]('+bbox+');out tags 60;nwr'+selector+'["name"][!website][!"contact:website"]('+bbox+');out tags 60;';
  const res=await fetch("https://overpass-api.de/api/interpreter?"+new URLSearchParams({data:query}),{headers:{"User-Agent":USER_AGENT},redirect:"error",cache:"no-store",signal:AbortSignal.timeout(18000)});
  if(!res.ok)throw Error("discovery_unavailable");
  const raw=await res.text();if(raw.length>2_000_000)throw Error("discovery_size");
- return candidatesFromOsm(JSON.parse(raw),brand);
+ const data=JSON.parse(raw);return {sites:candidatesFromOsm(data,brand),research:noSiteResearch(data,brand,new Date().toISOString())};
 }
 // Resolve and pin a public IPv4 address, keep TLS hostname verification.
 // Never follow redirects, attach cookies, forward credentials or fetch images.
@@ -59,14 +60,15 @@ export async function verifyCandidate(c:Candidate):Promise<VerifiedCandidate|nul
   if(!robotsAllows(robots.body,u.pathname))return null;
   const page=await fetchPage(c.site);
   if(page.status!==200||!businessMentioned(page.body,c.name))return null;
+  const presence=presenceFindings(page.body,c.site,c.brand,new Date().toISOString());
   const first=officialEmails(page.body,c.site)[0];
-  if(first)return {...c,email:first,source:c.site};
+  if(first)return {...c,email:first,source:c.site,presence};
   for(const source of contactLinks(page.body,c.site)){
    if(!robotsAllows(robots.body,new URL(source).pathname)||hostOf(source)!==hostOf(c.site))continue;
    const contact=await fetchPage(source);
    if(contact.status!==200)continue;
    const email=officialEmails(contact.body,c.site)[0];
-   if(email)return {...c,email,source};
+   if(email)return {...c,email,source,presence};
   }
  }catch{}
  return null;

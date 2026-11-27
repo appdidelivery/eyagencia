@@ -132,5 +132,17 @@ test("agente exige achado real, deduplica empresas e mantém oportunidade em rev
  const at="2026-11-27T12:00:00.000Z",audit={url:c.site,at,scores:{performance:42,seo:99,accessibility:90},findings:[]};
  assert.equal(prospectDraft(c,audit,at,"p1"),null);
  const row=prospectDraft(c,{...audit,findings:[{title:"Desempenho mobile",detail:"Pontuação 42/100",url:c.site,observedAt:at}]},at,"p1");
- assert.equal(row.status,"em revisão");assert.equal(row.createdBy,"agent:prospect");assert.equal(sameBusiness([row],c),true);assert.equal(sameBusiness([{...row,status:"não contatar",email:"vendas@loja.com.br"}],c),true);
+ assert.equal(row.status,"aprovado");assert.equal(row.createdBy,"agent:prospect");assert.equal(sameBusiness([row],c),true);assert.equal(sameBusiness([{...row,status:"não contatar",email:"vendas@loja.com.br"}],c),true);
+});
+
+import {presenceFindings,leadScore,noSiteResearch,channelPolicy} from "../app/lib/sdr-qualification.ts";
+test("SDR diferencia evidência positiva de ausência não comprovada e bloqueia canais",()=>{
+ const at="2026-11-27T12:00:00.000Z",site="https://loja.com.br/";
+ const f=presenceFindings('<a href="/cardapio.pdf">Cardápio</a><a href="https://wa.me/5500000000">Fazer pedido</a><a href="https://ifood.com.br/">Pedir</a>',site,"VELO",at);
+ assert.equal(f.length,3);assert.equal(leadScore(f,true),95);
+ assert.equal(presenceFindings("<h1>Loja</h1>",site,"VELO",at).length,0);
+ assert.equal(leadScore([],true),0);
+ const r=noSiteResearch({elements:[{type:"node",id:1,tags:{name:"Loja teste"}},{type:"node",id:2,tags:{name:"Loja com site",website:site}}]},"EYAGENCIA",at);
+ assert.equal(r.length,1);assert.equal(r[0].score,45);assert.match(r[0].reason,/sem site informado/);
+ assert.match(channelPolicy().whatsapp,/bloqueado/);assert.match(channelPolicy().email,/bloqueado/);
 });
