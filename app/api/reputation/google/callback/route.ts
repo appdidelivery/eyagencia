@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSocialState, finishSocialOAuth } from "@/app/lib/social-google-oauth";
 import { isCrmState, finishCrmLogin } from "@/app/lib/crm-google-session";
 import {
   GOOGLE_REPUTATION_REDIRECT_URI,
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
 
   // Independent CRM state namespace; do not modify Business Profile sessions.
   if (isCrmState(state)) return finishCrmLogin(request);
+  if (isSocialState(state)) return finishSocialOAuth(request);
 
   if (oauthError) {
     return NextResponse.redirect(

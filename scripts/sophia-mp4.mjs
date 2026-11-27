@@ -46,7 +46,7 @@ export function probeMp4(bytes){
  return {width:video[0].width,height:video[0].height,durationSeconds:movieDuration,hasAudio:true,videoCodec:video[0].codec,audioCodec:audio[0].codec}
 }
 // Bound download size and verify the asset's content hash, not only its MIME.
-export async function fetchMp4ForReview({assetUrl,assetId,fetcher=fetch}){
+export async function fetchReviewedMp4({assetUrl,assetId,fetcher=fetch}){
  const u=new URL(assetUrl),match=/^file-([a-f0-9]{40})-mp4$/i.exec(assetId)
  if(!match||u.origin!=='https://cdn.sanity.io'||u.username||u.password||u.search||u.hash||!/^\/files\/[a-z0-9-]+\/[a-z0-9_-]+\/[a-f0-9]{40}\.mp4$/i.test(u.pathname)||!u.pathname.endsWith('/'+match[1]+'.mp4'))throw Error('invalid-asset')
  const r=await fetcher(u.href,{redirect:'error',cache:'no-store',signal:AbortSignal.timeout(25000)})
@@ -57,5 +57,7 @@ export async function fetchMp4ForReview({assetUrl,assetId,fetcher=fetch}){
  if(total!==size)throw Error('incomplete-video')
  const bytes=Buffer.concat(chunks,total)
  if(createHash('sha1').update(bytes).digest('hex')!==match[1].toLowerCase())throw Error('asset-hash-mismatch')
- return probeMp4(bytes)
+ return {bytes,metadata:probeMp4(bytes)}
 }
+export async function fetchMp4ForReview(input){return (await fetchReviewedMp4(input)).metadata}
+
