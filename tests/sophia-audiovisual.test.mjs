@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {estimateOmni,budgetDecision,flowPlan,manualVideoReview,discoverOmni,OMNI_MODEL} from '../scripts/sophia-audiovisual.mjs';
+import {estimateOmni,budgetDecision,flowPlan,manualVideoReview,discoverOmni,OMNI_MODEL,prepareOmniRequest,prepareInstagramReel} from '../scripts/sophia-audiovisual.mjs';
 test('Omni estimate includes reserve and rejects invalid inputs',()=>{
  const result=estimateOmni({seconds:32,fxBrlPerUsd:6.1});
  assert.equal(result.model,OMNI_MODEL);assert.equal(result.estimatedCents,1962);
@@ -37,4 +37,15 @@ test('metadata GET never leaks key in URL or error and never generates',async()=
  assert.equal(result.available,true);assert.ok(!JSON.stringify(result).includes('fake-secret'));
  assert.equal((await discoverOmni({apiKey:'',fetcher:()=>{throw Error('must not call')}})).configured,false);
  assert.equal((await discoverOmni({apiKey:'secret',fetcher:async()=>{throw Error('secret')}})).error,'metadata-unavailable');
+});
+
+test('Omni payload is vertical and never executes',()=>{
+ const p=prepareOmniRequest({prompt:'Cena de produto',seconds:8});
+ assert.equal(p.body.response_format.duration,'8s');assert.equal(p.body.response_format.aspect_ratio,'9:16');
+ assert.equal(p.body.response_format.delivery,'uri');assert.equal(p.execute,false);
+ assert.throws(()=>prepareOmniRequest({prompt:'X',seconds:16}));
+});
+test('Instagram contract refuses missing review and never publishes',()=>{
+ const p=prepareInstagramReel({instagramId:'12345',reviewInput:{}});
+ assert.equal(p.execute,false);assert.ok(p.issues.includes('approval-required'));assert.equal(p.container,undefined);
 });
