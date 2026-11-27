@@ -11,10 +11,13 @@ export const socialPublicationType = defineType({
     defineField({name: 'topic', title: 'Pauta', type: 'string'}),
     defineField({name: 'status', title: 'Estado', type: 'string', options: {list: [
       {title: 'Reservada', value: 'reserved'}, {title: 'Gerando', value: 'generating'},
+      {title:'Publicando',value:'publishing'}, {title:'Pronta',value:'ready-to-publish'},
       {title: 'Publicada', value: 'published'}, {title: 'Parcial', value: 'partial'},
       {title: 'Bloqueada', value: 'blocked'}, {title: 'Falha', value: 'failed'},
     ]}}),
     defineField({name: 'caption', title: 'Legenda', type: 'text', rows: 10}),
+    defineField({name:'videoUrl',title:'MP4 publicado',type:'url',readOnly:true}),
+    defineField({name:'verificationRequired',title:'Conferência manual necessária',type:'boolean',readOnly:true}),
     defineField({name: 'imageUrl', title: 'Imagem usada', type: 'url'}),
     defineField({name: 'imageAssetId', title: 'Asset Sanity', type: 'string'}),
     defineField({name: 'instagramPostId', title: 'ID Instagram', type: 'string'}),

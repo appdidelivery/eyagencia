@@ -1,4 +1,5 @@
 import {writeClient} from '../../../sanity/lib/writeClient'
+import {runScheduledSophiaReel} from './sophiaReels'
 import {makeBrandSocialSvg, makeBrandMotivationSvg, supportedBrandSlug} from '../../../scripts/brand-social-visual.mjs'
 import {renderBrandArt} from '../../../scripts/render-brand-art.mjs'
 import {visualBriefForBrand} from '../../../scripts/premium-social-scene.mjs'
@@ -865,6 +866,8 @@ export async function runVeloBlogSocial() {
       '*[_id==$id][0]._id',{id:publicationId},
     )
     if(already)return {enabled:true,day,results:[{brand:brand.name,status:'already-processed'}]}
+    const reel=await runScheduledSophiaReel({day,weekday,publicationId,brand,keys,getPageToken:facebookPageToken})
+    if(reel)return {enabled:true,day,results:[reel]}
     const posts=await veloBlogCandidates()
     let chosen:VeloBlogSource|null=null
     for(const post of posts){
