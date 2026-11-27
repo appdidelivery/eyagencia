@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/verify-lockfile.mjs && node --experimental-strip-types --test tests/crm-model.test.mjs && next build --webpack && node scripts/verify-social-render.mjs && node scripts/verify-brand-social.mjs && node scripts/verify-news-radar.mjs && node scripts/verify-weekly-social.mjs && node --experimental-strip-types --test tests/content-agent-topic-cooldown.test.mjs tests/creative-studio.test.mjs tests/content-agent-editorial-qa.test.mjs",
+    "test:sophia": "node --test tests/sophia-audiovisual.test.mjs",
     "social:bootstrap": "node scripts/bootstrap-social-packages.mjs",
     "start": "next start",
     "lint": "eslint"
