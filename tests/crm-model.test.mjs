@@ -100,3 +100,18 @@ test("ambas as marcas usam remetente corporativo único e assinatura distinta",(
 import {umblerConfig,mailAccount,UmblerConfigError,safeMailFailure} from "../app/lib/umbler-config.ts";
 test("Umbler usa contas e servidores fixos com TLS, sem depender de parâmetros públicos redundantes",()=>{const env={UMBLER_CONTATO_PASSWORD:"synthetic-test-only",UMBLER_FINANCEIRO_PASSWORD:"synthetic-finance-only",UMBLER_SMTP_HOST:"attacker.example",UMBLER_SMTP_PORT:"25",UMBLER_CONTATO_EMAIL:"outra@example.com"};assert.equal(mailAccount("contato"),true);assert.equal(mailAccount("outra"),false);const c=umblerConfig("contato",env);assert.equal(c.imapPort,993);assert.equal(c.smtpPort,587);assert.equal(c.smtpHost,"smtp.umbler.com");assert.equal(c.user,"contato@eyagencia.com.br");assert.equal(umblerConfig("financeiro",env).user,"financeiro@eyagencia.com.br");assert.throws(()=>umblerConfig("financeiro",{}),e=>e instanceof UmblerConfigError&&e.missingKey==="UMBLER_FINANCEIRO_PASSWORD");assert.throws(()=>umblerConfig("contato",{UMBLER_CONTATO_PASSWORD:"  "}),e=>e instanceof UmblerConfigError&&e.missingKey==="UMBLER_CONTATO_PASSWORD");});
 test("Umbler classifica falhas sem divulgar mensagens ou segredos do provedor",()=>{assert.equal(safeMailFailure({code:"EAUTH",message:"SECRET"}),"Autenticação recusada pelo servidor");assert.equal(safeMailFailure({code:"ETIMEDOUT"}),"Falha de conexão ou tempo limite");assert.equal(safeMailFailure({message:"SECRET"}),"Servidor não confirmou a operação");});
+
+import {mailReadRequest,mailSequenceRange,mailTextPart,mailHtmlText} from "../app/lib/mail-read.ts";
+test("leitura corporativa aceita apenas contas fixas e operações list/read com UID válido",()=>{
+ assert.equal(mailReadRequest({account:"outro",action:"list",page:0}),null);
+ assert.equal(mailReadRequest({account:"contato",action:"send",page:0}),null);
+ assert.equal(mailReadRequest({account:"contato",action:"read",uid:0,uidValidity:"1"}),null);
+ assert.equal(mailReadRequest({account:"contato",action:"read",uid:1,uidValidity:"abc"}),null);
+ assert.deepEqual(mailReadRequest({account:"financeiro",action:"read",uid:7,uidValidity:"123"}),{account:"financeiro",action:"read",uid:7,uidValidity:"123"});
+ assert.equal(mailSequenceRange(144,0),"125:144");assert.equal(mailSequenceRange(144,7),"1:4");assert.equal(mailSequenceRange(144,8),null);
+});
+test("seleção de texto ignora anexos e prefere texto simples; HTML nunca renderizado",()=>{
+ assert.deepEqual(mailTextPart({type:"multipart/alternative",childNodes:[{type:"text/html",part:"1"},{type:"text/plain",part:"2",disposition:"attachment"},{type:"text/plain",part:"3"}]}),{part:"3",kind:"plain",size:undefined});
+ assert.equal(mailTextPart({type:"application/pdf",part:"1"}),null);
+ assert.equal(mailHtmlText("<head><style>hidden</style></head><p>Olá &amp; tchau</p><script>evil()</script><img src='https://tracker.example/a'>"),"Olá & tchau");
+});
