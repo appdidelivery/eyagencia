@@ -3,7 +3,7 @@ import {runScheduledSophiaReel} from './sophiaReels'
 import {makeBrandSocialSvg, makeBrandMotivationSvg, supportedBrandSlug} from '../../../scripts/brand-social-visual.mjs'
 import {renderBrandArt} from '../../../scripts/render-brand-art.mjs'
 import {visualBriefForBrand} from '../../../scripts/premium-social-scene.mjs'
-import {generateEditorialPhoto} from '../../../scripts/creative-studio.mjs'
+import {generateEditorialPhoto, fullCarouselPhotosEnabled, generateCarouselPhotos} from '../../../scripts/creative-studio.mjs'
 
 type Brand = {
   _id: string
@@ -803,7 +803,10 @@ async function renderVeloBlogCarousel(post:VeloBlogSource,day:string) {
   const images:string[]=[],assetIds:string[]=[]
   // Two distinct photographic scenes instead of a repeated vector-only template.
   const photos=new Map<number,Buffer>()
-  if(process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
+  if(fullCarouselPhotosEnabled()){
+    const all=await generateCarouselPhotos({brandSlug:'velo-delivery',topic:post.title,frames:slides,date:day+'-blog'})
+    all.forEach((buffer:Buffer,index:number)=>photos.set(index,buffer))
+  }else if(process.env.SOCIAL_AGENT_IMAGES_ENABLED==='true'){
     for(const index of [0,4]){
       try{
         const shot=await generateEditorialPhoto({
